@@ -13,25 +13,6 @@ from ocds.export.helpers import (
 )
 
 
-def test_mapping():
-    with pytest.raises(NotImplementedError):
-        mapping = Mapping(get_test_data())
-    Mapping.schema = test_schema
-
-    mapping = Mapping({'field': u'test_field', 'value': 11, 'extra': 'test'})
-    assert hasattr(mapping, 'field')
-    assert hasattr(mapping, 'value')
-    assert not hasattr(mapping, 'extra')
-    assert isinstance(mapping.field, unicode)
-    assert isinstance(mapping.value, int)
-    assert set(mapping.__dict__.keys()) == set(['field', 'value'])
-    assert len(mapping) == 2
-    mapping['aa'] = 2
-    assert not hasattr(mapping, 'aa')
-    mapping['value'] = 22
-    assert mapping.value == 22
-
-
 def test_tender():
     assert Tender.__tag__ == 'tender'
     tender = Tender(parse_tender(get_test_data()))
