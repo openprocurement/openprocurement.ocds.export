@@ -179,10 +179,10 @@ release = BaseSchema(
         'ocid': str,
         'date': str,
         'tag': list,
-        'tags': list
+        'tags': list,
         'buyer': organization_schema,
         'tender': tender,
         'awards': [award],
-        'contract': [contracts]
+        'contract': [contract]
     }
 )
