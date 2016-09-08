@@ -1,5 +1,7 @@
 import pytest
-from utils import get_test_data, test_schema
+from ocds.export.schema import BaseSchema
+from ocds.export.base import Mapping
+from utils import get_test_data
 from ocds.export.tag import (
     Mapping,
     Tender,
@@ -11,6 +13,19 @@ from ocds.export.tag import (
 from ocds.export.helpers import (
     parse_tender
 )
+
+schema = BaseSchema({'a': int, 'b': unicode})
+
+
+class TSchema(Mapping):
+    __schema__ = schema
+
+
+def test_schema():
+    mapp = TSchema({'a':1, 'b': u'sdf', 'd': 11})
+    assert hasattr(mapp, 'a')
+    assert hasattr(mapp, 'b')
+    assert not hasattr(mapp, 'd')
 
 
 def test_tender():

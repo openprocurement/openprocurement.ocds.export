@@ -8,6 +8,12 @@ class Mapping(MutableMapping):
             self._update(key, val)
 
     def _update(self, key, value):
+        if hasattr(self, '__schema__'):
+            cheked = self.__schema__({key: value}).items()
+            if cheked:
+                key, value = cheked.pop()
+            else:
+                return
         if isinstance(value, dict):
             self.__dict__[key] = Mapping(value)
         elif isinstance(value, (list, tuple)):
