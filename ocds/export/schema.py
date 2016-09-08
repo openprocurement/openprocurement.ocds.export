@@ -171,3 +171,18 @@ tender = BaseSchema(
         'documents': [document_schema],
     }
 )
+
+
+release = BaseSchema(
+    {
+        'language': str,
+        'ocid': str,
+        'date': str,
+        'tag': list,
+        'tags': list
+        'buyer': organization_schema,
+        'tender': tender,
+        'awards': [award],
+        'contract': [contracts]
+    }
+)

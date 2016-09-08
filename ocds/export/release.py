@@ -1,45 +1,26 @@
 from .helpers import (
-    get_ocid,
-    get_tags_from_tender,
     now,
     generate_id,
 )
-from .tag import Mapping
+from .schema import release
+from .base import Mapping
 
 
-class BaseRelease(object):
+class Release(Mapping):
+
+    __schema__ = release
 
     def __init__(self, ocid, tags, date=None):
+        super(Release, self).__init__(
+            language='uk',
+            ocid='ocid',
+            id=generate_id(),
+            date=now().isoformat(),
+            tag=map(lambda t: t.__tag__ for t in tags),
+        )
 
-        self.language = 'uk'
-        self.ocid = ocid
-        self.id = generate_id()
-        if not date:
-            date = now().isoformat()
-        self.date = date
-        self.tag = map(lambda t: t.__tag__ for t in tags)
-        self.initiationType = 'tender'
         for _tag in tags:
             if isinstance(_tag, list):
                 setattr(self, _tag[0].__tag__, _tag)
             elif isinstance(_tag, Mapping):
                 setattr(self, _tag.__tag__, _tag)
-
-    def serialize(self):
-        return self.__dict__
-
-
-class TenderRelease(BaseRelease):
-
-    def __init__(self, prefix, tender):
-        tags = get_tags_from_tender(tender)
-        ocid = get_ocid(prefix, tender['tenderID'])
-        super(self, TenderRelease).__init__(ocid, tags, tender['dateModified'])
-
-
-def generate_release(tender):
-    pass
-
-
-def generate_update_release(prev_ver, curr_ver, tag='tender'):
-    pass
