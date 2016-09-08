@@ -7,6 +7,18 @@ class BaseSchema(voluptuous.Schema):
         super(BaseSchema, self).__init__(
             schema=schema, required=required, extra=voluptuous.REMOVE_EXTRA)
 
+    def __set__(self, instance, owner):
+        try:
+            for k, v in self._compiled([], data):
+                setattr(instance, k, v)
+        except er.MultipleInvalid:
+            raise
+        except er.Invalid as e:
+            raise er.MultipleInvalid([e])
+
+    def __get__(self, instance):
+        return instance.value
+
 
 def value(val):
     try:

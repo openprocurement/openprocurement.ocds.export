@@ -10,34 +10,38 @@ from .schema import (
 class Tender(Mapping):
 
     __tag__ = 'tender'
+    __schema__ = tender
 
     def __init__(self, *args, **kwargs):
-        super(Tender, self).__init__(tender(dict(*args, **kwargs)))
+        super(Tender, self).__init__(dict(*args, **kwargs))
 
 
 class Award(Mapping):
 
     __tag__ = 'awards'
+    __schema__ = award
 
     def __init__(self, *args, **kwargs):
-        super(Award, self).__init__(award(dict(*args, **kwargs)))
+        super(Award, self).__init__(dict(*args, **kwargs))
 
 
 class Contract(Mapping):
 
     __tag__ = 'contracts'
+    __schema__ = contract
 
     def __init__(self, *args, **kwargs):
-        super(Contract, self).__init__(contract(dict(*args, **kwargs)))
+        super(Contract, self).__init__(dict(*args, **kwargs))
 
 
 class Buyer(Mapping):
 
     __tag__ = 'buyer'
+    __schema__ = organization_schema
 
     def __init__(self, *args, **kwargs):
         self.schema = organization_schema
-        super(Buyer, self).__init__(organization_schema(dict(*args, **kwargs)))
+        super(Buyer, self).__init__(dict(*args, **kwargs))
 
 
 def Tag(tag, vals):

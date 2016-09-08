@@ -1,37 +1,33 @@
 from collections import MutableMapping
 
 
-
 class Mapping(MutableMapping):
 
     def __init__(self, *args, **kwargs):
         for key, val in dict(*args, **kwargs).items():
-            if isinstance(val, dict):
-                self.__dict__[key] = Mapping(val)
-            elif isinstance(val, list):
-                self.__dict__[key] = []
-                for v in val:
-                    if isinstance(v, dict):
-                        self.__dict__[key].append(Mapping(v))
-                    else:
-                        self.__dict__[key].append(v)
-            else:
-                self.__dict__[key] = val
+            self._update(key, val)
+
+    def _update(self, key, value):
+        if isinstance(value, dict):
+            self.__dict__[key] = Mapping(value)
+        elif isinstance(value, (list, tuple)):
+            self.__dict__[key] = []
+            for v in value:
+                if isinstance(v, dict):
+                    self.__dict__[key].append(Mapping(v))
+                else:
+                    self.__dict__[key].append(v)
+        else:
+            self.__dict__[key] = value
 
     def __getitem__(self, key):
         return self.__dict__[key]
 
     def __setitem__(self, key, value):
-        if isinstance(value, dict):
-            self.__dict__[key] = Mapping(value)
-        else:
-            self.__dict__[key] = value
+        self._update(key, value)
 
     def __setattr__(self, key, value):
-        if isinstance(value, dict):
-            self.__dict__[key] = Mapping(value)
-        else:
-            self.__dict__[key] = value
+        self._update(key, value)
 
     def __getarttr__(self, key):
         return self.__dict__[key]
@@ -53,5 +49,3 @@ class Mapping(MutableMapping):
             else:
                 result[k] = v
         return result
-
-
