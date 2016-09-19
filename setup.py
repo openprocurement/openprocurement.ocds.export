@@ -9,8 +9,8 @@ install_requires = [
     'grequests',
     'gevent',
     'PyYaml',
-#    'ocds.export',
-#    'ocds.storage'
+    'ocds.export',
+    'ocds.storage'
 ]
 
 test_requires = [
