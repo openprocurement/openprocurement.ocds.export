@@ -1,0 +1,10 @@
+api:
+    api_host: ${options['api_host']}
+    api_key: ${options['api_key']}
+    api_version: ${options['api_version']}
+db:
+    username: ${options['db_user_name']}
+    password: ${options['db_user_password']}
+    host: ${parts['couchdb.ini'].host}
+    port: ${parts['couchdb.ini'].port}
+    name: ${options['db_name']}
