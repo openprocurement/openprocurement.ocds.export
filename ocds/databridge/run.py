@@ -6,8 +6,7 @@ import yaml
 import logging
 from logging.config import dictConfig
 from requests.adapters import HTTPAdapter
-from .contrib.workers import Fetch
-from .feed import APIRetreiver
+from .contrib.workers import Fetch, Parse, Save 
 from .bridge import APIDataBridge
 
 
@@ -33,6 +32,6 @@ def run():
         dictConfig(config['logging'])
     else:
         logging.basicConfig(level=logging.DEBUG)
-    bridge = APIDataBridge(config)
-    bridge.add_workers([Fetch], config)
+    bridge = APIDataBridge(config['api'])
+    bridge.add_workers([Fetch, Parse], config)
     bridge.run()

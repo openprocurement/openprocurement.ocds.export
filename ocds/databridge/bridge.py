@@ -35,8 +35,9 @@ class APIDataBridge(object):
     def _check(self):
         for g in self.workers.values():
             if g.ready() or g.dead or g.value:
+                logger.fatal('{} dead..restarting'.format(g.name))
                 g.kill()
-                g.start
+                g.start()
 
     def run(self):
         logger.debug('{}: starting'.format(self.__class__))
@@ -44,6 +45,6 @@ class APIDataBridge(object):
             g.start()
         while True:
             while not self.dest_queue.empty():
+                self._check()
                 logger.debug(self.dest_queue.get())
-            self._check()
             gevent.sleep(3)
