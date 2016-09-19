@@ -1,4 +1,23 @@
-import uuid
+import sys
+from couchdb.design import ViewDefinition
+
+
+class CouchView(ViewDefinition):
+
+    def __init__(self):
+
+        module = sys.modules[self.__module__]
+        design_name = module.__name__.split('.')[-1]
+
+        map_fun = self.__class__.map
+
+        if hasattr(self.__class__, "reduce"):
+            reduce_fun = self.__class__.reduce
+        else:
+            reduce_fun = None
+
+        super(CouchView, self).__init__(
+            design_name, self.__class__._design, map_fun, reduce_fun)
 
 
 def get_db_url(user, password, host, port, name=''):
@@ -10,12 +29,4 @@ def get_db_url(user, password, host, port, name=''):
         host,
         port,
         name
-    )
-
-
-def generate_ocid(organization_prefix, tender_id):
-    return "{}-{}".format(organization_prefix, tender_id)
-
-
-def generate_id():
-    return "{}-{}".format(uuid.uuid4().hex, uuid.uuid4().hex)
+    g
