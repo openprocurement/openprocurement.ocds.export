@@ -6,7 +6,6 @@ DESCRIPTION = """
 """
 
 install_requires = [
-    'pyyaml',
     'CouchDb'
 ]
 

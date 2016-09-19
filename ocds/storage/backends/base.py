@@ -15,7 +15,6 @@ class Storage(object):
         raise NotImplementedError
 
     def __len__(self):
-        pass
         raise NotImplementedError
 
     def __delitem__(self, key):

@@ -1,0 +1,2 @@
+ReleaseExistsError(Exception):
+    pass
