@@ -6,15 +6,21 @@ DESCRIPTION = """
 """
 install_requires = [
     'requests',
-    'grequests'
+    'grequests',
     'gevent',
-    'ocds.export',
-    'ocds.storage'
+    'PyYaml',
+#    'ocds.export',
+#    'ocds.storage'
 ]
 
 test_requires = [
 ]
 
+entry_points = {
+    'console_scripts': [
+        'bridge = ocds.databridge.run:run'
+    ]
+}
 
 setup(name='ocds.databridge',
       version='0.0.1',
@@ -27,4 +33,5 @@ setup(name='ocds.databridge',
       zip_safe=False,
       install_requires=install_requires,
       tests_require=test_requires,
+      entry_points=entry_points
       )
