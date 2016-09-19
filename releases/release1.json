@@ -1,0 +1,179 @@
+{
+   "_id": "ff871fd715764edb8223e0d9cc42feb4-b66af5f47f8844b38f3d104aa07aa5b0",
+   "_rev": "2-364af2932e52bf0d0d84f80cd5b69047",
+   "language": "uk",
+   "contracts": [
+       {
+           "status": "active",
+           "documents": [
+               {
+                   "title": "sign.p7s",
+                   "url": "https://public.api.openprocurement.org/api/2.3/tenders/ad8039bfe1e94ff29e9a0e93a5223ebc/contracts/ceadf45bfb4e4cdc9d27d0bba00915b9/documents/374b9b7ae5314fc486e5145b928d4c06?download=6a217263b1634d07988a45b2edff12a2",
+                   "format": "application/pkcs7-signature",
+                   "datePublished": "2016-08-17T10:28:43.646591+03:00",
+                   "dateModified": "2016-08-17T14:24:49.399182+03:00",
+                   "id": "374b9b7ae5314fc486e5145b928d4c06"
+               }
+           ],
+           "items": [
+               {
+                   "description": "вивізsds ТsssПВ",
+                   "classification": {
+                       "scheme": "CPV",
+                       "description": "Послуги зі збирання побутових відходів",
+                       "id": "90511200-4"
+                   },
+                   "additionalClassifications": [
+                       {
+                           "scheme": "ДКПП",
+                           "description": "Послуги підприємств щодо перевезення безпечних відходів",
+                           "id": "38.11.6"
+                       }
+                   ],
+                   "id": "750bae8c8d234e6e8616e504f215e16d",
+                   "unit": {
+                       "name": "метри кубічні"
+                   },
+                   "quantity": 20
+               }
+           ],
+           "period": {
+               "startDate": "2016-08-15T21:00:00+00:00",
+               "endDate": "2016-12-30T22:00:00+00:00"
+           },
+           "dateSigned": "2016-08-15T21:00:00+00:00",
+           "value": {
+               "currency": "UAH",
+               "amount": 2700
+           },
+           "awardID": "b76553sscc947b41bdad38d3798a006bf1",
+           "id": "ceadf45bfb4e4cdc9d27d0bba00915b9"
+       }
+   ],
+   "ocid": "ocid-32d4gz-fake-ad8039bfe1e94ff29e9a0e93a5223ebc",
+   "initiationType": "tender",
+   "date": "2016-20-16T14:26:00.501126+00:00",
+   "tag": [
+   ],
+   "awards": [
+       {
+           "status": "actddive",
+           "documents": [
+               {
+                   "title": "протокол10.pdf",
+                   "url": "https:dsd//public.api.openprocurement.org/api/2.3/tenders/ad8039bfe1e94ff29e9a0e93a5223ebc/awards/b76553cc947b41bdad38d3798a006bf1/documents/1682f4448d0043639eb92ea49a3685e4?download=799656a194c047f3bd3ebd154803b742",
+                   "format": "text/plain",
+                   "datePublished": "2016-08-16T16:45:30.488643+03:00",
+                   "documentType": "awardNotice",
+                   "dateModified": "2016-08-16T16:45:30.488679+03:00",
+                   "id": "1682f4448d0043639eidsb92ea49a3685e4"
+               }
+           ],
+           "suppliers": [
+               {
+                   "identifier": {
+                       "scheme": "UA-EDR",
+                       "id": "32356196",
+                       "legalName": "КП \"Селsdssdsdfищне комунальне підприємство\""
+                   },
+                   "name": "КП \"Селищне комунальне підприємство\"",
+                   "address": {
+                       "countryName": "Україна",
+                       "postalCode": "78595",
+                       "streetAddress": "Д.Галицького,40",
+                       "locality": "Ворохта"
+                   }
+               }
+           ],
+           "value": {
+               "currency": "UAH",
+               "amount": 2700
+           },
+           "date": "2016-08-17T10:24:33.129742+03:00",
+           "id": "b76553cc947b41bdad38d3798a006bf1"
+       }
+   ],
+   "buyer": {
+       "identifier": {
+           "scheme": "UA-EDR",
+           "id": "01981626",
+           "legalName": "Державний заклад \"Спеціалізований (спеціальний) санаторій \"Гірське повітря\" Міністерства охорони здоров'я України"
+       },
+       "name": "Державний заклад \"Спеціалізований (спеціальний) санаторій \"Гірське повітря\" Міністерства охорони здоров'я України",
+       "address": {
+           "countryName": "Україна",
+           "postalCode": "78595",
+           "streetAddress": "Д.Галицького, будинок 5",
+           "locality": "смт.Ворохта"
+       }
+   },
+   "tender": {
+       "procurementMethod": "limited",
+       "status": "compddlete",
+       "documents": [
+           {
+               "title": "sign.p7s",
+               "url": "https://public.api.openprocurement.org/api/2.3/tenders/ad8039bfe1e94ff29e9a0e93a5223ebc/documents/e12ddc23d9514ee995b03ab878df345b?download=b719b1580285436ebe2b1419acd233c0",
+               "format": "application/pkcs7-signature",
+               "datePublished": "2016-08-16T16:50:55.028182+03:00",
+               "dateModified": "2016-08-16T16:50:55.028205+03:00",
+               "id": "e12ddc23d9514ee995b03ab878df345b"
+           },
+           {
+               "title": "sign.p7s",
+               "url": "https://public.api.openprocurement.org/api/2.3/tenders/ad8039bfe1e94ff29e9a0e93a5223ebc/documents/e12ddc23d9514ee995b03ab878df345b?download=eb91d69f6b1d424590b799fd77112ae9",
+               "format": "application/pkcs7-signature",
+               "datePublished": "2016-08-16T16:50:55.028182+03:00",
+               "dateModified": "2016-08-16T16:50:57.161187+03:00",
+               "id": "e12ddc23d9514ee995b03ab878df345b"
+           }
+       ],
+       "description": "вивіз твердих побутових відходів",
+       "title": "вивіз ТПВ",
+       "items": [
+           {
+               "description": "вивіз ТПВ",
+               "classification": {
+                   "scheme": "CPV",
+                   "description": "Послуги зі збирання побутових відходів",
+                   "id": "90511200-4"
+               },
+               "additionalClassifications": [
+                   {
+                       "scheme": "ДКПП",
+                       "description": "Послуги підприємств щодо перевезення безпечних відходів",
+                       "id": "38.11.6"
+                   }
+               ],
+               "id": "750bae8c8d234e6e8616e504f215e16d",
+               "unit": {
+                   "name": "метри кубічні"
+               },
+               "quantity": 20
+           }
+       ],
+       "value": {
+           "currency": "UAH",
+           "amount": 2700
+       },
+       "numberOfTenderers": 0,
+       "procuringEntity": {
+           "identifier": {
+               "scheme": "UA-EDR",
+               "id": "01981626",
+               "legalName": "Державний заклад \"Спеціалізований (спеціальний) санаторій \"Гірське повітря\" Міністерства охорони здоров'я України"
+           },
+           "name": "Державний заклад \"Спеціалізований (спеціальний) санаторій \"Гірське повітря\" Міністерства охорони здоров'я України",
+           "address": {
+               "countryName": "Україна",
+               "postalCode": "78595",
+               "streetAddress": "Д.Галицького, будинок 5",
+               "locality": "смт.Ворохта"
+           }
+       },
+       "tenderers": [
+       ],
+       "id": "ad8039bfe1e94ff29e9a0e93a5223ebc"
+   },
+   "id": "68e73cc8f85d47198d76b7ba142a94f0-7b345d1b3a8542008bed52a8fda3a163"
+}
