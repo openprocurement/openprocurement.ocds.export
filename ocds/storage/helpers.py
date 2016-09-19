@@ -29,4 +29,4 @@ def get_db_url(user, password, host, port, name=''):
         host,
         port,
         name
-    g
+    )

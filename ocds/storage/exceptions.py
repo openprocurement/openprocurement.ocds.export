@@ -1,2 +1,2 @@
-ReleaseExistsError(Exception):
+class ReleaseExistsError(Exception):
     pass

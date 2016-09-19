@@ -3,7 +3,7 @@ import couchdb
 from ocds.storage.exceptions import ReleaseExistsError
 from couchdb.design import ViewDefinition
 from .design.releases import views
-from helpers import get_db_url
+from ocds.storage.helpers import get_db_url
 
 
 class CouchStorage(object):
