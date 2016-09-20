@@ -73,9 +73,10 @@ def get_tags_from_tender(tender):
             return Tag(tag, vals)
 
     fields = ['awards', 'contracts', 'buyer']
-
-    return [x for x in
+    tags = [x for x in
             map(lambda t: get_tag(get_field(tender, t), t), fields) if x]
+    tags.append(Tag('tender', tender))
+    return tags
 
 
 def generate_id():
