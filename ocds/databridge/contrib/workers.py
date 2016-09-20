@@ -47,12 +47,10 @@ class Parse(gevent.Greenlet):
         logger.info('Starting: {}'.format(self.name))
         while True:
             for feed in self.source:
-                logger.warn(feed)
                 for tender in feed:
                     try:
                         release = get_release_from_tender(tender, self.prefix)
-                        logger.info("{} generated release".format())
-                        logger.warn(release)
+                        logger.info("{} generated release".format(len(release)))
                         self.dest.put(release)
                     except Exception as e:
                         logger.fatal('Error {} during generation release'.format(e))
@@ -62,6 +60,8 @@ class Parse(gevent.Greenlet):
 
 
 class Save(gevent.Greenlet):
+
+    name = "Save"
 
     def __init__(self, src_queue, dest_queue, config):
 

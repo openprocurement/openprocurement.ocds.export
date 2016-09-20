@@ -6,6 +6,7 @@ import yaml
 import logging
 from logging.config import dictConfig
 from requests.adapters import HTTPAdapter
+from ocds.storage import CouchStorage
 from .contrib.workers import Fetch, Parse, Save 
 from .bridge import APIDataBridge
 
@@ -32,6 +33,10 @@ def run():
         dictConfig(config['logging'])
     else:
         logging.basicConfig(level=logging.DEBUG)
+    storage = CouchStorage(config['db'])
     bridge = APIDataBridge(config['api'])
-    bridge.add_workers([Fetch, Parse], config)
+    config.update(dict(
+        storage=storage
+    ))
+    bridge.add_workers([Fetch, Parse, Save], config)
     bridge.run()

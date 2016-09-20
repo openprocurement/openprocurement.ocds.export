@@ -38,13 +38,13 @@ class APIDataBridge(object):
                 logger.fatal('{} dead..restarting'.format(g.name))
                 g.kill()
                 g.start()
+            else:
+                logger.info("{} still active".format(g.name))
 
     def run(self):
         logger.debug('{}: starting'.format(self.__class__))
         for g in self.workers.values():
             g.start()
         while True:
-            while not self.dest_queue.empty():
-                self._check()
-                logger.debug(self.dest_queue.get())
+            self._check()
             gevent.sleep(3)
