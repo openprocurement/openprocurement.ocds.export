@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import itertools
 import iso8601
+import json
 from datetime import datetime
 from .tag import Tag
 from uuid import uuid4
@@ -79,3 +80,23 @@ def get_tags_from_tender(tender):
 
 def generate_id():
     return uuid4().hex
+
+
+def get_tag(tags):
+    t = []
+    for tag in tags:
+        if isinstance(tag, (list, tuple)):
+            t.append(tag[0].__tag__)
+        else:
+            t.append(tag.__tag__)
+    return t
+
+
+def encoder(obj):
+    if hasattr(obj, 'to_json'):
+        return obj.to_json()
+    return json.dumps(obj)
+
+
+def decoder(obj):
+    return json.loads(obj)

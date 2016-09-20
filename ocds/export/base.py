@@ -1,3 +1,4 @@
+import json
 from collections import MutableMapping
 
 
@@ -25,6 +26,14 @@ class Mapping(MutableMapping):
                     self.__dict__[key].append(v)
         else:
             self.__dict__[key] = value
+
+    def __repr__(self):
+        return json.dumps(self, default=lambda o: o.__dict__,
+                          sort_keys=True)
+
+    def to_json(self):
+        return json.dumps(self, default=lambda o: o.__dict__,
+                          sort_keys=True)
 
     def __getitem__(self, key):
         return self.__dict__[key]
