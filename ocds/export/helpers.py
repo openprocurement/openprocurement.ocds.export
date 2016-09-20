@@ -87,7 +87,10 @@ def get_tag(tags):
     t = []
     for tag in tags:
         if isinstance(tag, (list, tuple)):
-            t.append(tag[0].__tag__)
+            if tag[0].__tag__ == "awards":
+                t.append('award')
+            elif tag[0].__tag__ == "contracts":
+                t.append('contract')
         else:
             t.append(tag.__tag__)
     return t
