@@ -13,7 +13,7 @@ class Release(Mapping):
             date = now().isoformat()
         super(Release, self).__init__(
             language='uk',
-            ocid='ocid',
+            ocid=ocid,
             id=generate_id(),
             date=date,
             tag=tag,
