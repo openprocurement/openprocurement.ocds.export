@@ -3,7 +3,7 @@ from ocds.storage.helpers import CouchView
 
 class OcidView(CouchView):
 
-    _design = 'ocid'
+    design = 'ocid'
 
     @staticmethod
     def map(doc):
@@ -12,7 +12,7 @@ class OcidView(CouchView):
 
 class TagView(CouchView):
 
-    _design = 'tags'
+    design = 'tags'
 
     @staticmethod
     def map(doc):
@@ -20,6 +20,6 @@ class TagView(CouchView):
 
 
 views = [
-    OcidView,
-    TagView
+    OcidView(),
+    TagView()
 ]

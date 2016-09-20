@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 import couchdb
+import json
 from ocds.storage.exceptions import ReleaseExistsError
 from couchdb.design import ViewDefinition
 from .design.releases import views
 from ocds.storage.helpers import get_db_url
+from ocds.export.helpers import encoder, decoder
+from couchdb.json import use
+
+
+use(decode=decoder, encode=encoder)
 
 
 class CouchStorage(object):

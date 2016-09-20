@@ -17,7 +17,7 @@ class CouchView(ViewDefinition):
             reduce_fun = None
 
         super(CouchView, self).__init__(
-            design_name, self.__class__._design, map_fun, reduce_fun)
+            design_name, self.__class__.design, map_fun, reduce_fun, 'python')
 
 
 def get_db_url(user, password, host, port, name=''):
