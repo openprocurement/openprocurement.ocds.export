@@ -92,7 +92,8 @@ def get_tag(tags):
             elif tag[0].__tag__ == "contracts":
                 t.append('contract')
         else:
-            t.append(tag.__tag__)
+            if tag.__tag__ == 'tender':
+                t.append(tag.__tag__)
     return t
 
 
