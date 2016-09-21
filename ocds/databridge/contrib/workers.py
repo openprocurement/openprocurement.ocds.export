@@ -75,5 +75,5 @@ class Save(gevent.Greenlet):
         while True:
             for release in self.source:
                 self.dest.put('Save doc; {}'.format(release['id']))
-                self.storage.db.save(release)
+                self.storage.save(release)
         gevent.sleep(2)
