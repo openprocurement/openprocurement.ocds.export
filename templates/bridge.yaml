@@ -18,3 +18,4 @@ release:
     publicationPolicy: https://prozorro.gov.ua/publication-policy
     prefix: ocds-xxxxxx
 
+path: ${options['path_for_release']}
