@@ -68,7 +68,6 @@ class APIClient(object):
 def get_retreive_clients(api_key, api_host, api_version):
     forward = APIClient(api_key, api_host, api_version)
     backward = APIClient(api_key, api_host, api_version)
-
     origin_cookie = forward.session.cookies
     backward.session.cookies = origin_cookie
     return origin_cookie, forward, backward
