@@ -19,7 +19,17 @@ class TagView(CouchView):
         yield (doc['ocid'], doc['tag'])
 
 
+class DateView(CouchView):
+
+    design = 'date'
+
+    @staticmethod
+    def map(doc):
+        yield (doc['date'], doc)
+
+
 views = [
     OcidView(),
-    TagView()
+    TagView(),
+    DateView()
 ]

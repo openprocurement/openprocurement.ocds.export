@@ -1,2 +1,0 @@
-class ReleaseExistsError(Exception):
-    pass
