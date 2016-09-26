@@ -66,6 +66,9 @@ class APIRetreiver(object):
         forward_worker.start()
         backward_worker.start()
         self.workers = [forward_worker, backward_worker]
+        g = gevent.spawn(self._check())
+        g.link(lambda gr: gr.start())
+
 
     def _restart(self):
         for g in self.workers:
@@ -73,14 +76,19 @@ class APIRetreiver(object):
         self._start()
 
     def _check(self):
-        forward, backward = self.workers
+        while True:
+            forward, backward = self.workers
 
-        if backward.ready():
-            if backward.value != 1:
+            if backward.ready():
+                logger.info('Backward ready')
+                if backward.value != 1:
+                    logger.info('Backward fails')
+                    self._restart()
+                    return
+            if forward.dead or forward.ready():
                 self._restart()
-                return
-        if forward.dead or forward.ready():
-            self._restart()
+            logger.info('Forward ready: {} Backward ready: {}'.format(forward.ready(), backward.ready()))
+            gevent.sleep(3)
 
     def __iter__(self):
         try:
@@ -89,7 +97,6 @@ class APIRetreiver(object):
             logger.error('Error during start {}'.format(e))
             sys.exit(2)
         while True:
-            self._check()
             while not self.tender_queue.empty():
                 yield self.tender_queue.get()
             gevent.sleep(0.5)
