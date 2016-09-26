@@ -7,12 +7,19 @@ class BaseSchema(voluptuous.Schema):
         super(BaseSchema, self).__init__(
             schema=schema, required=required, extra=voluptuous.REMOVE_EXTRA)
 
+
 def value(val):
     try:
         parsed = int(val)
     except ValueError:
         parsed = float(val)
     return parsed
+
+
+def tender_status(status):
+    if status not in ['complete', 'unsuccessful', 'cancelled']:
+        return 'active'
+    return status
 
 
 identifier_schema = BaseSchema(
@@ -48,6 +55,8 @@ classification_schema = BaseSchema(
         'uri': unicode
     }
 )
+
+
 period_schema = BaseSchema(
     {
         'startDate': unicode,
@@ -150,7 +159,7 @@ tender = BaseSchema(
         'id': unicode,
         'title': unicode,
         'description': unicode,
-        'status': unicode,
+        'status': tender_status,
         'items': [items_schema],
         'minValue': value_schema,
         'value': value_schema,

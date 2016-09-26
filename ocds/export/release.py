@@ -17,6 +17,7 @@ class Release(Mapping):
             id=generate_id(),
             date=date,
             tag=tag,
+            initiationType='tender',
         )
 
         for _tag in tags:
