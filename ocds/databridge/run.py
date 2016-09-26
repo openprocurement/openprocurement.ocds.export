@@ -33,10 +33,5 @@ def run():
         dictConfig(config['logging'])
     else:
         logging.basicConfig(level=logging.DEBUG)
-    storage = CouchStorage(config['db'])
-    bridge = APIDataBridge(config['api'])
-    config.update(dict(
-        storage=storage
-    ))
-    bridge.add_workers([Fetch, Parse, Save], config)
+    bridge = APIDataBridge(config)
     bridge.run()

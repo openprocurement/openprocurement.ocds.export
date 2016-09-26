@@ -1,18 +1,10 @@
 import gevent
 import logging
-import sys
 from gevent.queue import Queue
 from .contrib.retreive import RetreiverForward, RetreiverBackward
 from .contrib.client import get_retreive_clients
 from .helpers import get_start_point
 
-
-QUEUE_FULL_DELAY = 5
-EMPTY_QUEUE_DELAY = 1
-ON_EMPTY_DELAY = 10
-FORWARD_WORKER_SLEEP = 5
-BACKWARD_WOKER_DELAY = 1
-WATCH_DELAY = 1
 
 logger = logging.getLogger(__name__)
 
@@ -66,37 +58,23 @@ class APIRetreiver(object):
         forward_worker.start()
         backward_worker.start()
         self.workers = [forward_worker, backward_worker]
-        g = gevent.spawn(self._check())
-        g.link(lambda gr: gr.start())
-
 
     def _restart(self):
         for g in self.workers:
             g.kill()
         self._start()
 
-    def _check(self):
+    def __iter__(self):
+        self._start()
         while True:
             forward, backward = self.workers
-
             if backward.ready():
                 logger.info('Backward ready')
                 if backward.value != 1:
                     logger.info('Backward fails')
                     self._restart()
-                    return
             if forward.dead or forward.ready():
                 self._restart()
-            logger.info('Forward ready: {} Backward ready: {}'.format(forward.ready(), backward.ready()))
-            gevent.sleep(3)
-
-    def __iter__(self):
-        try:
-            self._start()
-        except Exception as e:
-            logger.error('Error during start {}'.format(e))
-            sys.exit(2)
-        while True:
-            while not self.tender_queue.empty():
-                yield self.tender_queue.get()
-            gevent.sleep(0.5)
+            if self.tender_queue.empty():
+                gevent.sleep(1)
+            yield self.tender_queue.get()
