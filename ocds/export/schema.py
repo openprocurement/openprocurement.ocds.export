@@ -55,6 +55,8 @@ classification_schema = BaseSchema(
         'uri': unicode
     }
 )
+
+
 period_schema = BaseSchema(
     {
         'startDate': unicode,
