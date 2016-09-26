@@ -31,7 +31,7 @@ def get_release_from_tender(tender, prefix):
     date = tender['dateModified']
     tags = get_tags_from_tender(parse_tender(tender))
     return Release(
-        get_ocid(prefix, tender['tenderID']),
+        get_ocid(prefix, tender['id']),
         tags,
         get_tag(tags),
         date
