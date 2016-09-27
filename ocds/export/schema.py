@@ -22,6 +22,11 @@ def tender_status(status):
     return status
 
 
+def unique_tenderers(tenderers):
+    ids = set(t['identifier']['id'] for t in tenderers)
+    return [t for t in tenderers if t['identifier']['id'] in ids]
+
+
 identifier_schema = BaseSchema(
     {
         'scheme': unicode,
@@ -175,7 +180,7 @@ tender = BaseSchema(
         'eligibilityCriteria': unicode,
         'awardPeriod': period_schema,
         'numberOfTenderers': value,
-        'tenderers': [organization_schema],
+        'tenderers': unique_tenderers,
         'procuringEntity': organization_schema,
         'documents': [document_schema],
     }
