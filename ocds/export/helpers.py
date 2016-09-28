@@ -7,16 +7,6 @@ from .tag import Tag
 from uuid import uuid4
 
 
-DEFAULTS = {
-    'publisher': {
-        'name': 'ДП Прозорро',
-    },
-    'licence': 'https://creativecommons.org/publicdomain/zero/1.0/',
-    'publicationPolicy': 'https://prozorro.gov.ua/publication-policy',
-    'ocid_prefix': 'ocds-xxxxxx'
-}
-
-
 def parse_tender(tender):
 
     if 'bids' in tender:
