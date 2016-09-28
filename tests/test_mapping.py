@@ -101,11 +101,6 @@ def test_iter():
     assert [('a', 1), ('c', {'b': 2})] == mapp.items()
 
 
-def test_unwrap():
-    data = {'a': 1, 'c': {'b': 2}, 'd': [{'a': [1, 2, 3]}]}
-    mapp = Mapping(data)
-    assert data == mapp.unwrap()
-
 def test_json():
     data = {'a': 1, 'c': {'b': 2}, 'd': [{'a': [1, 2, 3]}]}
     m = Mapping(data)

@@ -13,7 +13,6 @@ def test_parse_tender():
     assert 'minimalStep' not in tender
 
     assert 'tenderers' in tender
-    assert 'numberOfTenderers' in tender
     assert 'minValue' in tender
 
 

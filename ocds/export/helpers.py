@@ -13,7 +13,6 @@ def parse_tender(tender):
         tender['tenderers'] = list(itertools.chain.from_iterable(
             map(lambda b: b.get('tenderers', ''), tender['bids'])))
 
-        tender['numberOfTenderers'] = len(tender['tenderers'])
         del tender['numberOfBids']
         del tender['bids']
 
