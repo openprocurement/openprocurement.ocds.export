@@ -28,6 +28,7 @@ def unique_tenderers(tenderers):
     if tenderers:
         res = [t.values() for t in tenderers][0]
         return res
+    return []
 
 
 def unique_documents(documents):
