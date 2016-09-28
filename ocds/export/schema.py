@@ -1,4 +1,5 @@
 import voluptuous
+from itertools import groupby
 
 
 class BaseSchema(voluptuous.Schema):
@@ -23,8 +24,22 @@ def tender_status(status):
 
 
 def unique_tenderers(tenderers):
-    ids = set(t['identifier']['id'] for t in tenderers)
-    return [t for t in tenderers if t['identifier']['id'] in ids]
+    tenderers = [{t['identifier']['id']: t} for t in tenderers]
+    if tenderers:
+        res = [t.values() for t in tenderers][0]
+        return res
+
+
+def unique_documents(documents):
+    temp = documents
+    count = 0
+    list_a = sorted([doc['id'] for doc in documents])
+    result = dict([(r, len(list(grp))) for r, grp in groupby(list_a)])
+    for i in temp:
+        if result[i['id']] > 1:
+            i['id'] = i['id'] + '-{}'.format(count)
+            count += 1
+    return [document_schema(t) for t in temp]
 
 
 identifier_schema = BaseSchema(
@@ -139,7 +154,7 @@ award = BaseSchema(
         'suppliers': [organization_schema],
         'items': [items_schema],
         'contractPeriod': period_schema,
-        'documents': [document_schema]
+        'documents': (unique_documents)
     }
 )
 
@@ -154,7 +169,7 @@ contract = BaseSchema(
         'value': value_schema,
         'items': [items_schema],
         'dateSigned': unicode,
-        'documents': [document_schema]
+        'documents': unique_documents
     }
 )
 
@@ -182,7 +197,7 @@ tender = BaseSchema(
         'numberOfTenderers': value,
         'tenderers': unique_tenderers,
         'procuringEntity': organization_schema,
-        'documents': [document_schema],
+        'documents': unique_documents,
     }
 )
 
