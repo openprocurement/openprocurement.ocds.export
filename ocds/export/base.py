@@ -55,12 +55,3 @@ class Mapping(MutableMapping):
 
     def __len__(self):
         return len(self.__dict__)
-
-    def unwrap(self):
-        result = {}
-        for k, v in self.__dict__.items():
-            if isinstance(v, Mapping):
-                result[k] = v.unwrap()
-            else:
-                result[k] = v
-        return result

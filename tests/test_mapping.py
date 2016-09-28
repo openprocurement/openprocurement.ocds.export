@@ -1,4 +1,5 @@
 from ocds.export.base import Mapping
+import json
 
 
 def test_map_create():
@@ -104,3 +105,8 @@ def test_unwrap():
     data = {'a': 1, 'c': {'b': 2}, 'd': [{'a': [1, 2, 3]}]}
     mapp = Mapping(data)
     assert data == mapp.unwrap()
+
+def test_json():
+    data = {'a': 1, 'c': {'b': 2}, 'd': [{'a': [1, 2, 3]}]}
+    m = Mapping(data)
+    assert m.to_json() == json.dumps(data)

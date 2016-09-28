@@ -10,11 +10,13 @@ install_requires = [
 ]
 
 test_requires = [
+    'pytest',
+    'pytest-cov'
 ]
 
 
 setup(name='ocds.export',
-      version='0.0.1',
+      version='0.0.2',
       description=DESCRIPTION,
       author='Quintagroup, Ltd.',
       author_email='info@quintagroup.com',
