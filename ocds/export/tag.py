@@ -14,7 +14,10 @@ class Tender(Mapping):
 
     def __init__(self, *args, **kwargs):
         super(Tender, self).__init__(dict(*args, **kwargs))
-        self.numberOfTenderers = len(self.tenderers)
+        if self.tenderers:
+            self.numberOfTenderers = len(self.tenderers)
+        else:
+            self.numberOfTenderers = 0
 
 
 class Award(Mapping):

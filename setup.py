@@ -6,7 +6,8 @@ DESCRIPTION = """
 """
 install_requires = [
     'iso8601',
-    'voluptuous'
+    'voluptuous',
+    'simplejson'
 ]
 
 test_requires = [
