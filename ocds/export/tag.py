@@ -14,7 +14,7 @@ class Tender(Mapping):
 
     def __init__(self, *args, **kwargs):
         super(Tender, self).__init__(dict(*args, **kwargs))
-        if self.tenderers:
+        if hasattr(self, 'tenderers'):
             self.numberOfTenderers = len(self.tenderers)
         else:
             self.numberOfTenderers = 0
