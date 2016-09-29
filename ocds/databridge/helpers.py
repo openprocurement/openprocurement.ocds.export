@@ -31,8 +31,7 @@ def fetch_tenders(client, src, dest):
             if resp:
                 logger.info('fetched {} tenders'.format(len(resp)))
             dest.put(resp)
-            gevent.sleep(0.5)
-        gevent.sleep(1)
+        gevent.sleep(0.5)
 
 
 def create_releases(prefix, src, dest):
