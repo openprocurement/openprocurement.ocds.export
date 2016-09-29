@@ -6,7 +6,6 @@ DESCRIPTION = """
 """
 install_requires = [
     'requests',
-    'grequests',
     'gevent',
     'PyYaml',
     'ocds.export',

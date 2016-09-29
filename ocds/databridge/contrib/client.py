@@ -1,6 +1,6 @@
 import requests
 import requests.adapters
-import grequests
+from gevent.pool import Pool
 import logging
 
 
@@ -26,24 +26,16 @@ class APIClient(object):
 
         # retrieve cookie
         self.session.head("{}/{}".format(self.base_url, 'spore'))
+        self.pool = Pool(10)
 
     def get_tenders(self, params=None):
         if not params:
             params = {'feed': 'chages'}
-        req = [grequests.get(self.resourse_url,
-                             params=params,
-                             session=self.session)]
-
-        resp = grequests.map(req)
-        for r in resp:
-            if r.ok:
-                return r.json()
-            else:
-                logger.warn(
-                    'Fail while fetching tenders '
-                    'feed with client params: {}'.format(params)
-                )
-                r.raise_for_status()
+        resp = self.session.get(self.resourse_url, params=params)
+        if resp.ok:
+            return resp.json()
+        else:
+            resp.raise_for_status()
 
     def get_tender(self, tender_id, params=None):
         resp = self.session.get(
@@ -55,13 +47,8 @@ class APIClient(object):
             resp.raise_for_status()
 
     def fetch(self, tender_ids):
-        urls = ['{}/{}'.format(self.resourse_url, tender_id['id'])
-                for tender_id in tender_ids]
-        resp = (grequests.get(url, session=self.session, stream=False)
-                for url in urls)
-        results = [t.json()['data'] for t in grequests.map(resp, size=10)]
-        [r.close() for r in resp]
-        return results
+        resp = self.pool.map(self.get_tender, [t['id'] for t in tender_ids])
+        return [r for r in resp]
 
 
 def get_retreive_clients(api_key, api_host, api_version):
