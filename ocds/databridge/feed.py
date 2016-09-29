@@ -58,7 +58,12 @@ class APIRetreiver(object):
             self.filter_callback,
             name='backward'
         )
+        bg.link(self._start_bg)
         self.workers = [fg, bg]
+
+    def _start_bg(self, bg):
+        bg.kill()
+        bg.start()
 
     def _restart(self):
         logger.ward('Restarting retreivers')
