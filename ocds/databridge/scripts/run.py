@@ -1,18 +1,12 @@
 import argparse
-import requests
 import os.path
 import sys
 import yaml
 import logging
 from logging.config import dictConfig
-from requests.adapters import HTTPAdapter
-from ocds.storage import CouchStorage
-from .contrib.workers import Fetch, Parse, Save 
-from .bridge import APIDataBridge
+from ..bridge import APIDataBridge
 
 
-ADAPTER = HTTPAdapter(pool_maxsize=50, pool_connections=100)
-SESSION = requests.Session()
 LOGGER = logging.getLogger(__name__)
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
