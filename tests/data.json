@@ -153,6 +153,17 @@
                     "documentType": "contractSigned",
                     "dateModified": "2016-08-19T09:58:38.008633+03:00",
                     "id": "8b275117d5364ded871419f3c0e70735"
+                },
+                {
+                    "description": "",
+                    "format": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "url": "https://lb.api-sandbox.openprocurement.org/api/2.3/tenders/3bfaccf5a42d4cc8b601e940e149af8b/contracts/ad6263fbb56443ba908ea4f45fbed465/documents/8b275117d5364ded871419f3c0e70735?download=10bb578ed3ca42ed9aac01e971970959",
+                    "title": "1.docx",
+                    "documentOf": "tender",
+                    "datePublished": "2016-08-19T09:58:38.008599+03:00",
+                    "documentType": "contractSigned",
+                    "dateModified": "2016-08-19T09:58:38.008633+03:00",
+                    "id": "8b275117d5364ded871419f3c0e70735"
                 }
             ],
             "items": [
@@ -241,6 +252,17 @@
         {
             "status": "unsuccessful",
             "documents": [
+                {
+                    "description": "",
+                    "format": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "url": "https://lb.api-sandbox.openprocurement.org/api/2.3/tenders/3bfaccf5a42d4cc8b601e940e149af8b/awards/e5ef124d04f64257bc8f2a67ba0d2b43/documents/15de8b5532d144c5bbcedfbf91202506?download=e4a8bc4fdd484b069c55008da055318c",
+                    "title": "1.docx",
+                    "documentOf": "tender",
+                    "datePublished": "2016-08-18T14:29:31.761460+03:00",
+                    "documentType": "awardNotice",
+                    "dateModified": "2016-08-18T14:29:31.761484+03:00",
+                    "id": "15de8b5532d144c5bbcedfbf91202506"
+                },
                 {
                     "description": "",
                     "format": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

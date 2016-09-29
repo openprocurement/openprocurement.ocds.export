@@ -155,7 +155,7 @@ award = BaseSchema(
         'suppliers': [organization_schema],
         'items': [items_schema],
         'contractPeriod': period_schema,
-        'documents': (unique_documents)
+        'documents': unique_documents,
     }
 )
 
@@ -170,7 +170,7 @@ contract = BaseSchema(
         'value': value_schema,
         'items': [items_schema],
         'dateSigned': unicode,
-        'documents': unique_documents
+        'documents': unique_documents,
     }
 )
 
