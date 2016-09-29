@@ -2,7 +2,6 @@ import requests
 import requests.adapters
 import grequests
 import logging
-#from databridge.helpers import APIAdapter
 
 
 logger = logging.getLogger(__name__)

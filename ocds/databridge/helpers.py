@@ -1,18 +1,14 @@
 import gevent
 import logging
-from requests.adapters import HTTPAdapter
 from .exceptions import LBMismatchError
 from ocds.export.release import get_release_from_tender
 
 
-APIAdapter = HTTPAdapter(max_retries=5,
-                         pool_connections=50,
-                         pool_maxsize=30)
-
 logger = logging.getLogger(__name__)
 
 
-def get_start_point(forward, backward, cookie, queue, callback=lambda x: x, extra={}):
+def get_start_point(forward, backward, cookie, queue,
+                    callback=lambda x: x, extra={}):
     forward_params = {'feed': 'changes'}
     backward_params = {'feed': 'changes', 'descending': '1'}
     if extra:
