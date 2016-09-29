@@ -6,7 +6,6 @@ from ocds.databridge.exceptions import LBMismatchError
 
 class RetreiverForward(gevent.Greenlet):
 
-
     def __init__(self, client, params, cookie, queue, filter_func, logger):
         super(RetreiverForward, self).__init__()
         self.name = 'Forward'

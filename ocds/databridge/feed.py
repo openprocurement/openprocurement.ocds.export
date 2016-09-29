@@ -30,7 +30,7 @@ class APIRetreiver(object):
         )
 
     def _start(self):
-        logger.info('{} starting'.format(self.__class__))
+        logger.info('Retreivers starting')
         forward, backward = get_start_point(
             self.forward_client,
             self.backward_client,
@@ -60,6 +60,7 @@ class APIRetreiver(object):
         self.workers = [forward_worker, backward_worker]
 
     def _restart(self):
+        logger.ward('Restarting retreivers')
         for g in self.workers:
             g.kill()
         self._start()
@@ -68,12 +69,12 @@ class APIRetreiver(object):
         self._start()
         while True:
             forward, backward = self.workers
-            if backward.ready():
-                logger.info('Backward ready')
+            if backward.ready() or backward.dead:
                 if backward.value != 1:
-                    logger.info('Backward fails')
+                    logger.fatal('Backward fails')
                     self._restart()
             if forward.dead or forward.ready():
+                logger.warm('Forward worker died!')
                 self._restart()
             if self.tender_queue.empty():
                 gevent.sleep(1)
