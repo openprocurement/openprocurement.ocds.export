@@ -39,7 +39,7 @@ def fetch_tenders(client, src, dest):
         gevent.sleep(1)
 
 
-def create_releases(src, dest, prefix):
+def create_releases(prefix, src, dest):
         logger.info('Starting generating releases')
         while True:
             for batch in src:
@@ -57,16 +57,19 @@ def create_releases(src, dest, prefix):
             gevent.sleep(2)
 
 
-def save(storage, src):
+def save_items(storage, src, dest):
     logger.info('Start saving')
     while True:
         for item in src:
-            if item['id'] not in storage:
-                storage.save(item)
-            else:
-                doc = storage.get(item['id'])
-                doc.update(item)
-                storage.save(doc)
+            for obj in item:
+                if obj['id'] not in storage:
+                    storage.save(obj)
+                    logger.info('Save doc {}'.format(obj['id']))
+                else:
+                    doc = storage.get(obj['id'])
+                    doc.update(obj)
+                    storage.save(doc)
+                    logger.info('Updated doc {}'.format(obj['id']))
 
 
 def exists_or_modified(db, doc):
@@ -76,5 +79,3 @@ def exists_or_modified(db, doc):
         if db.get(doc['id'])['dateModified'] < doc['dateModified']:
             return True
     return False
-    
-
