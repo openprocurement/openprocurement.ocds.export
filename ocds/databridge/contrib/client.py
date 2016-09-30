@@ -37,9 +37,9 @@ class APIClient(object):
         else:
             resp.raise_for_status()
 
-    def get_tender(self, tender_id, params=None):
+    def get_tender(self, tender_id):
         resp = self.session.get(
-            "{}/{}".format(self.resourse_url, tender_id), params=params
+            "{}/{}".format(self.resourse_url, tender_id)
         )
         if resp.ok:
             return resp.json()['data']
@@ -48,7 +48,7 @@ class APIClient(object):
 
     def fetch(self, tender_ids):
         resp = self.pool.map(self.get_tender, [t['id'] for t in tender_ids])
-        return [r for r in resp]
+        return [r for r in resp if r]
 
 
 def get_retreive_clients(api_key, api_host, api_version):
