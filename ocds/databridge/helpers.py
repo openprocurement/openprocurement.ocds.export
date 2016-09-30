@@ -26,6 +26,8 @@ def fetch_tenders(client, src, dest):
     logger.info('Starting downloading tenders')
     while True:
         for feed in src:
+            if not feed:
+                continue
             logger.info('Uploading {} tenders'.format(len(feed)))
             resp = client.fetch(feed)
             if resp:
