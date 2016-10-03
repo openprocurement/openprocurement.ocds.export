@@ -4,3 +4,7 @@ class ReleaseExistsError(Exception):
 
 class InvalidPath(Exception):
     pass
+
+
+class DocumentNotFound(Exception):
+    pass
