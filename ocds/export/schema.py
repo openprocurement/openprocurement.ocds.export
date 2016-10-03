@@ -216,3 +216,13 @@ release = BaseSchema(
         'contract': [contract]
     }
 )
+
+record = BaseSchema(
+    {
+        'id': str,
+        'date': str,
+        'ocid': str,
+        'releases': [release],
+        'compiledRelease': release
+    }
+)

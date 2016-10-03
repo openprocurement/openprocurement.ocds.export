@@ -5,7 +5,8 @@ import json
 from datetime import datetime
 from .tag import Tag
 from uuid import uuid4
-
+import ocdsmerge
+import pdb
 
 def parse_tender(tender):
 
@@ -94,3 +95,23 @@ def encoder(obj):
 
 def decoder(obj):
     return json.loads(obj)
+
+
+def get_same_ocid_releases(releases, ocid):
+    statuses = ['complete', 'unsuccesful', 'cancelled']
+    release = [rel for rel in releases if rel['ocid'] == ocid]
+    for _rel in release:
+        if _rel['tender']['status'] in statuses:
+            return release
+
+
+def get_compiled_release(releases):
+    return ocdsmerge.merge(releases)
+
+
+def get_ocids(releases):
+    return [rel['ocid'] for rel in releases]
+
+
+def generate_uri():
+    return 'https://fake-url/tenders-{}'.format(uuid4().hex)
