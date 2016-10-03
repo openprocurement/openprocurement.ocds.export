@@ -34,6 +34,33 @@ class FSStorage(Storage):
             for f in files:
                 yield join(path, f)
 
+    def __repr__(self):
+        return "Storage on: {}".format(self.base_path)
+
+    def __delitem__(self, key):
+        if not self._check(key):
+            key = self._find(key)
+        if key:
+            os.remove(key)
+            return True
+        raise DocumentNotFound
+
+    def _check(self, key):
+        return os.path.exists(key)
+
+    def __getitem__(self, key):
+        if not self._check(key):
+            key = self._find(key)
+        if not key:
+                raise DocumentNotFound
+        return self._load(key)
+
+    def __setitem__(self, key, value):
+        self._write(value)
+
+    def __len__(self):
+        return len([x for x in self._walk()])
+
     def _write(self, obj):
         path = join(self.base_path,
                     self._path_from_date(obj['date']))

@@ -2,10 +2,8 @@ import pytest
 import os
 import os.path
 import shutil
-import functools
-from copy import copy
 from ocds.storage import FSStorage
-from ocds.storage.errors import InvalidPath
+from ocds.storage.errors import DocumentNotFound
 
 
 base = os.path.dirname(__file__)
@@ -19,15 +17,17 @@ test_data = {
 @pytest.fixture(scope='function')
 def temp_dir(request):
     os.makedirs(path)
+
     def tear_down():
         shutil.rmtree(path)
+
     request.addfinalizer(tear_down)
 
 
 def test_create():
     assert not os.path.exists(path)
     storage = FSStorage(path)
-    assert os.path.exists
+    assert os.path.exists(path)
     shutil.rmtree(path)
 
 
@@ -45,6 +45,8 @@ def test_load(temp_dir):
     assert loaded['date'] == test_data['date']
     assert loaded['id'] == test_data['id']
     assert loaded['test'] == test_data['test']
+    with pytest.raises(DocumentNotFound):
+        loaded = storage.get('Invalid')
 
 
 def test_contains(temp_dir):
@@ -59,3 +61,24 @@ def test_iter(temp_dir):
     storage.save(test_data)
     for item in storage:
         assert item == test_data
+
+
+def test_count(temp_dir):
+    storage = FSStorage(path)
+    storage.save(test_data)
+    assert len(storage) == 1
+
+
+def test_remove(temp_dir):
+    storage = FSStorage(path)
+    storage.save(test_data)
+    assert test_data['id'] in storage
+    del storage[test_data['id']]
+    assert not test_data['id'] in storage
+
+
+def test_get_set(temp_dir):
+    storage = FSStorage(path)
+    storage[test_data['id']] = test_data
+    assert test_data['id'] in storage
+    assert test_data == storage[test_data['id']]
