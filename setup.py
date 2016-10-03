@@ -6,10 +6,13 @@ DESCRIPTION = """
 """
 
 install_requires = [
-    'CouchDb'
+    'CouchDb',
+    'python-dateutil'
 ]
 
 test_requires = [
+    'pytest',
+    'pytest-cov'
 ]
 
 
