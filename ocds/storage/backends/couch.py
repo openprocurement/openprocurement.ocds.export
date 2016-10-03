@@ -34,15 +34,11 @@ class CouchStorage(object):
     def save(self, doc):
         if '_id' not in doc:
             doc['_id'] = doc['id']
-        if doc['_id'] in self.db:
-            raise ReleaseExistsError
         self.db.save(doc)
 
     def __contains__(self, key):
-        resp = self.db.view('releases/ocid', key=key)
-        if len(resp) > 0:
-            return True
-        return False
+        #resp = self.db.view('releases/ocid', key=key)
+        return key in self.db
 
     def get_last(self, key):
         resp = self.db.view('releases/ocid', key=key, descending=True)
