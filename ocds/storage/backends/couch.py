@@ -6,15 +6,12 @@ from .design.releases import views
 from ocds.storage.helpers import get_db_url
 from ocds.export.helpers import encoder, decoder
 from couchdb.json import use
-from ocds.export.package import Package
-
 use(decode=decoder, encode=encoder)
 
 
 class CouchStorage(object):
 
     def __init__(self, config):
-        config = config.get('db')
         url = get_db_url(
             config.get('username'),
             config.get('password'),
@@ -34,11 +31,15 @@ class CouchStorage(object):
     def save(self, doc):
         if '_id' not in doc:
             doc['_id'] = doc['id']
+        if doc['_id'] in self.db:
+            raise ReleaseExistsError
         self.db.save(doc)
 
     def __contains__(self, key):
-        #resp = self.db.view('releases/ocid', key=key)
-        return key in self.db
+        resp = self.db.view('releases/ocid', key=key)
+        if len(resp) > 0:
+            return True
+        return False
 
     def get_last(self, key):
         resp = self.db.view('releases/ocid', key=key, descending=True)
@@ -52,14 +53,9 @@ class CouchStorage(object):
         resp = self.db.view('releases/tags', key=ocid)
         return set([x['value'] for x in resp])
 
-    def get_package(self, datestart, datefinish, publisher, license, publicationPolicy, uri):
-        result = self.db.iterview('releases/date', 100, startkey=datestart, endkey=datefinish)
-        releases = [res['value'] for res in result]
-        pack = Package(
-            releases,
-            publisher,
-            license,
-            publicationPolicy,
-            uri
-        )
-        return pack
+    def get_all(self):
+        return self.db.iterview('_all_docs', 100, include_docs=True)
+
+    def get_tenders_between_dates(self, datestart, datefinish):
+        result = self.db.iterview('tenders/dates', 100, startkey=datestart, endkey=datefinish)
+        return [res['value'] for res in result]

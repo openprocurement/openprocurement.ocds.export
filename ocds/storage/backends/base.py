@@ -28,3 +28,6 @@ class Storage(object):
 
     def get(self, key):
         raise NotImplementedError
+
+    def query(self, start_key, end_key, **options):
+        raise NotImplementedError
