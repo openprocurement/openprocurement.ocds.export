@@ -86,4 +86,3 @@ class APIDataBridge(object):
                 except gevent.Timeout:
                     logger.info('{} still active'.format(g.__class__))
             gevent.sleep(3)
-

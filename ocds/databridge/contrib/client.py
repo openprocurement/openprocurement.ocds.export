@@ -2,7 +2,6 @@ import requests
 import requests.adapters
 import grequests
 import logging
-#from databridge.helpers import APIAdapter
 
 
 logger = logging.getLogger(__name__)
@@ -24,8 +23,6 @@ class APIClient(object):
                                                    pool_connections=50,
                                                    pool_maxsize=30)
         self.session.mount(self.resourse_url, APIAdapter)
-
-        # retrieve cookie
         self.session.head("{}/{}".format(self.base_url, 'spore'))
 
     def get_tenders(self, params=None):
@@ -68,7 +65,6 @@ class APIClient(object):
 def get_retreive_clients(api_key, api_host, api_version):
     forward = APIClient(api_key, api_host, api_version)
     backward = APIClient(api_key, api_host, api_version)
-
     origin_cookie = forward.session.cookies
     backward.session.cookies = origin_cookie
     return origin_cookie, forward, backward
