@@ -37,7 +37,7 @@ def run():
     else:
         logging.basicConfig(level=logging.DEBUG)
 
-    storage = CouchStorage(config['db'])
+    storage = CouchStorage(config['tenders_db'])
     client = APIClient(
         config['api']['api_key'],
         config['api']['api_host'],
