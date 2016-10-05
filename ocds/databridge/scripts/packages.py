@@ -11,34 +11,56 @@ import time
 import sys
 
 
-def run():
-    parser = argparse.ArgumentParser('Release Packages')
-    parser.add_argument('-c', '--config', required=True)
-    parser.add_argument('-d', action='append', dest='dates', default=[])
-    parser.add_argument('-n', '--number')
-    args = parser.parse_args()
-    releases = []
-    with open(args.config) as cfg:
+URI = 'https://fake-url/tenders-{}'.format(uuid4().hex)
+
+
+def read_config(path):
+    with open(path) as cfg:
         config = yaml.load(cfg)
+    return config
+
+
+def parse_args():
+    parser = argparse.ArgumentParser('Release Packages')
+    parser.add_argument('-c', '--config', required=True, help="Path to configuration file")
+    parser.add_argument('-d', action='append', dest='dates', default=[], help='Start-end dates to generate package')
+    parser.add_argument('-n', '--number')
+    return parser.parse_args()
+
+
+def parse_date(date):
+    return iso8601.parse_date(date).isoformat()
+
+
+def get_releases(gen, info):
+    for row in gen:
+        try:
+            if 'ТЕСТУВАННЯ'.decode('utf-8') not in row['title']:
+                release = get_release_from_tender(row, info['prefix'])
+                yield release
+        except KeyError as e:
+            print e
+            yield None
+
+
+def run():
+    args = parse_args()
+    releases = []
+    config = read_config(args.config)
     storage = CouchStorage(config.get('tenders_db'))
     info = config.get('release')
-    uri = 'https://fake-url/tenders-{}'.format(uuid4().hex)
     if args.dates:
-        datestart = iso8601.parse_date(args.dates[0]).isoformat()
-        datefinish = iso8601.parse_date(args.dates[1]).isoformat()
-        for res in storage.get_tenders_between_dates(datestart, datefinish):
-            try:
-                release = get_release_from_tender(res, info['prefix'])
+        datestart = parse_date(args.dates[0])
+        datefinish = parse_date(args.dates[1])
+        for release in get_releases(storage.get_tenders_between_dates(datestart, datefinish), info):
+            if release:
                 releases.append(release)
-            except KeyError as e:
-                print e
-                pass
         data = Package(
             releases,
             info['publisher'],
             info['license'],
             info['publicationPolicy'],
-            uri
+            URI
         )
         if not os.path.exists(config.get('path')):
             os.makedirs(config.get('path'))
@@ -46,27 +68,26 @@ def run():
             outfile.write(data.to_json())
     else:
         count = 0
-        for row in storage.get_all():
-            if row.doc['procurementMethod'] == 'open':
-                sys.stdout.write('{}\r'.format(count))
-                sys.stdout.flush()
-                if 'ТЕСТУВАННЯ'.decode('utf-8') not in row.doc['title']:
-                    try:
-                        release = get_release_from_tender(row.doc, info['prefix'])
-                        releases.append(release)
-                        count += 1
-                    except KeyError as e:
-                        print e
-                        pass
-                if count == 16384:
-                    package = Package(
-                        releases,
-                        info['publisher'],
-                        info['license'],
-                        info['publicationPolicy'],
-                        uri
-                    )
-                    releases = []
-                    with open('var/report/release-{}.json'.format(time.time()), 'w') as outfile:
-                        outfile.write(package.to_json())
+        if not args.number:
+            total = 16384
+        else:
+            total = int(args.number)
+        for release in get_releases(storage.get_all(), info):
+            sys.stdout.write('{}\r'.format(count))
+            sys.stdout.flush()
+            if release:
+                releases.append(release)
+                count += 1
+            if count == total:
+                package = Package(
+                    releases,
+                    info['publisher'],
+                    info['license'],
+                    info['publicationPolicy'],
+                    URI
+                )
+                releases = []
+                path = os.path.join(config['path'], 'release-{}.json'.format(time.time()))
+                with open(path, 'w') as outfile:
+                    outfile.write(package.to_json())
                     count = 0
