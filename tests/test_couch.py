@@ -7,7 +7,8 @@ CONFIG = {
     "username": "",
     "password": "",
     "host": "127.0.0.1",
-    "port": "5984"
+    "port": "5984",
+    "name": "test"
 }
 DB = 'test'
 SERVER = couchdb.Server("http://{}:{}".format(CONFIG['host'], CONFIG['port']))
@@ -32,15 +33,12 @@ def db(request):
 def test_create():
     assert DB not in SERVER
     storage = CouchStorage(CONFIG)
-    assert DB not in SERVER
-    storage.name = DB
     assert DB in SERVER
     del SERVER[DB]
 
 
 def test_save(db):
     storage = CouchStorage(CONFIG)
-    storage.name = DB
     storage.save(test_data)
     assert test_data['id'] in SERVER[DB]
     doc = SERVER[DB].get(test_data['id'])
@@ -51,7 +49,6 @@ def test_save(db):
 
 def test_load(db):
     storage = CouchStorage(CONFIG)
-    storage.name = DB
     storage.save(test_data)
     loaded = storage.get(test_data['id'])
     assert loaded['date'] == test_data['date']
@@ -63,7 +60,6 @@ def test_load(db):
 
 def test_contains(db):
     storage = CouchStorage(CONFIG)
-    storage.name = DB
     storage.save(test_data)
     assert "0009417e6dd1413585426be68bf6a4dd" in storage
     assert "fake" not in storage
@@ -71,7 +67,6 @@ def test_contains(db):
 
 def test_iter(db):
     storage = CouchStorage(CONFIG)
-    storage.name = DB
     storage.save(test_data)
     for item in storage:
         assert item == test_data
@@ -79,14 +74,12 @@ def test_iter(db):
 
 def test_count(db):
     storage = CouchStorage(CONFIG)
-    storage.name = DB
     storage.save(test_data)
     assert len(storage) == 1
 
 
 def test_remove(db):
     storage = CouchStorage(CONFIG)
-    storage.name = DB
     storage.save(test_data)
     assert test_data['id'] in storage
     del storage[test_data['id']]
@@ -95,7 +88,6 @@ def test_remove(db):
 
 def test_get_set(db):
     storage = CouchStorage(CONFIG)
-    storage.name = DB
     storage.save(test_data)
     storage[test_data['id']] = test_data
     assert test_data['id'] in storage

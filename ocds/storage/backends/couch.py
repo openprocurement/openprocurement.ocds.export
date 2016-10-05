@@ -21,12 +21,11 @@ class CouchStorage(Storage):
             config.get('host'),
             config.get('port'),
         )
-        self.server = couchdb.client.Server(url)
-
-    def _init(self):
-        if self.db_name not in self.server:
-            self.server.create(self.db_name)
-        self.db = self.server[self.db_name]
+        server = couchdb.client.Server(url)
+        db_name = config.get('name')
+        if db_name not in server:
+            server.create(db_name)
+        self.db = server[db_name]
         ViewDefinition.sync_many(self.db, tenders_views)
 
     def _get(self, docid):
@@ -36,15 +35,6 @@ class CouchStorage(Storage):
 
     def __repr__(self):
         return "Storage : {}".format(self.name)
-
-    @property
-    def name(self):
-        return self.db_name
-
-    @name.setter
-    def name(self, name):
-        self.db_name = name
-        self._init()
 
     def get(self, doc_id):
         return self._get(doc_id)
