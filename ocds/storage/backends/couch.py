@@ -72,3 +72,14 @@ class CouchStorage(Storage):
     def __iter__(self):
         for row in self.db.iterview('tenders/docs', 100):
             yield row['value']
+
+    def get_all(self):
+        for row in self.db.iterview('tenders/docs', 100):
+            yield row['value']
+
+    def get_tenders_between_dates(self, datestart, datefinish):
+        for row in self.db.iterview('tenders/dates',
+                                    100,
+                                    startkey=datestart,
+                                    endkey=datefinish):
+            yield row['value']
