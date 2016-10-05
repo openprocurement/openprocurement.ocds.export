@@ -42,6 +42,19 @@ def get_releases(gen, info):
             print e
             yield None
 
+def dump_package(releases, config):
+    info = config['release']
+    package = Package(
+        releases,
+        info['publisher'],
+        info['license'],
+        info['publicationPolicy'],
+        URI
+    )
+    path = os.path.join(config['path'], 'release-{}.json'.format(time.time()))
+    with open(path, 'w') as outfile:
+        outfile.write(package.to_json())
+
 
 def run():
     args = parse_args()
@@ -49,23 +62,17 @@ def run():
     config = read_config(args.config)
     storage = CouchStorage(config.get('tenders_db'))
     info = config.get('release')
+
+    if not os.path.exists(config.get('path')):
+            os.makedirs(config.get('path'))
+
     if args.dates:
         datestart = parse_date(args.dates[0])
         datefinish = parse_date(args.dates[1])
         for release in get_releases(storage.get_tenders_between_dates(datestart, datefinish), info):
             if release:
                 releases.append(release)
-        data = Package(
-            releases,
-            info['publisher'],
-            info['license'],
-            info['publicationPolicy'],
-            URI
-        )
-        if not os.path.exists(config.get('path')):
-            os.makedirs(config.get('path'))
-        with open('{}/release.json'.format(config.get('path')), 'w') as outfile:
-            outfile.write(data.to_json())
+        dump_package(releases, config)
     else:
         count = 0
         if not args.number:
@@ -79,15 +86,6 @@ def run():
                 releases.append(release)
                 count += 1
             if count == total:
-                package = Package(
-                    releases,
-                    info['publisher'],
-                    info['license'],
-                    info['publicationPolicy'],
-                    URI
-                )
+                dump_package(releases, config)
+                count = 0
                 releases = []
-                path = os.path.join(config['path'], 'release-{}.json'.format(time.time()))
-                with open(path, 'w') as outfile:
-                    outfile.write(package.to_json())
-                    count = 0
