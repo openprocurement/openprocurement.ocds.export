@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class Worker(object):
+class Monitor(object):
 
     def __init__(self, target, *args, **kwargs):
         self.run_func = target
