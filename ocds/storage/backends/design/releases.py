@@ -1,6 +1,15 @@
 from ocds.storage.helpers import CouchView
 
 
+class AllDocs(CouchView):
+
+    design = 'docs'
+
+    @staticmethod
+    def map(doc):
+        yield (doc['_id'], doc)
+
+
 class OcidView(CouchView):
 
     design = 'ocid'
@@ -8,15 +17,6 @@ class OcidView(CouchView):
     @staticmethod
     def map(doc):
         yield (doc['ocid'], doc)
-
-
-class TagView(CouchView):
-
-    design = 'tags'
-
-    @staticmethod
-    def map(doc):
-        yield (doc['ocid'], doc['tag'])
 
 
 class DateView(CouchView):
@@ -30,6 +30,5 @@ class DateView(CouchView):
 
 views = [
     OcidView(),
-    TagView(),
     DateView()
 ]
