@@ -19,7 +19,7 @@ class FSStorage(Storage):
 
     def __init__(self, base_path):
         self.base_path = base_path
-        self.path_fmt = '%Y-%m-%d/%H/%M/%S'
+        self.path_fmt = '%Y/%m/%d'
         if not os.path.exists(self.base_path):
             logger.warn('Initial path not exists. Creating')
             try:
@@ -79,7 +79,7 @@ class FSStorage(Storage):
         return parse(string)
 
     def _path_from_date(self, date):
-        if isinstance(date, str):
+        if isinstance(date, (str, unicode)):
             path = self._from_string(date).strftime(self.path_fmt)
         if isinstance(date, datetime.date):
             path = date.strftime(self.path_fmt)
