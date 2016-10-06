@@ -139,10 +139,43 @@ items_schema = BaseSchema(
         'classification': classification_schema,
         'additionalClassifications': [classification_schema],
         'quantity': value,
-        'unit': unit_schema
+        'unit': unit_schema,
+        'deliveryAddress': address_schema
     }
 )
 
+
+lots = BaseSchema(
+    {
+        "status": unicode,
+        "description": unicode,
+        "title": unicode,
+        "minimalStep": value_schema,
+        "value": value_schema,
+        "date": unicode,
+        "id": unicode
+    }
+)
+
+
+lotValues = (
+    {
+        "relatedLot": str,
+        "date": str,
+        "value": value_schema
+    }
+)
+
+bids = BaseSchema(
+    {
+        "status": unicode,
+        "documents": [document_schema],
+        "lotValues": lotValues,
+        "tenderers": unique_tenderers,
+        "date": unicode,
+        "id": unicode
+    }
+)
 
 award = BaseSchema(
     {
@@ -195,10 +228,11 @@ tender = BaseSchema(
         'hasEnquiries': unicode,
         'eligibilityCriteria': unicode,
         'awardPeriod': period_schema,
-        'numberOfTenderers': value,
-        'tenderers': unique_tenderers,
+        'numberOfBids': value,
+        'bids': [bids],
         'procuringEntity': organization_schema,
         'documents': unique_documents,
+        "lots": lots
     }
 )
 

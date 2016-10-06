@@ -6,16 +6,15 @@ from datetime import datetime
 from .tag import Tag
 from uuid import uuid4
 import ocdsmerge
-import pdb
 
 def parse_tender(tender):
 
-    if 'bids' in tender:
-        tender['tenderers'] = list(itertools.chain.from_iterable(
-            map(lambda b: b.get('tenderers', ''), tender['bids'])))
+    # if 'bids' in tender:
+    #     tender['tenderers'] = list(itertools.chain.from_iterable(
+    #         map(lambda b: b.get('tenderers', ''), tender['bids'])))
 
-        del tender['numberOfBids']
-        del tender['bids']
+    #     del tender['numberOfBids']
+    #     del tender['bids']
 
     if 'submissionMethod' in tender:
         tender['submissionMethod'] = [tender['submissionMethod']]
@@ -32,13 +31,13 @@ def get_ocid(prefix, tenderID):
 
 
 def parse_award(tender):
-    if 'lots' in tender:
-        for award in tender['awards']:
-            award['items'] = [item for item in tender['items']
-                              if item['relatedLot'] == award['lotID']]
-    else:
-        for award in tender['awards']:
-            award['items'] = tender['items']
+    # if 'lots' in tender:
+    #     for award in tender['awards']:
+    #         award['items'] = [item for item in tender['items']
+    #                           if item['relatedLot'] == award['lotID']]
+    # else:
+    #     for award in tender['awards']:
+    #         award['items'] = tender['items']
     return tender
 
 
