@@ -17,6 +17,15 @@ tenders_db:
     port: ${parts['couchdb.ini'].port}
     name: ${options['tenders_db_name']}
 
+release:
+    publisher:
+        name: "\u0414\u041f \"\u041f\u0440\u043e\u0437\u043e\u0440\u0440\u043e\""
+    license: https://creativecommons.org/publicdomain/zero/1.0/
+    initiationType: tender
+    publicationPolicy: https://prozorro.gov.ua/publication-policy
+    prefix: ocds-xxxxxx
+
+
 path: ${options['path_for_release']}
 
 logging:
