@@ -17,7 +17,8 @@ test_requires = [
 
 entry_points = {
     'console_scripts': [
-        'bridge = ocds.databridge.scripts.run:run'
+        'bridge = ocds.databridge.scripts.run:run',
+        'releases = ocds.databridge.scripts.release:run'
     ]
 }
 
