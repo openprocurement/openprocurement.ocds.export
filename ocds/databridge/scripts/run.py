@@ -5,7 +5,7 @@ import sys
 import yaml
 import logging
 import functools
-from ocds.storage import CouchStorage
+from ocds.storage import TendersStorage
 from ..contrib.client import APIClient
 from logging.config import dictConfig
 from ..bridge import APIDataBridge
@@ -37,7 +37,7 @@ def run():
     else:
         logging.basicConfig(level=logging.DEBUG)
 
-    storage = CouchStorage(config['tenders_db'])
+    storage = TendersStorage(config['tenders_db'])
     client = APIClient(
         config['api']['api_key'],
         config['api']['api_host'],
