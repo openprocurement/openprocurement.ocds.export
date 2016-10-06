@@ -1,7 +1,8 @@
 import gevent
 import logging
+import functools
 from gevent.queue import Queue
-from .contrib.retreive import RetreiverForward, RetreiverBackward
+from .contrib.retreive import retreiver
 from .contrib.client import get_retreive_clients
 from .helpers import get_start_point
 
@@ -28,10 +29,12 @@ class APIRetreiver(object):
             self.api_host,
             self.api_version
         )
+        self.forward = functools.partial(retreiver, self.forward_client)
+        self.backward = functools.partial(retreiver, self.backward_client)
 
     def _start(self):
-        logger.info('{} starting'.format(self.__class__))
-        forward, backward = get_start_point(
+        logger.info('Retreivers starting')
+        forward_params, backward_params = get_start_point(
             self.forward_client,
             self.backward_client,
             self.origin_cookie,
@@ -39,27 +42,26 @@ class APIRetreiver(object):
             self.filter_callback,
             self.api_extra_params
         )
-        forward_worker = RetreiverForward(
-            self.forward_client,
-            forward,
+
+        fg = gevent.spawn(
+            self.forward,
+            forward_params,
             self.origin_cookie,
             self.tender_queue,
             self.filter_callback,
-            logger
         )
-        backward_worker = RetreiverBackward(
-            self.backward_client,
-            backward,
+        bg = gevent.spawn(
+            self.backward,
+            backward_params,
             self.origin_cookie,
             self.tender_queue,
             self.filter_callback,
-            logger
+            name='backward'
         )
-        forward_worker.start()
-        backward_worker.start()
-        self.workers = [forward_worker, backward_worker]
+        self.workers = [fg, bg]
 
     def _restart(self):
+        logger.warn('Restarting retreivers')
         for g in self.workers:
             g.kill()
         self._start()
@@ -68,12 +70,12 @@ class APIRetreiver(object):
         self._start()
         while True:
             forward, backward = self.workers
-            if backward.ready():
-                logger.info('Backward ready')
+            if backward.ready() or backward.dead:
                 if backward.value != 1:
-                    logger.info('Backward fails')
+                    logger.fatal('Backward fails')
                     self._restart()
             if forward.dead or forward.ready():
+                logger.warm('Forward worker died!')
                 self._restart()
             if self.tender_queue.empty():
                 gevent.sleep(1)

@@ -6,7 +6,6 @@ DESCRIPTION = """
 """
 install_requires = [
     'requests',
-    'grequests',
     'gevent',
     'PyYaml',
     'ocds.export',
@@ -19,7 +18,8 @@ test_requires = [
 entry_points = {
     'console_scripts': [
         'bridge = ocds.databridge.run:run',
-        'get_pack = ocds.databridge.scripts.packages:run'
+        'get_pack = ocds.databridge.scripts.packages:run',
+        'releases = ocds.databridge.scripts.release:run'
     ]
 }
 
