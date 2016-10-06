@@ -34,8 +34,8 @@ def test_create():
 def test_save(temp_dir):
     storage = FSStorage(path)
     storage.save(test_data)
-    assert os.path.exists(os.path.join(path, '2016-09-28/14/57/14/0009417e6dd1413585426be68bf6a4dd.json'))
-    assert os.path.isfile(os.path.join(path, '2016-09-28/14/57/14/0009417e6dd1413585426be68bf6a4dd.json'))
+    assert os.path.exists(os.path.join(path, '2016/09/28/0009417e6dd1413585426be68bf6a4dd.json'))
+    assert os.path.isfile(os.path.join(path, '2016/09/28/0009417e6dd1413585426be68bf6a4dd.json'))
 
 
 def test_load(temp_dir):

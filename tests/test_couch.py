@@ -1,6 +1,6 @@
 import pytest
 import couchdb
-from ocds.storage import CouchStorage
+from ocds.storage import TendersStorage
 from ocds.storage.errors import DocumentNotFound
 
 CONFIG = {
@@ -32,13 +32,13 @@ def db(request):
 
 def test_create():
     assert DB not in SERVER
-    storage = CouchStorage(CONFIG)
+    storage = TendersStorage(CONFIG)
     assert DB in SERVER
     del SERVER[DB]
 
 
 def test_save(db):
-    storage = CouchStorage(CONFIG)
+    storage = TendersStorage(CONFIG)
     storage.save(test_data)
     assert test_data['id'] in SERVER[DB]
     doc = SERVER[DB].get(test_data['id'])
@@ -48,7 +48,7 @@ def test_save(db):
 
 
 def test_load(db):
-    storage = CouchStorage(CONFIG)
+    storage = TendersStorage(CONFIG)
     storage.save(test_data)
     loaded = storage.get(test_data['id'])
     assert loaded['date'] == test_data['date']
@@ -59,27 +59,27 @@ def test_load(db):
 
 
 def test_contains(db):
-    storage = CouchStorage(CONFIG)
+    storage = TendersStorage(CONFIG)
     storage.save(test_data)
     assert "0009417e6dd1413585426be68bf6a4dd" in storage
     assert "fake" not in storage
 
 
 def test_iter(db):
-    storage = CouchStorage(CONFIG)
+    storage = TendersStorage(CONFIG)
     storage.save(test_data)
     for item in storage:
         assert item == test_data
 
 
 def test_count(db):
-    storage = CouchStorage(CONFIG)
+    storage = TendersStorage(CONFIG)
     storage.save(test_data)
     assert len(storage) == 1
 
 
 def test_remove(db):
-    storage = CouchStorage(CONFIG)
+    storage = TendersStorage(CONFIG)
     storage.save(test_data)
     assert test_data['id'] in storage
     del storage[test_data['id']]
@@ -87,7 +87,7 @@ def test_remove(db):
 
 
 def test_get_set(db):
-    storage = CouchStorage(CONFIG)
+    storage = TendersStorage(CONFIG)
     storage.save(test_data)
     storage[test_data['id']] = test_data
     assert test_data['id'] in storage
