@@ -1,16 +1,29 @@
-from ocds.export.helpers import get_same_ocid_releases, get_ocids, generate_uri
+from ocds.export.helpers import check_releases
 import os
-from utils import get_releases
 from ocds.export.record import Record
+
+
 basepath = os.path.dirname(__file__)
 
 
 def test_record():
-    releases = get_releases(os.path.join(basepath, 'releases'))
-    ocids = set(get_ocids(releases))
-    publisher = {
-        "name": "\u0414\u041f \"\u041f\u0440\u043e\u0437\u043e\u0440\u0440\u043e\""
+    test_release1 = {
+        "ocid": "test",
+        "date": "qwe",
+        "tender": {
+            "status": "active"
+        }
     }
-    for ocid in ocids:
-        if get_same_ocid_releases(releases, ocid):
-            assert Record(ocid, get_same_ocid_releases(releases, ocid), publisher, generate_uri())
+    test_release2 = {
+        "ocid": "test",
+        "date": "qwe",
+        "tender": {
+            "status": "cancelled"
+        }
+    }
+    releases = [test_release1, test_release2]
+    assert check_releases(releases)
+    record = Record(releases, releases[0]['ocid'])
+    assert record
+    assert record['releases']
+    assert record['compiledRelease']['tag'][0] == "compiled"

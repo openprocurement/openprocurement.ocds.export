@@ -1,16 +1,29 @@
 from .base import Mapping
-from .helpers import generate_id, now, get_compiled_release
+from .helpers import now, generate_uri, get_compiled_release
 
 
 class Record(Mapping):
 
-    def __init__(self, ocid, releases, publisher, uri):
+    def __init__(self, releases, ocid):
         super(Record, self).__init__(
-            id=generate_id(),
-            publishedDate=now().isoformat(),
-            releases=releases,
             ocid=ocid,
-            compiledRelease=get_compiled_release(releases),
+            releases=releases,
+            compiledRelease=get_compiled_release(releases)
+        )
+
+
+class Record_Package(Mapping):
+
+    def __init__(self,
+                 records,
+                 publisher,
+                 license,
+                 publicationPolicy):
+        super(Record_Package, self).__init__(
+            records=records,
+            publicationPolicy=publicationPolicy,
             publisher=publisher,
-            uri=uri,
+            license=license,
+            uri=generate_uri(),
+            publishedDate=now().isoformat(),
         )
