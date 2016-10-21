@@ -10,9 +10,6 @@ from ocds.export.tag import (
     Buyer,
     Tag
 )
-from ocds.export.helpers import (
-    parse_tender
-)
 
 schema = BaseSchema({'a': int, 'b': unicode})
 
@@ -22,7 +19,7 @@ class TSchema(Mapping):
 
 
 def test_schema():
-    mapp = TSchema({'a':1, 'b': u'sdf', 'd': 11})
+    mapp = TSchema({'a': 1, 'b': u'sdf', 'd': 11})
     assert hasattr(mapp, 'a')
     assert hasattr(mapp, 'b')
     assert not hasattr(mapp, 'd')
@@ -30,7 +27,8 @@ def test_schema():
 
 def test_tender():
     assert Tender.__tag__ == 'tender'
-    tender = Tender(parse_tender(get_test_data()))
+    tag = Tag('tender', get_test_data())
+    assert isinstance(tag, Tender)
 
 
 def test_buyer():
@@ -51,9 +49,6 @@ def test_tag():
 
     tag = Tag('contracts', get_test_data())
     assert isinstance(tag, Contract)
-
-    tag = Tag('tender', parse_tender(get_test_data()))
-    assert isinstance(tag, Tender)
 
     tag = Tag('buyer', get_test_data())
     assert isinstance(tag, Buyer)

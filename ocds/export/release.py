@@ -3,7 +3,7 @@ from .helpers import (
     generate_id,
 )
 from .base import Mapping
-from .helpers import parse_tender, get_tags_from_tender, get_ocid, get_tag
+from .helpers import get_tags_from_tender, get_ocid, get_tag
 
 
 class Release(Mapping):
@@ -29,7 +29,7 @@ class Release(Mapping):
 
 def get_release_from_tender(tender, prefix):
     date = tender['dateModified']
-    tags = get_tags_from_tender(parse_tender(tender))
+    tags = get_tags_from_tender(tender)
     return Release(
         get_ocid(prefix, tender['tenderID']),
         tags,

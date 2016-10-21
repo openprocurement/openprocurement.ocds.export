@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import itertools
 import iso8601
 import json
 from datetime import datetime
@@ -7,38 +6,9 @@ from .tag import Tag
 from uuid import uuid4
 import ocdsmerge
 
-def parse_tender(tender):
-
-    # if 'bids' in tender:
-    #     tender['tenderers'] = list(itertools.chain.from_iterable(
-    #         map(lambda b: b.get('tenderers', ''), tender['bids'])))
-
-    #     del tender['numberOfBids']
-    #     del tender['bids']
-
-    if 'submissionMethod' in tender:
-        tender['submissionMethod'] = [tender['submissionMethod']]
-    if 'minimalStep' in tender:
-        tender['minValue'] = tender['minimalStep']
-        del tender['minimalStep']
-    if 'awards' in tender:
-        tender = parse_award(tender)
-    return tender
-
 
 def get_ocid(prefix, tenderID):
     return "{}-{}".format(prefix, tenderID)
-
-
-def parse_award(tender):
-    # if 'lots' in tender:
-    #     for award in tender['awards']:
-    #         award['items'] = [item for item in tender['items']
-    #                           if item['relatedLot'] == award['lotID']]
-    # else:
-    #     for award in tender['awards']:
-    #         award['items'] = tender['items']
-    return tender
 
 
 def now():
@@ -96,20 +66,16 @@ def decoder(obj):
     return json.loads(obj)
 
 
-def get_same_ocid_releases(releases, ocid):
+def check_releases(releases):
     statuses = ['complete', 'unsuccesful', 'cancelled']
-    release = [rel for rel in releases if rel['ocid'] == ocid]
-    for _rel in release:
+    for _rel in releases:
         if _rel['tender']['status'] in statuses:
-            return release
+            return True
+            break
 
 
 def get_compiled_release(releases):
     return ocdsmerge.merge(releases)
-
-
-def get_ocids(releases):
-    return [rel['ocid'] for rel in releases]
 
 
 def generate_uri():

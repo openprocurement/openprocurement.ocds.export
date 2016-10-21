@@ -160,8 +160,8 @@ lots = BaseSchema(
 
 lotValues = (
     {
-        "relatedLot": str,
-        "date": str,
+        "relatedLot": unicode,
+        "date": unicode,
         "value": value_schema
     }
 )
@@ -169,8 +169,8 @@ lotValues = (
 bids = BaseSchema(
     {
         "status": unicode,
-        "documents": [document_schema],
-        "lotValues": lotValues,
+        "documents": unique_documents,
+        "lotValues": [lotValues],
         "tenderers": unique_tenderers,
         "date": unicode,
         "id": unicode
@@ -221,7 +221,7 @@ tender = BaseSchema(
         'procurementMethodRationale': unicode,
         'awardCriteria': unicode,
         'awardCriteriaDetails': unicode,
-        'submissionMethod': [unicode],
+        'submissionMethod': unicode,
         'submissionMethodDetails': unicode,
         'tenderPeriod': period_schema,
         'enquiryPeriod': period_schema,
@@ -232,7 +232,7 @@ tender = BaseSchema(
         'bids': [bids],
         'procuringEntity': organization_schema,
         'documents': unique_documents,
-        "lots": lots
+        "lots": [lots]
     }
 )
 
