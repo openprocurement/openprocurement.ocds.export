@@ -75,7 +75,13 @@ def check_releases(releases):
 
 
 def get_compiled_release(releases):
-    return ocdsmerge.merge(releases)
+    compiled = ocdsmerge.merge(releases)
+    if 'bids' in compiled['tender'].keys():
+        for bid in compiled['tender']['bids']:
+            if 'lotValues' in bid.keys():
+                for lotval in bid['lotValues']:
+                    del lotval['id']
+    return compiled
 
 
 def generate_uri():
