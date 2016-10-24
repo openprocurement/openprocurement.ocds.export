@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import iso8601
-import json
+import simplejson as json
 from datetime import datetime
 from .tag import Tag
 from uuid import uuid4
