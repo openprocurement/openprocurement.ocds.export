@@ -12,8 +12,8 @@ def test_tender_release():
     release = get_release_from_tender(tender, 'sd')
     if tender['status'] not in ['complete', 'unsuccessful', 'cancelled']:
         assert release['tender']['status'] == 'active'
-    assert (release['tender']['numberOfTenderers']) == len(release[ 'tender']['tenderers'])
-    tenderers_ids = [i['identifier']['id'] for i in release['tender']['tenderers']]
+    assert (release['tender']['numberOfBids']) == len(release['tender']['bids'])
+    tenderers_ids = [k['identifier']['id'] for i in release['tender']['bids'] for k in i['tenderers']]
     assert len(set(tenderers_ids)) == len(tenderers_ids)
     tender_doc_ids = [i['id'] for i in release['tender']['documents']]
     assert len(set(tender_doc_ids)) == len(tender_doc_ids)
