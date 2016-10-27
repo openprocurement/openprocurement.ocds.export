@@ -94,3 +94,10 @@ class ReleasesStorage(CouchStorage):
     def get_all(self):
         for row in self.db.iterview('releases/docs', 100):
             yield row['value']
+
+    def get_ocid(self, key):
+        for row in self.db.iterview('releases/ocid', 100, key=key):
+            yield row['value']
+
+    def save(self, doc):
+        self.db.save(doc)
