@@ -15,7 +15,8 @@ SERVER = couchdb.Server("http://{}:{}".format(CONFIG['host'], CONFIG['port']))
 test_data = {
     "date": "2016-09-28t14:57:14.846483+03:00",
     "id": "0009417e6dd1413585426be68bf6a4dd",
-    "test": "test"
+    "test": "test",
+    "dateModified": "2016-09-28t14:57:14.846483+03:00"
 }
 
 
@@ -75,7 +76,7 @@ def test_iter(db):
 def test_count(db):
     storage = TendersStorage(CONFIG)
     storage.save(test_data)
-    assert len(storage) == 1
+    assert len(storage) == 2
 
 
 def test_remove(db):

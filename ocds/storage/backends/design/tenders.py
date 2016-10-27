@@ -10,6 +10,16 @@ class AllDocs(CouchView):
         yield (doc['id'], doc)
 
 
+class DateView(CouchView):
+
+    design = 'dates'
+
+    @staticmethod
+    def map(doc):
+        yield (doc['dateModified'], doc)
+
+
 views = [
-    AllDocs()
+    AllDocs(),
+    DateView()
 ]
