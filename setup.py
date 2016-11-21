@@ -8,7 +8,8 @@ install_requires = [
     'iso8601',
     'voluptuous',
     'simplejson',
-    'ocdsmerge'
+    'ocdsmerge',
+    'jsonpatch'
 ]
 
 test_requires = [
