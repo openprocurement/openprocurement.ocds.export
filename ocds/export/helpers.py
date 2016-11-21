@@ -5,6 +5,8 @@ from datetime import datetime
 from .tag import Tag
 from uuid import uuid4
 import ocdsmerge
+import jsonpatch as jpatch
+from copy import deepcopy
 
 
 def get_ocid(prefix, tenderID):
@@ -42,20 +44,6 @@ def generate_id():
     return uuid4().hex
 
 
-def get_tag(tags):
-    t = []
-    for tag in tags:
-        if isinstance(tag, (list, tuple)):
-            if tag[0].__tag__ == "awards":
-                t.append('award')
-            elif tag[0].__tag__ == "contracts":
-                t.append('contract')
-        else:
-            if tag.__tag__ == 'tender':
-                t.append(tag.__tag__)
-    return t
-
-
 def encoder(obj):
     if hasattr(obj, 'to_json'):
         return obj.to_json()
@@ -64,14 +52,6 @@ def encoder(obj):
 
 def decoder(obj):
     return json.loads(obj)
-
-
-def check_releases(releases):
-    statuses = ['complete', 'unsuccesful', 'cancelled']
-    for _rel in releases:
-        if _rel['tender']['status'] in statuses:
-            return True
-            break
 
 
 def get_compiled_release(releases):
@@ -86,3 +66,36 @@ def get_compiled_release(releases):
 
 def generate_uri():
     return 'https://fake-url/tenders-{}'.format(uuid4().hex)
+
+
+def make_tags(patch):
+    tags = set()
+    for op in patch:
+        name = op['path'].split('/')
+        if name[1] in ['awards', 'contracts']:
+            try:
+                int(name[2])
+                if len(name) == 3:
+                    tags.add(name[1][:-1])
+                elif name[3] == 'status' and op['value'] == 'cancelled':
+                    tags.add('{}Cancellation'.format(name[1][:-1]))
+                else:
+                    tags.add("{}Update".format(name[1][:-1]))
+            except Exception:
+                tags.add("{}Update".format(name[1][:-1]))
+                pass
+        else:
+            tags.add("tenderUpdate")
+    return tags
+
+
+def add_revisions(tenders):
+    prev_tender = tenders[0]
+    new_tenders = []
+    for tender in tenders[1:]:
+        patch = jpatch.make_patch(prev_tender, tender)
+        tender['revisions'] = list(patch)
+        prev_tender = deepcopy(tender)
+        new_tenders.append(tender)
+        del prev_tender['revisions']
+    return new_tenders
