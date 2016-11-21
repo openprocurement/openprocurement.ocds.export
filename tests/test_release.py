@@ -6,10 +6,8 @@ def test_tender_release():
     tender = get_test_data()
     assert tender['bids']
     assert tender['submissionMethod']
-    del tender['submissionMethod']
     assert tender['minimalStep']
-    del tender['minimalStep']
-    release = get_release_from_tender(tender, 'sd')
+    release = get_release_from_tender(tender, 'test')
     if tender['status'] not in ['complete', 'unsuccessful', 'cancelled']:
         assert release['tender']['status'] == 'active'
     assert (release['tender']['numberOfTenderers']) == len(release[ 'tender']['tenderers'])

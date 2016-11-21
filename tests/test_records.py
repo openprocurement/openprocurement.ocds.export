@@ -1,4 +1,3 @@
-from ocds.export.helpers import check_releases
 import os
 from ocds.export.record import Record
 
@@ -21,9 +20,20 @@ def test_record():
             "status": "cancelled"
         }
     }
+    test_release_with_lot_value = {
+        "ocid": "test",
+        "date": "qwe",
+        "tender": {
+            "status": "cancelled",
+            "bids": [
+                {
+                    "lotValues": [{"test": "test"}]
+                }]
+        }
+    }
     releases = [test_release1, test_release2]
-    assert check_releases(releases)
     record = Record(releases, releases[0]['ocid'])
-    assert record
-    assert record['releases']
+    assert len(record['releases']) == 2
     assert record['compiledRelease']['tag'][0] == "compiled"
+    record = Record([test_release_with_lot_value], releases[0]['ocid'])
+    assert "id" not in record['compiledRelease']['tender']['bids'][0]['lotValues'][0].keys()

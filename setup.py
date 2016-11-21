@@ -7,7 +7,9 @@ DESCRIPTION = """
 install_requires = [
     'iso8601',
     'voluptuous',
-    'simplejson'
+    'simplejson',
+    'ocdsmerge',
+    'jsonpatch'
 ]
 
 test_requires = [
