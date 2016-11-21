@@ -7,7 +7,7 @@ class AllDocs(CouchView):
 
     @staticmethod
     def map(doc):
-        yield (doc['id'], doc)
+        yield (doc['tenderID'], doc)
 
 
 class DateView(CouchView):

@@ -5,4 +5,4 @@ class ReleaseDoc(Document):
     path = TextField()
     ocid = TextField()
     finished = BooleanField()
-    same_ocids = BooleanField()
+    _id = TextField()

@@ -16,7 +16,8 @@ test_data = {
     "date": "2016-09-28t14:57:14.846483+03:00",
     "id": "0009417e6dd1413585426be68bf6a4dd",
     "test": "test",
-    "dateModified": "2016-09-28t14:57:14.846483+03:00"
+    "dateModified": "2016-09-28t14:57:14.846483+03:00",
+    "tenderID": "test"
 }
 
 
@@ -70,7 +71,7 @@ def test_iter(db):
     storage = TendersStorage(CONFIG)
     storage.save(test_data)
     for item in storage:
-        assert item == test_data
+        assert item[0] == test_data
 
 
 def test_count(db):
