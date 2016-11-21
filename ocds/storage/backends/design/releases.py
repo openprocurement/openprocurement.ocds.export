@@ -19,16 +19,18 @@ class OcidView(CouchView):
         yield (doc['ocid'], doc)
 
 
-class DateView(CouchView):
+class FinishedView(CouchView):
 
-    design = 'date'
+    design = 'finished'
 
     @staticmethod
     def map(doc):
-        yield (doc['date'], doc)
+        if doc['finished']:
+            yield (doc['ocid'], doc)
 
 
 views = [
     OcidView(),
-    DateView()
+    AllDocs(),
+    FinishedView()
 ]

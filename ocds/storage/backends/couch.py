@@ -8,6 +8,7 @@ from ocds.export.helpers import encoder, decoder
 from couchdb.json import use
 from .base import Storage
 from ocds.storage.errors import DocumentNotFound
+from copy import deepcopy
 
 
 use(decode=decoder, encode=encoder)
@@ -67,12 +68,17 @@ class TendersStorage(CouchStorage):
         super(TendersStorage, self).__init__(config, tenders_views)
 
     def __iter__(self):
-        for row in self.db.iterview('tenders/docs', 100):
-            yield row['value']
-
-    def get_all(self):
-        for row in self.db.iterview('tenders/docs', 100):
-            yield row['value']
+        same = []
+        for i, row in enumerate(self.db.iterview('tenders/docs', 100)):
+            same.append(row['value'])
+            if i == 0:
+                prev = row['key']
+            elif prev != row['key']:
+                temp = deepcopy(same)
+                same = same[-1:]
+                prev = row['key']
+                yield temp[:-1]
+        yield same
 
     def get_tenders_between_dates(self, datestart, datefinish):
         for row in self.db.iterview('tenders/dates',
@@ -91,6 +97,22 @@ class ReleasesStorage(CouchStorage):
         for row in self.db.iterview('releases/docs', 100):
             yield row['value']
 
-    def get_all(self):
-        for row in self.db.iterview('releases/docs', 100):
+    def get_ocid(self, key):
+        for row in self.db.iterview('releases/ocid', 100, key=key):
             yield row['value']
+
+    def get_finished_ocids(self):
+        same = []
+        for i, row in enumerate(self.db.iterview('releases/finished', 100)):
+            same.append(row['value'])
+            if i == 0:
+                prev = row['key']
+            elif prev != row['key']:
+                temp = deepcopy(same)
+                same = same[-1:]
+                prev = row['key']
+                yield temp[:-1]
+        yield same
+
+    def save(self, doc):
+        self.db.save(doc)

@@ -109,3 +109,7 @@ class FSStorage(Storage):
         if path:
             return self._load(path)
         raise DocumentNotFound
+
+    def read_by_full_path(self, release):
+        path = os.path.join(self.base_path, release['path'], release['_id']) + '.json'
+        return self._load(path)
