@@ -35,18 +35,20 @@ class APIClient(object):
         else:
             resp.raise_for_status()
 
-    def get_tender(self, tender_id):
-        resp = self.session.get(
-            "{}/{}".format(self.resourse_url, tender_id)
-        )
+    def get_tender(self, tender_id, version=''):
+        version_header = 'X-Revision-N'
+        args = dict(url="{}/{}".format(self.resourse_url, tender_id))
+        if version and version.isdigit():
+            args.update(dict(headers={version_header: version}))
+        resp = self.session.get(**args)
         if resp.ok:
-            return resp.json()['data']
+            return resp.headers[version_header], resp.json()['data']
         else:
             resp.raise_for_status()
 
     def fetch(self, tender_ids):
         resp = self.pool.map(self.get_tender, [t['id'] for t in tender_ids])
-        return [r for r in resp if r]
+        return [r for v, r in resp if r]
 
 
 def get_retreive_clients(api_key, api_host, api_version):

@@ -1,7 +1,10 @@
 import gevent
 import logging
+import os.path
+import json
+from requests.exceptions import HTTPError
 from .exceptions import LBMismatchError
-from ocds.export.release import get_release_from_tender
+from ocds.export.release import release_tender, release_tenders
 
 
 logger = logging.getLogger(__name__)
@@ -36,22 +39,59 @@ def fetch_tenders(client, src, dest):
         gevent.sleep(0.5)
 
 
-def create_releases(prefix, src, dest):
-        logger.info('Starting generating releases')
-        while True:
-            for batch in src:
-                logger.info('Got {} tenders'.format(len(batch)))
-                for tender in batch:
-                    try:
-                        release = get_release_from_tender(tender, prefix)
-                        logger.info("generated release for tender "
-                                    "{}".format(tender['id']))
-                        dest.put(release)
-                    except Exception as e:
-                        logger.fatal('Error {} during'
-                                     ' generation release'.format(e))
+def fetch_tender_versioned(client, src, dest):
+    logger.info('Starting downloading tender')
+    while True:
+        for feed in src:
+            if not feed:
                 gevent.sleep(0.5)
-            gevent.sleep(2)
+                continue
+
+            for _id in [i['id'] for i in feed]:
+                tenders = []
+                version, tender = client.get_tender(_id)
+                tenders.append(tender)
+                logger.info('Got tender id={}, version={}'.format(tender['id'], version))
+                try:
+                    while version != '1':
+                        version = str(int(version) - 1)
+                        logger.info('Getting prev version = {}'.format(version))
+                        version, tender = client.get_tender(_id, version)
+                        tenders.append(tender)
+                except HTTPError:
+                    logger.fatal("Falied to retreive tender id={} \n"
+                                 "version {}".format(tender['id'], version))
+                    continue
+                dest.put(tenders)
+
+
+def create_releases(prefix, src, dest):
+    logger.info('Starting generating releases')
+    while True:
+        for batch in src:
+            logger.info('Got {} tenders'.format(len(batch)))
+            for tender in batch:
+                try:
+                    release = release_tender(tender, prefix)
+                    logger.info("generated release for tender "
+                                "{}".format(tender['id']))
+                    dest.put(release)
+                except Exception as e:
+                    logger.fatal('Error {} during'
+                                 ' generation release'.format(e))
+            gevent.sleep(0.5)
+        gevent.sleep(2)
+
+
+def batch_releases(prefix, src, dest):
+    logger.info('Starting generating releases')
+    while True:
+        for batch in src:
+            logger.info('Got {} tenders'.format(len(batch)))
+            releases = release_tenders(iter(batch), prefix)
+            dest.put(releases)
+            gevent.sleep(0.5)
+        gevent.sleep(2)
 
 
 def save_items(storage, src, dest):
@@ -59,14 +99,8 @@ def save_items(storage, src, dest):
     while True:
         for item in src:
             for obj in item:
-                if obj['id'] not in storage:
-                    storage.save(obj)
-                    logger.info('Save doc {}'.format(obj['id']))
-                else:
-                    doc = storage.get(obj['id'])
-                    doc.update(obj)
-                    storage.save(doc)
-                    logger.info('Updated doc {}'.format(obj['id']))
+                storage.save(obj)
+                logger.info('Saved doc {}'.format(obj['id']))
 
 
 def exists_or_modified(db, doc):
