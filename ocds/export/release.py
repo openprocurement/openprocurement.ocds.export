@@ -27,7 +27,7 @@ class Release(Mapping):
                 setattr(self, _tag.__tag__, _tag)
 
 
-def get_release_from_tender(tender, prefix):
+def release_tender(tender, prefix):
     date = tender['dateModified']
     tags = get_tags_from_tender(parse_tender(tender))
     return Release(
