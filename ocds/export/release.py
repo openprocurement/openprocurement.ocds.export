@@ -35,10 +35,10 @@ def release_tender(tender, prefix):
     return Release(get_ocid(prefix, tender['tenderID']), tags, get_tag(tags), date)
 
 
-def additional_release_info(patch):
+def additional_release_info(release, patch):
     tags = []
     for _tag in ['award', 'contract']:
-        for op in patch['changes']:
+        for op in patch:
             if _tag in op['path']:
                 if op['op'] == 'add':
                     tags.append(_tag)
@@ -54,8 +54,9 @@ def release_tenders(tenders, prefix):
     yield release_tender(tender, prefix)
     prev_tender = tender
     for tender in tenders:
-        patch = jsonpatch.create_patch(prev_tender, tender)
-        if path:
+        patch = jsonpatch.make_patch(prev_tender, tender).patch
+        if patch:
             release = release_tender(tender, prefix)
             additional_release_info(release, patch)
             yield release
+        prev_tender = tender
