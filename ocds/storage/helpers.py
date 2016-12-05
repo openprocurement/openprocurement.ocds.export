@@ -1,5 +1,7 @@
 import sys
 from couchdb.design import ViewDefinition
+from dateutil.parser import parse
+from os.path import join
 
 
 class CouchView(ViewDefinition):
@@ -24,9 +26,17 @@ def get_db_url(user, password, host, port, name=''):
     prefix = ''
     if user:
         prefix = "{}:{}@".format(user, password)
-    return "http://{}{}:{}/".format(
-        prefix,
-        host,
-        port,
-        name
-    )
+    return "http://{}{}:{}/".format(prefix, host, port, name)
+
+
+def date_path(base, obj):
+    if 'date' in obj:
+        return join(base, parse(obj['date']).strftime('%Y/%m/%d'))
+    raise AttributeError('{} has no attr `date`'.format(type(obj)))
+
+
+def ocid_path(base, obj):
+    if 'ocid' in obj:
+        return join(base, obj['ocid'])
+    raise AttributeError('{} has no attr `ocid`'.format(type(obj)))
+
