@@ -130,3 +130,8 @@ def add_revisions(tenders):
         new_tenders.append(tender)
         del prev_tender['revisions']
     return new_tenders
+
+
+def mode_test(tender):
+    return 'ТЕСТУВАННЯ'.decode('utf-8') not in tender['title']
+    
