@@ -5,6 +5,7 @@ from ocds.storage import TendersStorage, ReleasesStorage, MainStorage
 from ocds.storage.errors import DocumentNotFound
 import os
 import shutil
+from copy import deepcopy
 
 
 base = os.path.dirname(__file__)
@@ -98,12 +99,33 @@ def test_write(db):
     mainst = MainStorage(CONFIG, path)
     mainst.ten_storage.save(test_tender1)
     test_tender1['_id'] = '3'
-    test_tender1['status'] = 'active'
-    mainst.ten_storage.save(test_tender1)
-    test_tender1['_id'] = '4'
-    test_tender1['tenderID'] = 'test2'
     mainst.ten_storage.save(test_tender1)
     mainst.save()
-    assert len(mainst.rel_storage) == 4
+    ocid = (CONFIG['release']['prefix']) + "-" + (test_tender1['tenderID'])
+    assert mainst.rel_storage[ocid]['date'] == test_tender1['dateModified']
+    test_tender1['_id'] = '4'
+    test_tender1['dateModified'] = "2016-10-28t14:57:14.846483+03:00"
+    mainst.ten_storage.save(test_tender1)
+    mainst.save()
+    assert mainst.rel_storage[ocid]['date'] == test_tender1['dateModified']
+    assert len(mainst.rel_storage) == 2
     assert len(mainst.ten_storage) == 4
+    assert len(mainst.fs_storage) == 2
+    test_tender1['_id'] = '5'
+    test_tender1['tenderID'] = "test2"
+    mainst.ten_storage.save(test_tender1)
+    mainst.save()
+    assert mainst.rel_storage[ocid]['date'] == test_tender1['dateModified']
+    assert len(mainst.rel_storage) == 3
+    assert len(mainst.ten_storage) == 5
+    assert len(mainst.fs_storage) == 3
+    test_tender1['_id'] = '6'
+    prev_date = deepcopy(test_tender1['dateModified'])
+    test_tender1['dateModified'] = "2016-09-28t14:57:14.846483+03:00"
+    mainst.ten_storage.save(test_tender1)
+    mainst.save()
+    ocid = (CONFIG['release']['prefix']) + "-" + (test_tender1['tenderID'])
+    assert mainst.rel_storage[ocid]['date'] == prev_date
+    assert len(mainst.rel_storage) == 3
+    assert len(mainst.ten_storage) == 6
     assert len(mainst.fs_storage) == 3

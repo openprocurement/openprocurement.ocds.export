@@ -15,7 +15,7 @@ class MainStorage(object):
         self.basepath = basepath
 
     def __contains__(self, key):
-        for res in self.rel_storage.get_ocid(key):
+        for res in self.rel_storage.get(key):
             if res:
                 return True
             else:
@@ -34,25 +34,33 @@ class MainStorage(object):
         else:
             return False
 
-    def form_doc(self, ocid, path, status, _id):
+    def form_doc(self, path, status, _id, date):
         return ReleaseDoc(_id=_id,
                           path=path,
-                          ocid=ocid,
-                          finished=self.is_finished(status)
+                          finished=self.is_finished(status),
+                          date=date
                           ).__dict__['_data']
 
     def _write(self):
         for tenders in self.ten_storage:
             for release in do_releases(tenders, self.info['prefix']):
-                _id = release['id']
-                self.fs_storage.save(release)
+                _id = release['ocid']
                 path = os.path.join(
                     self.basepath, self.fs_storage._path_from_date(release['date']))
-                self.rel_storage.save(self.form_doc(release['ocid'],
-                                                    path,
-                                                    release['tender']['status'],
-                                                    _id)
-                                      )
+                if self.rel_storage.get_doc(_id):
+                    if release['date'] > self.rel_storage.get_doc(_id)['date']:
+                        self.fs_storage.save(release)
+                        doc = self.rel_storage.get(release['ocid'])
+                        doc['date'] = release['date']
+                        doc['finished'] = self.is_finished(release['tender']['status'])
+                        self.rel_storage.save(doc)
+                else:
+                    self.fs_storage.save(release)
+                    self.rel_storage.save(self.form_doc(path,
+                                                        release['tender']['status'],
+                                                        _id,
+                                                        release['date'])
+                                          )
 
     def save(self):
         self._write()

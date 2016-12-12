@@ -97,9 +97,13 @@ class ReleasesStorage(CouchStorage):
         for row in self.db.iterview('releases/docs', 100):
             yield row['value']
 
-    def get_ocid(self, key):
+    def get_by_ocid(self, key):
         for row in self.db.iterview('releases/ocid', 100, key=key):
             yield row['value']
+
+    def get_doc(self, docid):
+        if docid in self.db:
+            return self.db.get(docid)
 
     def get_finished_ocids(self):
         same = []
