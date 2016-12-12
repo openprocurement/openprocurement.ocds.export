@@ -1,7 +1,7 @@
 from ..backends.couch import TendersStorage, ReleasesStorage
 from ocds.storage.backends.fs import FSStorage
 import os
-from ocds.export.release import do_releases
+from ocds.export.release import release_tenders
 from ocds.storage.models import ReleaseDoc
 
 
