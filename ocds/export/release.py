@@ -28,7 +28,7 @@ class Release(Mapping):
                 setattr(self, _tag.__tag__, _tag)
 
 
-def get_release_from_tender(tender, prefix):
+def release_tender(tender, prefix):
     date = tender['dateModified']
     tags = get_tags_from_tender(parse_tender(tender))
     return Release(
@@ -38,14 +38,14 @@ def get_release_from_tender(tender, prefix):
     )
 
 
-def do_releases(tenders, prefix):
-    first_rel = get_release_from_tender(tenders[0], prefix)
+def release_tenders(tenders, prefix):
+    prev_tender = next(tenders)
+    first_rel = release_tender(prev_tender, prefix)
     first_rel['tag'] = ['tender']
     yield first_rel
-    prev_tender = tenders[0]
-    for tender in tenders[1:]:
+    for tender in tenders:
         patch = jpatch.make_patch(prev_tender, tender)
-        release = get_release_from_tender(tender, prefix)
+        release = release_tender(tender, prefix)
         release['tag'] = list(make_tags(patch))
         prev_tender = tender
         yield release

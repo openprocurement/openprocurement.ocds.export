@@ -1,5 +1,5 @@
 from utils import get_test_data
-from ocds.export.release import get_release_from_tender
+from ocds.export.release import release_tender
 
 
 def test_tender_release():
@@ -7,7 +7,7 @@ def test_tender_release():
     assert tender['bids']
     assert tender['submissionMethod']
     assert tender['minimalStep']
-    release = get_release_from_tender(tender, 'test')
+    release = release_tender(tender, 'test')
     if tender['status'] not in ['complete', 'unsuccessful', 'cancelled']:
         assert release['tender']['status'] == 'active'
     assert (release['tender']['numberOfTenderers']) == len(release[ 'tender']['tenderers'])
