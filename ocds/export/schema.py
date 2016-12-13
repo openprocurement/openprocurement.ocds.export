@@ -13,6 +13,9 @@ from .helpers import tender_converter, unique_tenderers, unique_documents, patch
 # TODO: Import loop(parse_tender)
 # DONE: tender statuses
 
+def now():
+    return datetime.now().isoformat()
+
 
 class BaseModel(Model):
 
@@ -21,6 +24,8 @@ class BaseModel(Model):
 
     def convert(self, raw_data, context=None, **kw):
         kw['strict'] = False
+        if 'documents' in raw_data:
+            unique_documents(raw_data['documents'])
         return convert(self.__class__, raw_data, context=context, **kw)
 
 
@@ -117,12 +122,12 @@ class Item(BaseModel):
 
 class Change(BaseModel):
     property = StringType()
-    former_type = StringType()
+    former_value = StringType()
 
 
 class Amendment(BaseModel):
 
-    date = DateTimeType(default=datetime.now)
+    date = StringType(default=now)
     changes = ListType(ModelType(Change))
     rationale = StringType()
 
@@ -189,15 +194,15 @@ class Tender(BaseModel):
     def convert(self, raw_data, context=None, **kw):
         data = tender_converter(raw_data)
         data['tenderers'] = unique_tenderers(data['tenderers']) 
-        if 'documents' in data:
-            unique_documents(data['documents'])
         return super(Tender, self).convert(data, context=context, **kw)
-
-    def with_diff(self, prev_tender, new_tender, context=None, **kw):
+    
+    @classmethod
+    def with_diff(cls, prev_tender, new_tender):
         amendment = {}
-        patch = jsonpatch.make_patch(new_tender, prev_tender).patch
+        patch = jsonpatch.make_patch(tender_converter(new_tender), tender_converter(prev_tender)).patch
         if patch:
             amendment['changes'] = patch_converter(patch)
             amendment['date'] = new_tender['dateModified']
         new_tender['amendment'] = amendment
-        self.convert(new_tender, context=context, *kw)
+        return cls(new_tender)
+        #return cls.convert(cls.__class__, new_tender, converted=True, context=context, *kw)
