@@ -27,11 +27,7 @@ def tender_converter(tender):
 
 def unique_tenderers(tenderers):
     """leave only unique tenderers as required by standard"""
-    tenderers = [{t['identifier']['id']: t} for t in tenderers]
-    if tenderers:
-        res = [t.values() for t in tenderers][0]
-        return res
-    return []
+    return {t['identifier']['id']:t for t in tenderers}.values() if tenderers else []
 
 
 def unique_documents(documents):
@@ -48,6 +44,7 @@ def patch_converter(patch):
 
 
 def get_ocid(prefix, tenderID):
+    """greates unique contracting identifier"""
     return "{}-{}".format(prefix, tenderID)
 
 
