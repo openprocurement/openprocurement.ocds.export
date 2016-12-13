@@ -5,12 +5,12 @@ import simplejson as json
 import ocdsmerge
 import jsonpatch as jpatch
 from datetime import datetime
-from .tag import Tag
+from collections import Counter
 from uuid import uuid4
 from copy import deepcopy
 
 
-def parse_tender(tender):
+def tender_converter(tender):
 
     if 'bids' in tender:
         tender['tenderers'] = list(itertools.chain.from_iterable(
@@ -19,8 +19,6 @@ def parse_tender(tender):
         del tender['numberOfBids']
         del tender['bids']
 
-    if 'submissionMethod' in tender:
-        tender['submissionMethod'] = [tender['submissionMethod']]
     if 'minimalStep' in tender:
         tender['minValue'] = tender['minimalStep']
         del tender['minimalStep']
@@ -28,6 +26,21 @@ def parse_tender(tender):
         tender = parse_award(tender)
     return tender
 
+
+def unique_tenderers(tenderers):
+    tenderers = [{t['identifier']['id']: t} for t in tenderers]
+    if tenderers:
+        res = [t.values() for t in tenderers][0]
+        return res
+    return []
+
+
+def unique_documents(documents):
+    cout = Counter(doc['id'] for doc in documents)
+    for i in [i for i, c in cout.iteritems() if c > 1]:
+        for index, d in enumerate([d for d in documents if d['id'] == i]):
+            d['id'] = d['id'] + '-{}'.format(index)
+   
 
 def get_ocid(prefix, tenderID):
     return "{}-{}".format(prefix, tenderID)
@@ -134,4 +147,26 @@ def add_revisions(tenders):
 
 def mode_test(tender):
     return 'ТЕСТУВАННЯ'.decode('utf-8') not in tender['title']
-    
+   
+
+def release_tender(tender, prefix):
+    date = tender['dateModified']
+    tags = get_tags_from_tender(parse_tender(tender))
+    return Release(
+        get_ocid(prefix, tender['tenderID']),
+        tags,
+        date
+    )
+
+
+def release_tenders(tenders, prefix):
+    prev_tender = next(tenders)
+    first_rel = release_tender(prev_tender, prefix)
+    first_rel['tag'] = ['tender']
+    yield first_rel
+    for tender in tenders:
+        patch = jpatch.make_patch(prev_tender, tender)
+        release = release_tender(tender, prefix)
+        release['tag'] = list(make_tags(patch))
+        prev_tender = tender
+        yield release
