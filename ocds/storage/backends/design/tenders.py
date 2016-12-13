@@ -7,7 +7,10 @@ class AllDocs(CouchView):
 
     @staticmethod
     def map(doc):
-        yield (doc['tenderID'], doc)
+        if 'doc_type' in doc and doc['doc_type'] != 'Tender':
+            return
+
+        yield doc['_id'], doc
 
 
 class DateView(CouchView):
@@ -16,7 +19,10 @@ class DateView(CouchView):
 
     @staticmethod
     def map(doc):
-        yield (doc['dateModified'], doc)
+        if 'doc_type' in doc and doc['doc_type'] != 'Tender':
+            return
+
+        yield doc['_id'], doc['dateModified']
 
 
 views = [
