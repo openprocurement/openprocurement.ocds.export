@@ -1,11 +1,12 @@
-import voluptuous
+import jsonpatch
 from itertools import groupby
+from datetime import datetime
 from schematics.models import Model
-from schematics.types import BaseType, StringType, FloatType, IntType
+from schematics.types import BaseType, StringType, FloatType, IntType, DateTimeType
 from schematics.types.compound import ModelType, ListType
 from schematics.types.serializable import serializable
 from schematics.transforms import convert
-from .helpers import tender_converter, unique_tenderers, unique_documents
+from .helpers import tender_converter, unique_tenderers, unique_documents, patch_converter
 
 
 # TODO: Unique tenderers and documents
@@ -24,6 +25,7 @@ class BaseModel(Model):
 
 
 class Status(BaseType):
+
     """Only active status in standard"""
 
     def to_native(self, value):
@@ -31,6 +33,7 @@ class Status(BaseType):
 
 
 class Identifier(BaseModel):
+
     scheme = StringType()
     id = StringType()
     legalName = StringType()
@@ -38,6 +41,7 @@ class Identifier(BaseModel):
 
 
 class Document(BaseModel):
+
     id = StringType()
     documentType = StringType()
     title = StringType()
@@ -50,6 +54,7 @@ class Document(BaseModel):
 
 
 class Classification(BaseModel):
+
     scheme = StringType()
     id = StringType()
     description = StringType()
@@ -57,21 +62,25 @@ class Classification(BaseModel):
 
 
 class Period(BaseModel):
+
     startDate = StringType()
     endDate = StringType()
 
 
 class Value(BaseModel):
+
     amount = FloatType()
     currency = StringType()
 
 
 class Unit(BaseModel):
+
     name = StringType()
     value = ModelType(Value)
 
 
 class Address(BaseModel):
+
     streetAddress = StringType()
     locality = StringType()
     postalCode = StringType()
@@ -79,6 +88,7 @@ class Address(BaseModel):
 
 
 class Contact(BaseModel):
+
     name = StringType()
     email = StringType()
     telephone = StringType()
@@ -87,6 +97,7 @@ class Contact(BaseModel):
 
 
 class Organization(BaseModel):
+
     identifier = ModelType(Identifier) 
     additionalIdentifiers = ListType(ModelType(Identifier))
     name = StringType()
@@ -95,6 +106,7 @@ class Organization(BaseModel):
 
 
 class Item(BaseModel):
+
     id = StringType()
     description = StringType()
     classification = ModelType(Classification)
@@ -102,7 +114,22 @@ class Item(BaseModel):
     quantity = IntType()
     unit = ModelType(Unit)
 
+
+class Change(BaseModel):
+    property = StringType()
+    former_type = StringType()
+
+
+class Amendment(BaseModel):
+
+    date = DateTimeType(default=datetime.now)
+    changes = ListType(ModelType(Change))
+    rationale = StringType()
+
+
 class Award(BaseModel):
+    """See: http://standard.open-contracting.org/latest/en/schema/reference/#award"""
+
     id = StringType()
     title = StringType()
     description = StringType()
@@ -116,6 +143,7 @@ class Award(BaseModel):
 
 
 class Contract(BaseModel):
+
     id = StringType()
     awardID = StringType()
     title = StringType()
@@ -129,6 +157,8 @@ class Contract(BaseModel):
 
 
 class Tender(BaseModel):
+    """See: http://standard.open-contracting.org/latest/en/schema/reference/#tender"""
+
     id = StringType()
     title = StringType()
     description = StringType()
@@ -150,6 +180,7 @@ class Tender(BaseModel):
     tenderers = ListType(ModelType(Organization))
     procuringEntity = ModelType(Organization)
     documents = ListType(ModelType(Document)) 
+    amendment = ModelType(Amendment)
 
     @serializable
     def numberOfTenderers(self):
@@ -161,3 +192,12 @@ class Tender(BaseModel):
         if 'documents' in data:
             unique_documents(data['documents'])
         return super(Tender, self).convert(data, context=context, **kw)
+
+    def with_diff(self, prev_tender, new_tender, context=None, **kw):
+        amendment = {}
+        patch = jsonpatch.make_patch(new_tender, prev_tender).patch
+        if patch:
+            amendment['changes'] = patch_converter(patch)
+            amendment['date'] = new_tender['dateModified']
+        new_tender['amendment'] = amendment
+        self.convert(new_tender, context=context, *kw)
