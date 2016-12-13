@@ -18,9 +18,9 @@ from ocds.export.schema import (
 
 def release_tender(tender, prefix):
     """ returns Release object created from `tender` with ocid `prefix` """
+    date = tender.get('dateModified', '')
     ocid = get_ocid(prefix, tender['tenderID'])
-    date = tender.get('dateModified', '') 
-    return Release(dict(tender=tender, date=date, ocid=ocid))
+    return Release(dict(tender=tender, ocid=ocid, date=date))
 
 
 def release_tenders(tenders, prefix):
@@ -48,7 +48,7 @@ class Release(BaseModel):
 
     # required by standard
     date = DateTimeType(default=datetime.now, required=True)
-    ocid = StringType(required=True)
+    ocid = StringType()
     id = StringType(default=uuid4().hex, required=True)
     language = StringType(default='uk')
 
@@ -62,12 +62,16 @@ class Release(BaseModel):
     contracts = ListType(ModelType(Contract))
     #planning = ModelType(Organization)
 
+    #@serializable
+    #def ocid(self):
+    #    return "{}-{}".format(self.prefix, self.tender.tenderID)
+
     @serializable
     def tag(self):
         tags = []
         if self.tender:
             tags.append('tender')
-            if hasattr(self.tender, 'amendment'):
+            if hasattr(self.tender, 'amendment') and getattr(self.tender, 'amendment'):
                 tags.append('tenderUpdate')
 
         for op in ['award', 'contract']:
@@ -79,27 +83,33 @@ class Release(BaseModel):
         return tags
 
     def convert(self, raw_data, context=None, **kw):
-        tender = raw_data.get('tender', '')
-        awards = [A for A in tender.get('awards', [])]
-        contracts = [C for C in tender.get('contracts', [])]
-        buyer = raw_data.get('procuringEntity', '')
+        tender = raw_data.get('tender', raw_data)
+        awards = tender.get('awards', [])
+        contracts = tender.get('contracts', [])
+        buyer = tender.get('procuringEntity', '')
+        ocid = raw_data.get('ocid', get_ocid('ocds-xxxx', tender['tenderID']))
+
         return convert(self.__class__,
-                       dict(tender=tender, awards=awards, contracts=contracts, buyer=buyer),
+                       dict(tender=tender, awards=awards, contracts=contracts, buyer=buyer, ocid=ocid),
                        context=context, **kw)
 
 
 class Record(BaseModel):
-    ocid = StringType()
     releases=ListType(ModelType(Release))
 
     @serializable
     def compiledRelease(self):
         return get_compiled_release(self.releases)
 
+    @serializable
+    def ocid(self):
+        return self.releases[0].ocid
+
+
 
 class Package(BaseModel):
 
-    publishedDate = DateTimeType(default=lambda: datetime.now, required=True)
+    publishedDate = DateTimeType(default=datetime.now, required=True)
     publisher = StringType(required=True)
     license = StringType()
     _url = StringType()
