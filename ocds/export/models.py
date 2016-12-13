@@ -6,13 +6,36 @@ from schematics.types import DateTimeType, StringType
 from schematics.types.compound import ModelType, ListType
 from schematics.types.serializable import serializable
 from schematics.transforms import convert
-from .helpers import get_compiled_release
+from .helpers import get_compiled_release, get_ocid
 from ocds.export.schema import (
     Tender,
     Award,
     Contract,
     Organization
 )
+
+
+
+def release_tender(tender, prefix):
+    """ returns Release object created from `tender` with ocid `prefix` """
+    ocid = get_ocid(prefix, tender['tenderID'])
+    date = tender.get('dateModified', '') 
+    return Release(dict(tender=tender, date=date, ocid=ocid))
+
+
+def release_tenders(tenders, prefix):
+    """ returns list of Release object created from `tenders` with amendment info and ocid `prefix` """
+    pass
+    # prev_tender = next(tenders)
+    # first_rel = release_tender(prev_tender, prefix)
+    # first_rel['tag'] = ['tender']
+    # yield first_rel
+    # for tender in tenders:
+    #     patch = jpatch.make_patch(prev_tender, tender)
+    #     release = release_tender(tender, prefix)
+    #     release['tag'] = list(make_tags(patch))
+    #     prev_tender = tender
+    #     yield release
 
 
 class BaseModel(Model):
@@ -56,15 +79,13 @@ class Release(BaseModel):
         return tags
 
     def convert(self, raw_data, context=None, **kw):
-        data = {}
-        data['tender'] = Tender(raw_data)
-
-        if 'awards' in raw_data:
-            data['awards'] = [Award(A) for A in raw_data['awards']]
-        if 'contracts' in raw_data:
-            data['contracts'] = [Contract(A) for A in raw_data['contracts']]
-
-        return convert(self.__class__, data, context=context, **kw)
+        tender = raw_data.get('tender', '')
+        awards = [A for A in tender.get('awards', [])]
+        contracts = [C for C in tender.get('contracts', [])]
+        buyer = raw_data.get('procuringEntity', '')
+        return convert(self.__class__,
+                       dict(tender=tender, awards=awards, contracts=contracts, buyer=buyer),
+                       context=context, **kw)
 
 
 class Record(BaseModel):
