@@ -1,218 +1,163 @@
 import voluptuous
 from itertools import groupby
+from schematics.models import Model
+from schematics.types import BaseType, StringType, FloatType, IntType
+from schematics.types.compound import ModelType, ListType
+from schematics.types.serializable import serializable
+from schematics.transforms import convert
+from .helpers import tender_converter, unique_tenderers, unique_documents
 
 
-class BaseSchema(voluptuous.Schema):
-
-    def __init__(self, schema, required=False):
-        super(BaseSchema, self).__init__(
-            schema=schema, required=required, extra=voluptuous.REMOVE_EXTRA)
+# TODO: Unique tenderers and documents
+# TODO: Import loop(parse_tender)
+# DONE: tender statuses
 
 
-def value(val):
-    try:
-        parsed = int(val)
-    except ValueError:
-        parsed = float(val)
-    return parsed
+class BaseModel(Model):
+
+    class Options(object):
+        serialize_when_none = False
+
+    def convert(self, raw_data, context=None, **kw):
+        kw['strict'] = False
+        return convert(self.__class__, raw_data, context=context, **kw)
 
 
-def tender_status(status):
-    if status not in ['complete', 'unsuccessful', 'cancelled']:
-        return 'active'
-    return status
+class Status(BaseType):
+    """Only active status in standard"""
+
+    def to_native(self, value):
+        return value.split('.')[0]
 
 
-def unique_tenderers(tenderers):
-    tenderers = [{t['identifier']['id']: t} for t in tenderers]
-    if tenderers:
-        res = [t.values() for t in tenderers][0]
-        return res
-    return []
+class Identifier(BaseModel):
+    scheme = StringType()
+    id = StringType()
+    legalName = StringType()
+    uri = StringType()
 
 
-def unique_documents(documents):
-    temp = documents
-    count = 0
-    list_a = sorted([doc['id'] for doc in documents])
-    result = dict([(r, len(list(grp))) for r, grp in groupby(list_a)])
-    for i in temp:
-        if result[i['id']] > 1:
-            i['id'] = i['id'] + '-{}'.format(count)
-            count += 1
-    return [document_schema(t) for t in temp]
+class Document(BaseModel):
+    id = StringType()
+    documentType = StringType()
+    title = StringType()
+    description = StringType()
+    url = StringType()
+    datePublished = StringType()
+    dateModified = StringType()
+    format = StringType()
+    language = StringType()
 
 
-identifier_schema = BaseSchema(
-    {
-        'scheme': unicode,
-        'id': unicode,
-        'legalName': unicode,
-        'uri': unicode
-    }
-)
+class Classification(BaseModel):
+    scheme = StringType()
+    id = StringType()
+    description = StringType()
+    uri = StringType()
 
 
-document_schema = BaseSchema(
-    {
-        'id': unicode,
-        'documentType': unicode,
-        'title': unicode,
-        'description': unicode,
-        'url': unicode,
-        'datePublished': unicode,
-        'dateModified': unicode,
-        'format': unicode,
-        'language': unicode,
-    },
-)
+class Period(BaseModel):
+    startDate = StringType()
+    endDate = StringType()
 
 
-classification_schema = BaseSchema(
-    {
-        'scheme': unicode,
-        'id': unicode,
-        'description': unicode,
-        'uri': unicode
-    }
-)
+class Value(BaseModel):
+    amount = FloatType()
+    currency = StringType()
 
 
-period_schema = BaseSchema(
-    {
-        'startDate': unicode,
-        'endDate': unicode
-    }
-)
+class Unit(BaseModel):
+    name = StringType()
+    value = ModelType(Value)
 
 
-value_schema = BaseSchema(
-    {
-        'amount': value,
-        'currency': unicode
-    }
-)
+class Address(BaseModel):
+    streetAddress = StringType()
+    locality = StringType()
+    postalCode = StringType()
+    countryName = StringType()
 
 
-unit_schema = BaseSchema(
-    {
-        'name': unicode,
-        'value': value_schema
-    }
-)
+class Contact(BaseModel):
+    name = StringType()
+    email = StringType()
+    telephone = StringType()
+    faxNumber = StringType()
+    url = StringType()
 
 
-address_schema = BaseSchema({
-    'streetAddress': unicode,
-    'locality': unicode,
-    'postalCode': unicode,
-    'countryName': unicode
-})
+class Organization(BaseModel):
+    identifier = ModelType(Identifier) 
+    additionalIdentifiers = ListType(ModelType(Identifier))
+    name = StringType()
+    address = ModelType(Address)
+    contactPoint = ModelType(Contact)
 
 
-contact_point_schema = BaseSchema(
-    {
-        'name': unicode,
-        'email': unicode,
-        'telephone': unicode,
-        'faxNumber': unicode,
-        'url': unicode
-    }
-)
+class Item(BaseModel):
+    id = StringType()
+    description = StringType()
+    classification = ModelType(Classification)
+    additionalClassifications = ListType(ModelType(Classification))
+    quantity = IntType()
+    unit = ModelType(Unit)
+
+class Award(BaseModel):
+    id = StringType()
+    title = StringType()
+    description = StringType()
+    status = StringType(choices=['pending', 'active', 'unsuccessful', 'cancelled'])
+    date = StringType()
+    value = ModelType(Value)
+    suppliers = ListType(ModelType(Organization)) 
+    items = ListType(ModelType(Item))
+    contractPeriod = ModelType(Period)
+    documents = ListType(ModelType(Document))
 
 
-organization_schema = BaseSchema(
-    {
-        'identifier': identifier_schema,
-        'additionalIdentifiers': identifier_schema,
-        'name': unicode,
-        'address': address_schema,
-        'contactPoint': contact_point_schema
-    }
-)
+class Contract(BaseModel):
+    id = StringType()
+    awardID = StringType()
+    title = StringType()
+    description = StringType()
+    status = StringType(choices=['pending', 'active', 'cancelled', 'terminated'])
+    period = ModelType(Period)
+    value = ModelType(Value) 
+    items = ListType(ModelType(Item)) 
+    dateSigned = StringType()
+    documents = ListType(ModelType(Document))
 
 
-items_schema = BaseSchema(
-    {
-        'id': unicode,
-        'description': unicode,
-        'classification': classification_schema,
-        'additionalClassifications': [classification_schema],
-        'quantity': value,
-        'unit': unit_schema
-    }
-)
+class Tender(BaseModel):
+    id = StringType()
+    title = StringType()
+    description = StringType()
+    status = Status()
+    items = ListType(ModelType(Item)) 
+    minValue = ModelType(Item) 
+    value = ModelType(Value) 
+    procurementMethod = StringType()
+    procurementMethodRationale = StringType()
+    awardCriteria = StringType()
+    awardCriteriaDetails = StringType()
+    submissionMethod = ListType(StringType)
+    submissionMethodDetails = StringType()
+    tenderPeriod = ModelType(Period) 
+    enquiryPeriod = ModelType(Period)
+    hasEnquiries = StringType()
+    eligibilityCriteria = StringType()
+    awardPeriod = ModelType(Period)
+    tenderers = ListType(ModelType(Organization))
+    procuringEntity = ModelType(Organization)
+    documents = ListType(ModelType(Document)) 
 
+    @serializable
+    def numberOfTenderers(self):
+        return len(self.tenderers) if self.tenderers else 0
 
-award = BaseSchema(
-    {
-        'id': unicode,
-        'title': unicode,
-        'description': unicode,
-        'status': unicode,
-        'date': unicode,
-        'value': value_schema,
-        'suppliers': [organization_schema],
-        'items': [items_schema],
-        'contractPeriod': period_schema,
-        'documents': unique_documents,
-    }
-)
-
-contract = BaseSchema(
-    {
-        'id': unicode,
-        'awardID': unicode,
-        'title': unicode,
-        'description': unicode,
-        'status': unicode,
-        'period': period_schema,
-        'value': value_schema,
-        'items': [items_schema],
-        'dateSigned': unicode,
-        'documents': unique_documents,
-    }
-)
-
-
-tender = BaseSchema(
-    {
-        'id': unicode,
-        'title': unicode,
-        'description': unicode,
-        'status': tender_status,
-        'items': [items_schema],
-        'minValue': value_schema,
-        'value': value_schema,
-        'procurementMethod': unicode,
-        'procurementMethodRationale': unicode,
-        'awardCriteria': unicode,
-        'awardCriteriaDetails': unicode,
-        'submissionMethod': [unicode],
-        'submissionMethodDetails': unicode,
-        'tenderPeriod': period_schema,
-        'enquiryPeriod': period_schema,
-        'hasEnquiries': unicode,
-        'eligibilityCriteria': unicode,
-        'awardPeriod': period_schema,
-        'numberOfTenderers': value,
-        'tenderers': unique_tenderers,
-        'procuringEntity': organization_schema,
-        'documents': unique_documents,
-    }
-)
-
-
-release = BaseSchema(
-    {
-        'language': str,
-        'ocid': str,
-        'date': str,
-        'tag': list,
-        'tags': list,
-        'buyer': organization_schema,
-        'tender': tender,
-        'awards': [award],
-        'contract': [contract]
-    }
-)
+    def convert(self, raw_data, context=None, **kw):
+        data = tender_converter(raw_data)
+        data['tenderers'] = unique_tenderers(data['tenderers']) 
+        if 'documents' in data:
+            unique_documents(data['documents'])
+        return super(Tender, self).convert(data, context=context, **kw)

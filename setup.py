@@ -4,9 +4,11 @@ DESCRIPTION = """
     Libraty for generating packages
     in OCDS release format from openprocurement data
 """
+
+
 install_requires = [
     'iso8601',
-    'voluptuous',
+    'schematics',
     'simplejson',
     'ocdsmerge',
     'jsonpatch'
