@@ -148,6 +148,7 @@ class Award(BaseModel):
 
 
 class Contract(BaseModel):
+    """See: http://standard.open-contracting.org/latest/en/schema/reference/#contract"""
 
     id = StringType()
     awardID = StringType()
@@ -205,4 +206,3 @@ class Tender(BaseModel):
             amendment['date'] = new_tender['dateModified']
         new_tender['amendment'] = amendment
         return cls(new_tender)
-        #return cls.convert(cls.__class__, new_tender, converted=True, context=context, *kw)

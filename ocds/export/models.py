@@ -25,17 +25,10 @@ def release_tender(tender, prefix):
 
 def release_tenders(tenders, prefix):
     """ returns list of Release object created from `tenders` with amendment info and ocid `prefix` """
-    pass
-    # prev_tender = next(tenders)
-    # first_rel = release_tender(prev_tender, prefix)
-    # first_rel['tag'] = ['tender']
-    # yield first_rel
-    # for tender in tenders:
-    #     patch = jpatch.make_patch(prev_tender, tender)
-    #     release = release_tender(tender, prefix)
-    #     release['tag'] = list(make_tags(patch))
-    #     prev_tender = tender
-    #     yield release
+    prev_tender = next(tenders)
+    for tender in tenders:
+        yield Tender.with_diff(prev_tender, tender)
+        prev_tender = tender
 
 
 class BaseModel(Model):
