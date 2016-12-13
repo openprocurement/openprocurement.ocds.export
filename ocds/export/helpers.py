@@ -11,13 +11,15 @@ from copy import deepcopy
 
 
 def tender_converter(tender):
-    """ converts raw openprocurement data into acceptable by OCDS standard"""
+    """ converts raw openprocurement data into acceptable by OCDS standard """
     if 'bids' in tender:
         tender['tenderers'] = list(itertools.chain.from_iterable(
             map(lambda b: b.get('tenderers', ''), tender['bids'])))
 
         del tender['numberOfBids']
         del tender['bids']
+    elif 'tenderers' not in tender:
+        tender['tenderers'] = []
 
     if 'minimalStep' in tender:
         tender['minValue'] = tender['minimalStep']
