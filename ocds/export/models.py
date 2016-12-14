@@ -66,14 +66,16 @@ class Release(BaseModel):
         tags = []
         if self.tender:
             tags.append('tender')
-            if hasattr(self.tender, 'amendment') and getattr(self.tender, 'amendment'):
+            if hasattr(self.tender, 'amendment')\
+               and getattr(self.tender, 'amendment'):
                 tags.append('tenderUpdate')
 
         for op in ['award', 'contract']:
             field = '{}s'.format(op)
             if getattr(self, field):
                 tags.append(op)
-                if any([hasattr(i, 'amendment') for i in getattr(self, field, [])]):
+                if any([hasattr(i, 'amendment') for i in getattr(self, field, [])
+                        if getattr(i, 'amendment')]):
                     tags.append('{}Update'.format(op))
         return tags
 

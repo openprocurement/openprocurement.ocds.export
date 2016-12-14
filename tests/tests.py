@@ -149,7 +149,7 @@ class TestModels(object):
         tender = deepcopy(TEST_TENDER)
         release = Release(tender)
         assert release.tag == ['tender', 'award', 'contract']
-        assert release.buyer.to_native()['name'] == TEST_TENDER['procuringEntity']['name']
+        assert release.buyer['name'] == TEST_TENDER['procuringEntity']['name']
         assert hasattr(release, 'tender') and getattr(release, 'tender')
         assert hasattr(release, 'awards') and getattr(release, 'awards')
         assert hasattr(release, 'contracts') and getattr(release, 'contracts')
