@@ -59,7 +59,7 @@ class Release(BaseModel):
 
     @serializable(serialize_when_none=False)
     def buyer(self):
-        return self.procuringEntity
+        return self.procuringEntity.to_primitive()
 
     @serializable(serialize_when_none=False)
     def tag(self):
