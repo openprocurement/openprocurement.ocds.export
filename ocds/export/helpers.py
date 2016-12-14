@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import itertools
-import iso8601
 import simplejson as json
 import ocdsmerge
 import jsonpatch as jpatch
@@ -29,7 +28,7 @@ def tender_converter(tender):
 
 def unique_tenderers(tenderers):
     """leave only unique tenderers as required by standard"""
-    return {t['identifier']['id']:t for t in tenderers}.values() if tenderers else []
+    return {t['identifier']['id']: t for t in tenderers}.values() if tenderers else []
 
 
 def unique_documents(documents):
@@ -42,7 +41,7 @@ def unique_documents(documents):
 
 def patch_converter(patch):
     """creates OCDS Amendment dict"""
-    return [{'property': op['path'], 'former_value': op['value']} for op in patch] 
+    return [{'property': op['path'], 'former_value': op['value']} for op in patch]
 
 
 def get_ocid(prefix, tenderID):
@@ -100,6 +99,7 @@ def add_revisions(tenders):
 def mode_test(tender):
     """ drops all test mode tenders """
     return 'ТЕСТУВАННЯ'.decode('utf-8') not in tender['title']
+
 
 def now():
     return datetime.now().isoformat()

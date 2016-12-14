@@ -1,12 +1,21 @@
 import jsonpatch
-from itertools import groupby
-from datetime import datetime
 from schematics.models import Model
-from schematics.types import BaseType, StringType, FloatType, IntType, DateTimeType
 from schematics.types.compound import ModelType, ListType
 from schematics.types.serializable import serializable
 from schematics.transforms import convert
-from .helpers import tender_converter, unique_tenderers, unique_documents, patch_converter, now
+from schematics.types import (
+    BaseType,
+    StringType,
+    FloatType,
+    IntType,
+)
+from .helpers import (
+    tender_converter,
+    unique_tenderers,
+    unique_documents,
+    patch_converter,
+    now
+)
 
 
 # TODO: Unique tenderers and documents
@@ -100,7 +109,7 @@ class Contact(BaseModel):
 
 class Organization(BaseModel):
 
-    identifier = ModelType(Identifier) 
+    identifier = ModelType(Identifier)
     additionalIdentifiers = ListType(ModelType(Identifier))
     name = StringType()
     address = ModelType(Address)
@@ -138,10 +147,11 @@ class Award(BaseModel):
     status = StringType(choices=['pending', 'active', 'unsuccessful', 'cancelled'])
     date = StringType()
     value = ModelType(Value)
-    suppliers = ListType(ModelType(Organization)) 
+    suppliers = ListType(ModelType(Organization))
     items = ListType(ModelType(Item))
     contractPeriod = ModelType(Period)
     documents = ListType(ModelType(Document))
+    amendment = ModelType(Amendment)
 
 
 class Contract(BaseModel):
@@ -153,10 +163,11 @@ class Contract(BaseModel):
     description = StringType()
     status = StringType(choices=['pending', 'active', 'cancelled', 'terminated'])
     period = ModelType(Period)
-    value = ModelType(Value) 
-    items = ListType(ModelType(Item)) 
+    value = ModelType(Value)
+    items = ListType(ModelType(Item))
     dateSigned = StringType()
     documents = ListType(ModelType(Document))
+    amendment = ModelType(Amendment)
 
 
 class Tender(BaseModel):
@@ -166,23 +177,23 @@ class Tender(BaseModel):
     title = StringType()
     description = StringType()
     status = Status()
-    items = ListType(ModelType(Item)) 
-    minValue = ModelType(Item) 
-    value = ModelType(Value) 
+    items = ListType(ModelType(Item))
+    minValue = ModelType(Item)
+    value = ModelType(Value)
     procurementMethod = StringType()
     procurementMethodRationale = StringType()
     awardCriteria = StringType()
     awardCriteriaDetails = StringType()
     submissionMethod = ListType(StringType)
     submissionMethodDetails = StringType()
-    tenderPeriod = ModelType(Period) 
+    tenderPeriod = ModelType(Period)
     enquiryPeriod = ModelType(Period)
     hasEnquiries = StringType()
     eligibilityCriteria = StringType()
     awardPeriod = ModelType(Period)
     tenderers = ListType(ModelType(Organization))
     procuringEntity = ModelType(Organization)
-    documents = ListType(ModelType(Document)) 
+    documents = ListType(ModelType(Document))
     amendment = ModelType(Amendment)
 
     @serializable
@@ -191,9 +202,9 @@ class Tender(BaseModel):
 
     def convert(self, raw_data, context=None, **kw):
         data = tender_converter(raw_data)
-        data['tenderers'] = unique_tenderers(data['tenderers']) 
+        data['tenderers'] = unique_tenderers(data['tenderers'])
         return super(Tender, self).convert(data, context=context, **kw)
-    
+
     @classmethod
     def with_diff(cls, prev_tender, new_tender):
         amendment = {}

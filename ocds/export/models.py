@@ -1,4 +1,3 @@
-import iso8601
 from datetime import datetime
 from uuid import uuid4
 from schematics.models import Model
@@ -13,7 +12,6 @@ from ocds.export.schema import (
     Contract,
     Organization
 )
-
 
 
 def release_tender(tender, prefix):
@@ -49,16 +47,16 @@ class Release(BaseModel):
     initiationType = StringType(default='tender', choices=['tender'], required=True)
 
     # exported from openprocurement.api data
-    procuringEntity =  ModelType(Organization)
-    tender = ModelType(Tender) 
+    procuringEntity = ModelType(Organization)
+    tender = ModelType(Tender)
     awards = ListType(ModelType(Award))
     contracts = ListType(ModelType(Contract))
-    #planning = ModelType(Organization)
+    # planning = ModelType(Organization)
 
-    #@serializable
-    #def ocid(self):
-    #    return "{}-{}".format(self.prefix, self.tender.tenderID)
-    
+    # @serializable
+    # def ocid(self):
+    #     return "{}-{}".format(self.prefix, self.tender.tenderID)
+
     @serializable(serialize_when_none=False)
     def buyer(self):
         return self.procuringEntity
@@ -83,7 +81,7 @@ class Release(BaseModel):
         if all(f in raw_data for f in self._fields):
             return convert(self.__class__, raw_data, **kw)
         data = {}
-        if not 'tender' in data:
+        if 'tender' not in data:
             data['tender'] = raw_data
 
         for f in self._fields:
@@ -93,7 +91,7 @@ class Release(BaseModel):
 
 
 class Record(BaseModel):
-    releases=ListType(ModelType(Release))
+    releases = ListType(ModelType(Release))
 
     @serializable
     def compiledRelease(self):
@@ -102,7 +100,6 @@ class Record(BaseModel):
     @serializable
     def ocid(self):
         return self.releases[0].ocid
-
 
 
 class Package(BaseModel):
