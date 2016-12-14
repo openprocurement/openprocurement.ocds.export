@@ -6,7 +6,7 @@ from schematics.types import DateTimeType, StringType
 from schematics.types.compound import ModelType, ListType
 from schematics.types.serializable import serializable
 from schematics.transforms import convert
-from .helpers import get_compiled_release, get_ocid
+from .helpers import get_compiled_release, get_ocid, now
 from ocds.export.schema import (
     Tender,
     Award,
@@ -40,16 +40,16 @@ class BaseModel(Model):
 class Release(BaseModel):
 
     # required by standard
-    date = DateTimeType(default=datetime.now, required=True)
-    ocid = StringType()
+    date = StringType(default=now, required=True)
+    ocid = StringType(required=True)
     id = StringType(default=uuid4().hex, required=True)
-    language = StringType(default='uk')
+    language = StringType(default='uk', required=True)
 
     # Only one choice. See: http://standard.open-contracting.org/latest/en/schema/codelists/#initiation-type
     initiationType = StringType(default='tender', choices=['tender'], required=True)
 
     # exported from openprocurement.api data
-    buyer =  ModelType(Organization)
+    procuringEntity =  ModelType(Organization)
     tender = ModelType(Tender) 
     awards = ListType(ModelType(Award))
     contracts = ListType(ModelType(Contract))
@@ -58,8 +58,12 @@ class Release(BaseModel):
     #@serializable
     #def ocid(self):
     #    return "{}-{}".format(self.prefix, self.tender.tenderID)
+    
+    @serializable(serialize_when_none=False)
+    def buyer(self):
+        return self.procuringEntity
 
-    @serializable
+    @serializable(serialize_when_none=False)
     def tag(self):
         tags = []
         if self.tender:
@@ -75,16 +79,17 @@ class Release(BaseModel):
                     tags.append('{}Update'.format(op))
         return tags
 
-    def convert(self, raw_data, context=None, **kw):
-        tender = raw_data.get('tender', raw_data)
-        awards = tender.get('awards', [])
-        contracts = tender.get('contracts', [])
-        buyer = tender.get('procuringEntity', '')
-        ocid = raw_data.get('ocid', get_ocid('ocds-xxxx', tender['tenderID']))
+    def convert(self, raw_data, **kw):
+        if all(f in raw_data for f in self._fields):
+            return convert(self.__class__, raw_data, **kw)
+        data = {}
+        if not 'tender' in data:
+            data['tender'] = raw_data
 
-        return convert(self.__class__,
-                       dict(tender=tender, awards=awards, contracts=contracts, buyer=buyer, ocid=ocid),
-                       context=context, **kw)
+        for f in self._fields:
+            if f in raw_data:
+                data[f] = raw_data.pop(f, data['tender'].pop(f, ''))
+        return convert(self.__class__, data, **kw)
 
 
 class Record(BaseModel):

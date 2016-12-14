@@ -7,6 +7,7 @@ DESCRIPTION = """
 
 
 install_requires = [
+    'setuptools',
     'iso8601',
     'schematics',
     'simplejson',

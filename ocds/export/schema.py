@@ -6,15 +6,12 @@ from schematics.types import BaseType, StringType, FloatType, IntType, DateTimeT
 from schematics.types.compound import ModelType, ListType
 from schematics.types.serializable import serializable
 from schematics.transforms import convert
-from .helpers import tender_converter, unique_tenderers, unique_documents, patch_converter
+from .helpers import tender_converter, unique_tenderers, unique_documents, patch_converter, now
 
 
 # TODO: Unique tenderers and documents
 # TODO: Import loop(parse_tender)
 # DONE: tender statuses
-
-def now():
-    return datetime.now().isoformat()
 
 
 class BaseModel(Model):

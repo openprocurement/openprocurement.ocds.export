@@ -100,3 +100,6 @@ def add_revisions(tenders):
 def mode_test(tender):
     """ drops all test mode tenders """
     return 'ТЕСТУВАННЯ'.decode('utf-8') not in tender['title']
+
+def now():
+    return datetime.now().isoformat()
