@@ -41,9 +41,12 @@ logging:
             class: logging.handlers.RotatingFileHandler
             formatter: simple
             filename: ${parts.buildout.directory}/var/log/bridge.log
-
+        console:
+            class: logging.StreamHandler
+            formatter: simple
     root:
         level: DEBUG
         handlers:
             - file
+            - console
 
