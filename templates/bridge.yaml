@@ -4,17 +4,11 @@ api:
     api_version: ${options['api_version']}
 
 releases_db:
-    username: ${options['db_user_name']}
-    password: ${options['db_user_password']}
-    host: ${parts['couchdb.ini'].host}
-    port: ${parts['couchdb.ini'].port}
+    url: ${options['releases_db_url']}
     name: ${options['releases_db_name']}
 
 tenders_db:
-    username: ${options['db_user_name']}
-    password: ${options['db_user_password']}
-    host: ${parts['couchdb.ini'].host}
-    port: ${parts['couchdb.ini'].port}
+    url: ${options['tenders_db_url']}
     name: ${options['tenders_db_name']}
 
 release:
