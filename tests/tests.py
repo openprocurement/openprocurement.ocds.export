@@ -23,9 +23,8 @@ from ocds.export.models import (
     ReleasePackage,
     Record,
     RecordPackage,
-    release_tender
 )
-
+from ocds.export import release_tender
 
 TEST_PERIOD = { "startDate": "2016-08-18T14:19:24.770873+03:00", "endDate": "2016-08-18T14:32:59.793234+03:00"}
 TEST_ORGANIZATION = { "name": "test_name", "rogue_field": "rogue_field", "address": { "postalCode": "02221", "countryName": "TESK", "streetAddress": "STREET", "region": "Londod", "locality": "LONDON" }, "contactPoint": { "telephone": "11111111", "faxNumber": "", "name": "John Doe", "email": "john.doe@mail.net" }, "identifier": { "scheme": "UA-EDR", "legalName_en": "FOP-5", "id": "9009900990", "legalName": "legal name" }}

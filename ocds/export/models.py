@@ -4,7 +4,7 @@ from schematics.models import Model
 from schematics.types import DateTimeType, StringType
 from schematics.types.compound import ModelType, ListType
 from schematics.types.serializable import serializable
-from schematics.transforms import convert
+from schematics.transforms import convert, blacklist
 from .helpers import get_compiled_release, get_ocid, now
 from ocds.export.schema import (
     Tender,
@@ -14,20 +14,6 @@ from ocds.export.schema import (
 )
 
 
-def release_tender(tender, prefix):
-    """ returns Release object created from `tender` with ocid `prefix` """
-    date = tender.get('dateModified', '')
-    ocid = get_ocid(prefix, tender['tenderID'])
-    return Release(dict(tender=tender, ocid=ocid, date=date))
-
-
-def release_tenders(tenders, prefix):
-    """ returns list of Release object created from `tenders` with amendment info and ocid `prefix` """
-    prev_tender = next(tenders)
-    for tender in tenders:
-        yield Tender.with_diff(prev_tender, tender)
-        prev_tender = tender
-
 
 class BaseModel(Model):
 
@@ -35,7 +21,16 @@ class BaseModel(Model):
         serialize_when_none = False
 
 
+class Publisher(BaseModel):
+    name = StringType()
+
+
 class Release(BaseModel):
+
+    class Options:
+        roles = {
+            'public': blacklist('procuringEntity')
+        }
 
     # required by standard
     date = StringType(default=now, required=True)
@@ -47,19 +42,14 @@ class Release(BaseModel):
     initiationType = StringType(default='tender', choices=['tender'], required=True)
 
     # exported from openprocurement.api data
-    procuringEntity = ModelType(Organization)
+    procuringEntity = ModelType(Organization, serialized_name="buyer")
     tender = ModelType(Tender)
     awards = ListType(ModelType(Award))
     contracts = ListType(ModelType(Contract))
-    # planning = ModelType(Organization)
-
-    # @serializable
-    # def ocid(self):
-    #     return "{}-{}".format(self.prefix, self.tender.tenderID)
-
+    
     @serializable(serialize_when_none=False)
     def buyer(self):
-        return self.procuringEntity.to_primitive()
+        return self.procuringEntity.to_native()
 
     @serializable(serialize_when_none=False)
     def tag(self):
@@ -83,12 +73,15 @@ class Release(BaseModel):
         if all(f in raw_data for f in self._fields):
             return convert(self.__class__, raw_data, **kw)
         data = {}
-        if 'tender' not in data:
-            data['tender'] = raw_data
+        tender = raw_data.get('tender', raw_data)
+        if not isinstance(tender, dict):
+            tender = dict(tender)
 
         for f in self._fields:
-            if f in raw_data:
-                data[f] = raw_data.pop(f, data['tender'].pop(f, ''))
+            value = raw_data.get(f, '') or tender.get(f, '') 
+            if value:
+                data[f] = value
+        data['tender'] = tender
         return convert(self.__class__, data, **kw)
 
 
@@ -106,8 +99,8 @@ class Record(BaseModel):
 
 class Package(BaseModel):
 
-    publishedDate = DateTimeType(default=datetime.now, required=True)
-    publisher = StringType(required=True)
+    publishedDate = StringType(default=now, required=True)
+    publisher = ModelType(Publisher, required=True)
     license = StringType()
     _url = StringType()
     _policy_url = StringType()
