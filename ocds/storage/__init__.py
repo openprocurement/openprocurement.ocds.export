@@ -15,6 +15,10 @@ class TendersStorage(Database):
         super(TendersStorage, self).__init__(url=url)
         ViewDefinition.sync_many(self, [_tenders_all])
 
+    def __iter__(self):
+        for item in self.iterview('tenders/all', 1000):
+            yield item['value']
+
 
 class ReleasesStorage(Database):
 
@@ -26,3 +30,9 @@ class ReleasesStorage(Database):
     def ocid_list(self, ocid):
         for row in self.iterview('releases/ocid', 1000, key=ocid):
             yield row['value']
+
+    def __iter__(self):
+        for item in self.iterview('releases/all', 1000):
+            yield item['value']
+
+

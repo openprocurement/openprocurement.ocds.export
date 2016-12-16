@@ -6,7 +6,8 @@ DESCRIPTION = """
 """
 
 install_requires = [
-    'CouchDb',
+    'CouchDB',
+    'couchdb-schematics',
     'python-dateutil'
 ]
 
