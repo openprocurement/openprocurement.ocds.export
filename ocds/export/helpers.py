@@ -3,6 +3,7 @@ import itertools
 import simplejson as json
 import ocdsmerge
 import jsonpatch as jpatch
+from iso8601 import parse_date
 from datetime import datetime
 from collections import Counter
 from uuid import uuid4
@@ -102,4 +103,5 @@ def mode_test(tender):
 
 
 def now():
-    return datetime.now().isoformat()
+    # uri = StringType()
+    return parse_date(datetime.now().isoformat()).isoformat()
