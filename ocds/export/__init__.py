@@ -24,3 +24,11 @@ def release_tenders(tenders, prefix):
     for tender in tenders:
         yield Tender.with_diff(prev_tender, tender)
         prev_tender = tender
+
+def package_tenders(tenders, params):
+    data = {}
+    for field in ReleasePackage._fields:
+        if field in params:
+            data[field] = params.get(field, '')
+    data['releases'] = [release_tender(tender, params.get('prefix')) for tender in tenders]
+    return ReleasePackage(dict(**data)).serialize()
