@@ -1,4 +1,6 @@
 import jsonpatch
+from urllib import quote
+from urlparse import urlparse, urlunparse
 from schematics.models import Model
 from schematics.types.compound import ModelType, ListType
 from schematics.types.serializable import serializable
@@ -18,9 +20,7 @@ from .helpers import (
 )
 
 
-# TODO: Unique tenderers and documents
-# TODO: Import loop(parse_tender)
-# DONE: tender statuses
+invalidsymbols = ["`","~","!", "@","#","$", '"']
 
 
 class BaseModel(Model):
@@ -36,11 +36,17 @@ class BaseModel(Model):
 
 
 class Status(BaseType):
-
     """Only active status in standard"""
 
     def to_native(self, value):
         return value.split('.')[0]
+
+
+class Url(BaseType):
+    """Fixes invalid urls in validator"""
+
+    def to_native(self, value, **kw):
+        return ''.join(c for c in value.encode('ascii','ignore') if c not in invalidsymbols)
 
 
 class Identifier(BaseModel):
@@ -48,7 +54,7 @@ class Identifier(BaseModel):
     scheme = StringType()
     id = StringType()
     legalName = StringType()
-    uri = StringType()
+    uri = Url()
 
 
 class Document(BaseModel):
@@ -57,7 +63,7 @@ class Document(BaseModel):
     documentType = StringType()
     title = StringType()
     description = StringType()
-    url = StringType()
+    url = Url()
     datePublished = StringType()
     dateModified = StringType()
     format = StringType()
@@ -69,7 +75,8 @@ class Classification(BaseModel):
     scheme = StringType()
     id = StringType()
     description = StringType()
-    uri = StringType()
+    # uri = StringType()
+    uri = Url() 
 
 
 class Period(BaseModel):
@@ -104,7 +111,7 @@ class Contact(BaseModel):
     email = StringType()
     telephone = StringType()
     faxNumber = StringType()
-    url = StringType()
+    url = Url()
 
 
 class Organization(BaseModel):
@@ -173,7 +180,7 @@ class Contract(BaseModel):
 class Tender(BaseModel):
     """See: http://standard.open-contracting.org/latest/en/schema/reference/#tender"""
 
-    id = StringType()
+    _id = StringType()
     title = StringType()
     description = StringType()
     status = Status()
@@ -195,6 +202,10 @@ class Tender(BaseModel):
     procuringEntity = ModelType(Organization)
     documents = ListType(ModelType(Document))
     amendment = ModelType(Amendment)
+    
+    @serializable(serialized_name='id')
+    def tender_id(self):
+        return self._id 
 
     @serializable
     def numberOfTenderers(self):
