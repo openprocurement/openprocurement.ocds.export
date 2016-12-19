@@ -1,22 +1,25 @@
 # -*- coding: utf-8 -*-
-from ocds.storage.backends.couch import CouchStorage
 import argparse
 import yaml
 import iso8601
 import os
-from ocds.export.package import Package
-from ocds.export.release import get_release_from_tender
-from uuid import uuid4
 import time
 import sys
+import logging
+from logging.config import dictConfig
+from simplejson import dump
+from ocds.export import package_tenders, mode_test
+from ocds.storage import TendersStorage
+from uuid import uuid4
 
 
 URI = 'https://fake-url/tenders-{}'.format(uuid4().hex)
-
+Logger = logging.getLogger(__name__)
 
 def read_config(path):
     with open(path) as cfg:
         config = yaml.load(cfg)
+    dictConfig(config.get('logging', ''))
     return config
 
 
@@ -28,64 +31,48 @@ def parse_args():
     return parser.parse_args()
 
 
-def parse_date(date):
-    return iso8601.parse_date(date).isoformat()
+def parse_dates(dates):
+    return iso8601.parse_date(dates[0]).isoformat(), iso8601.parse_date(dates[1]).isoformat()
 
 
-def get_releases(gen, info):
-    for row in gen:
-        try:
-            if 'ТЕСТУВАННЯ'.decode('utf-8') not in row['title']:
-                release = get_release_from_tender(row, info['prefix'])
-                yield release
-        except KeyError as e:
-            print e
-            yield None
-
-def dump_package(releases, config):
+def dump_package(tenders, config):
     info = config['release']
-    package = Package(
-        releases,
-        info['publisher'],
-        info['license'],
-        info['publicationPolicy'],
-        URI
-    )
+    try:
+        package = package_tenders(tenders, config.get('release'))
+    except Exception as e:
+        Logger.info('Error: {}'.format(e))
+        return
     path = os.path.join(config['path'], 'release-{}.json'.format(time.time()))
     with open(path, 'w') as outfile:
-        outfile.write(package.to_json())
+        dump(package, outfile)
 
 
 def run():
     args = parse_args()
     releases = []
     config = read_config(args.config)
-    storage = CouchStorage(config.get('tenders_db'))
+    _tenders = TendersStorage(config['tenders_db']['url'], config['tenders_db']['name'])
     info = config.get('release')
-
+    Logger.info('Start packaging')
     if not os.path.exists(config.get('path')):
-            os.makedirs(config.get('path'))
+        os.makedirs(config.get('path'))
 
     if args.dates:
-        datestart = parse_date(args.dates[0])
-        datefinish = parse_date(args.dates[1])
-        for release in get_releases(storage.get_tenders_between_dates(datestart, datefinish), info):
-            if release:
-                releases.append(release)
-        dump_package(releases, config)
+        datestart, datefinish  = parse_dates(args.dates)
+        tenders = [t['value'] for t in _tenders.db.view('tenders/byDateModified', startkey=datestart, endkey=datefinish) if t['value'].get('status') not in ['draft']]
+        dump_package(tenders, config)
     else:
         count = 0
-        if not args.number:
-            total = 16384
-        else:
-            total = int(args.number)
-        for release in get_releases(storage.get_all(), info):
-            sys.stdout.write('{}\r'.format(count))
-            sys.stdout.flush()
-            if release:
-                releases.append(release)
-                count += 1
+        total = int(args.number) if args.number else 10000
+        tenders = []
+        for tender in _tenders:
+            tenders.append(tender)
+            count += 1
             if count == total:
-                dump_package(releases, config)
+                Logger.info('dumping {} packages'.format(len(tenders)))
+                dump_package(tenders, config)
                 count = 0
-                releases = []
+                tenders = []
+        if tenders:
+            Logger.info('dumping {} packages'.format(len(tenders)))
+            dump_package(tenders, config)
