@@ -5,7 +5,7 @@ from schematics.types import DateTimeType, StringType
 from schematics.types.compound import ModelType, ListType
 from schematics.types.serializable import serializable
 from schematics.transforms import convert, blacklist
-from .helpers import get_compiled_release, get_ocid, now
+from .helpers import get_compiled_release, get_ocid, now, generate_uri
 from ocds.export.schema import (
     Tender,
     Award,
@@ -33,9 +33,9 @@ class Release(BaseModel):
         }
 
     # required by standard
+    _id = StringType(default=uuid4(), required=True)
     date = StringType(default=now, required=True)
     ocid = StringType(required=True)
-    id = StringType(default=uuid4().hex, required=True)
     language = StringType(default='uk', required=True)
 
     # Only one choice. See: http://standard.open-contracting.org/latest/en/schema/codelists/#initiation-type
@@ -84,6 +84,12 @@ class Release(BaseModel):
         data['tender'] = tender
         return convert(self.__class__, data, **kw)
 
+    @serializable(serialize_when_none=False, serialized_name='id')
+    def doc_id(self):
+        if hasattr(self, '_id'):
+            return self._id
+        return None
+
 
 class Record(BaseModel):
     releases = ListType(ModelType(Release))
@@ -102,7 +108,7 @@ class Package(BaseModel):
     publishedDate = StringType(default=now, required=True)
     publisher = ModelType(Publisher, required=True)
     license = StringType()
-    _url = StringType()
+    _url = StringType(default=generate_uri)
     _policy_url = StringType()
 
     @serializable
