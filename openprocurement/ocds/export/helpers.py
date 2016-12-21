@@ -156,7 +156,7 @@ def fetch_tender_versioned(client, src, dest):
                 tenders.append(tender)
                 logger.info('Got tender id={}, version={}'.format(tender['id'], version))
                 try:
-                    while version not in ['1', '0', '']:
+                    while version and version not in ['1', '0']:
                         version = str(int(version) - 1)
                         logger.info('Getting prev version = {}'.format(version))
                         version, tender = client.get_tender(_id, version)
@@ -169,21 +169,26 @@ def fetch_tender_versioned(client, src, dest):
 
 
 def save_items(storage, src, dest):
+    def save(obj):
+        if hasattr(obj, 'store'):
+            obj.store(storage)
+        else:
+            storage.save(obj)
+
     logger.info('Start saving')
     while True:
         for item in src:
-            for obj in item:
-                if hasattr(obj, 'store'):
-                    obj.store(storage)
-                else:
-                    storage.save(obj)
-                logger.info('Saved doc {}'.format(obj['id']))
+            if isinstance(item, list):
+                for obj in item:
+                    save(obj)
+                    logger.info('Saved doc {}'.format(obj['id']))
+            else:
+                save(item)
+                logger.info('Saved doc {}'.format(item['id']))
 
 
 def exists_or_modified(db, doc):
-    if doc['id'] not in db:
+    resp = db.view('tenders/byDateModified', key=doc['id'])
+    if not resp or resp['value'] < doc['dateModified']:
         return True
-    else:
-        if db.get(doc['id'])['dateModified'] < doc['dateModified']:
-            return True
     return False
