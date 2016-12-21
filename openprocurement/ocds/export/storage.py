@@ -29,15 +29,13 @@ _releases_tag = ViewDefinition('releases', 'tag',
 )
 _tenders_all = ViewDefinition('tenders', 'all', 
     map_fun="""function(doc) { 
-                    if(doc.doc_type !== 'Tender') {return;}; 
                     if(doc.status.indexOf('draft') !== -1) {return;}; 
                     emit(doc._id, doc); 
     }"""
 )
 _tenders_date_modified = ViewDefinition('tenders', 'by_dateModified', 
     map_fun="""function(doc) {
-                if(doc.doc_type !== 'Tender') {return;};
-                emit(doc.dateModified, doc);
+                emit(doc.id, doc.dateModified);
     }"""
 )
 
