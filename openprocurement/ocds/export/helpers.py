@@ -177,24 +177,27 @@ def save_items(storage, src, dest):
     logger.info('Start saving')
     while True:
         for item in src:
-            item.store(storage)
-            #if isinstance(item, list):
-            #    for obj in item:
-            #        save(obj)
-            #        logger.info('Saved doc {}'.format(obj['id']))
-            #else:
-            #    save(item)
-            #    logger.info('Saved doc {}'.format(item['id']))
+            if isinstance(item, list):
+                for obj in item:
+                    save(obj)
+                    logger.info('Saved doc {}'.format(obj['id']))
+            else:
+                save(item)
+                logger.info('Saved doc {}'.format(item['id']))
 
 
-def exists_or_modified(db, doc):
-    resp = db.view('tenders/byDateModified', key=doc['id'])
-    if not resp or resp['value'] < doc['dateModified']:
+def exists_or_modified(storage, doc):
+    resp = storage.view('tenders/by_dateModified', key=doc['id'])
+    try:
+        date_mod = next(r['value'] for r in resp) 
+        return date_mod < doc.get('dateModified')
+    except StopIteration:
         return True
-    return False
 
 
 def save_patched(storage, tender):
+    if '_id' not in tender:
+        tender['_id'] = tender['id']
     resp = storage.view('tenders/by_dateModified', key=tender['id'])
     try:
         date_mod = next(r['value'] for r in resp) 
@@ -209,6 +212,8 @@ def save_patched(storage, tender):
         logger.info('Updated tender id={}'.format(tender['id']))
         doc = storage.get(tender['id'])
         revisions = doc.pop('revisions', [])
-        patch = jpatch.make_patch(doc, tender).patch
+        patch = [p for p in jpatch.make_patch(doc, tender).patch if not p['path'].startswith('/_rev')]
         revisions.append(patch)
-        tender['revisions'] = revisions
+        doc.update(tender)
+        doc['revisions'] = revisions
+        storage.save(doc)

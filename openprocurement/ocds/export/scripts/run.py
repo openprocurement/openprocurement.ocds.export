@@ -82,14 +82,14 @@ def run():
         config['api']['api_version']
     )
 
-    #_filter = functools.partial(exists_or_modified, storage)
+    _filter = functools.partial(exists_or_modified, tenders)
     #_fetch = functools.partial(fetch_tender_versioned, client)
     #_batch = functools.partial(batch_releases, config.get('release').get('prefix'))
     _fetch = functools.partial(fetch_tenders, client)
     _batch = functools.partial(create_releases, config.get('release').get('prefix'), tenders_db=tenders)
     _save = functools.partial(save_items, storage)
 
-    bridge = APIDataBridge(config)
+    bridge = APIDataBridge(config, filter_feed=_filter)
     bridge.add_gt(_fetch)
     bridge.add_gt(_batch)
     bridge.add_gt(_save, last=True)
