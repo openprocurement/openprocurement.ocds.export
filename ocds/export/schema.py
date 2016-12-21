@@ -18,6 +18,7 @@ from .helpers import (
     patch_converter,
     now
 )
+from .convert import Converter
 
 
 invalidsymbols = ["`","~","!", "@","#","$", '"']
@@ -28,11 +29,10 @@ class BaseModel(Model):
     class Options(object):
         serialize_when_none = False
 
-    def convert(self, raw_data, context=None, **kw):
-        kw['strict'] = False
+    def convert(self, raw_data, strict=False, **kw):
         if 'documents' in raw_data:
             unique_documents(raw_data['documents'])
-        return convert(self.__class__, raw_data, context=context, **kw)
+        return convert(self.__class__, raw_data, strict=False, **kw)
 
 
 class Status(BaseType):
@@ -135,7 +135,7 @@ class Item(BaseModel):
 
 class Change(BaseModel):
     property = StringType()
-    former_value = StringType()
+    former_value = BaseType()
 
 
 class Amendment(BaseModel):
@@ -145,7 +145,7 @@ class Amendment(BaseModel):
     rationale = StringType()
 
 
-class Award(BaseModel):
+class Award(BaseModel, Converter):
     """See: http://standard.open-contracting.org/latest/en/schema/reference/#award"""
 
     id = StringType()
@@ -161,7 +161,7 @@ class Award(BaseModel):
     amendment = ModelType(Amendment)
 
 
-class Contract(BaseModel):
+class Contract(BaseModel, Converter):
     """See: http://standard.open-contracting.org/latest/en/schema/reference/#contract"""
 
     id = StringType()
@@ -175,9 +175,9 @@ class Contract(BaseModel):
     dateSigned = StringType()
     documents = ListType(ModelType(Document))
     amendment = ModelType(Amendment)
+    
 
-
-class Tender(BaseModel):
+class Tender(BaseModel, Converter):
     """See: http://standard.open-contracting.org/latest/en/schema/reference/#tender"""
 
     _id = StringType()
@@ -210,18 +210,10 @@ class Tender(BaseModel):
     @serializable
     def numberOfTenderers(self):
         return len(self.tenderers) if self.tenderers else 0
-
-    def convert(self, raw_data, context=None, **kw):
-        data = tender_converter(raw_data)
-        data['tenderers'] = unique_tenderers(data['tenderers'])
-        return super(Tender, self).convert(data, context=context, **kw)
-
+    
     @classmethod
-    def with_diff(cls, prev_tender, new_tender):
-        amendment = {}
-        patch = jsonpatch.make_patch(tender_converter(new_tender), tender_converter(prev_tender)).patch
-        if patch:
-            amendment['changes'] = patch_converter(patch)
-            amendment['date'] = new_tender['dateModified']
-        new_tender['amendment'] = amendment
-        return cls(new_tender)
+    def _convert(cls, raw_data):
+        return cls(raw_data).serialize()
+
+    def convert(self, raw_data, **kw):
+        return super(Tender, self).convert(tender_converter(raw_data), **kw)
