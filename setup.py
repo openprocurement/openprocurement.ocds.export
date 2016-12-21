@@ -13,6 +13,9 @@ install_requires = [
     'simplejson',
     'ocdsmerge',
     'jsonpatch'
+    'CouchDB',
+    'couchdb-schematics',
+    'python-dateutil'
 ]
 
 test_requires = [
@@ -21,7 +24,7 @@ test_requires = [
 ]
 
 
-setup(name='ocds.export',
+setup(name='openprocurement.ocds.export',
       version='0.1.0',
       description=DESCRIPTION,
       author='Quintagroup, Ltd.',
