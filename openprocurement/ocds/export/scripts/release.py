@@ -5,8 +5,8 @@ import argparse
 import yaml
 import os
 import sys
-from ocds.export import mode_test
-from ocds.storage import (
+from openprocurement.ocds.export.helpers import mode_test
+from openprocurement.ocds.export.storage import (
     TendersStorage,
     ReleasesStorage,
     Release,

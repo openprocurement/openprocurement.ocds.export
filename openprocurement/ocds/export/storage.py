@@ -2,8 +2,7 @@ import itertools
 from couchdb import Database
 from uuid import uuid4
 from couchdb.design import ViewDefinition
-from .models import Release
-from openprocurement.ocds.export import Tender, get_ocid, Release
+from openprocurement.ocds.export.models import Release, ReleasePackage, get_ocid, Tender
 from couchdb_schematics.document import Document
 
 
@@ -85,3 +84,12 @@ def release_tenders(tenders, prefix):
 def release_tender(tender, prefix):
     ocid = get_ocid(prefix, tender['tenderID'])
     return Release(dict(tender=tender, ocid=ocid, **tender))
+
+
+def package_tenders(tenders, params):
+    data = {}
+    for field in ReleasePackage._fields:
+        if field in params:
+            data[field] = params.get(field, '')
+    data['releases'] = [release_tender(tender, params.get('prefix')) for tender in tenders]
+    return ReleasePackage(dict(**data)).serialize()

@@ -1,5 +1,5 @@
 import jsonpatch
-from .helpers import patch_converter
+from openprocurement.ocds.export.helpers import patch_converter
 
 
 class Converter(object):

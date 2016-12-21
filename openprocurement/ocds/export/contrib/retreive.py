@@ -2,7 +2,7 @@ import gevent
 import random
 import logging
 from gevent.queue import Full
-from ocds.databridge.exceptions import LBMismatchError
+from ..exceptions import LBMismatchError
 
 
 logger = logging.getLogger()

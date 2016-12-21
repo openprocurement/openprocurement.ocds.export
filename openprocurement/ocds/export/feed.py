@@ -2,9 +2,9 @@ import gevent
 import logging
 import functools
 from gevent.queue import Queue
+from openprocurement.ocds.export.helpers import get_start_point
 from .contrib.retreive import retreiver
 from .contrib.client import get_retreive_clients
-from .helpers import get_start_point
 
 
 logger = logging.getLogger(__name__)

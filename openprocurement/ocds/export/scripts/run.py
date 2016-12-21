@@ -5,7 +5,7 @@ import sys
 import yaml
 import logging
 import functools
-from ocds.storage import TendersStorage, ReleasesStorage
+from openprocurement.ocds.export.storage import TendersStorage, ReleasesStorage
 from ..contrib.client import APIClient
 from logging.config import dictConfig
 from ..bridge import APIDataBridge

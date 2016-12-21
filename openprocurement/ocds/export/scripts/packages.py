@@ -8,8 +8,8 @@ import sys
 import logging
 from logging.config import dictConfig
 from simplejson import dump
-from ocds.export import package_tenders, mode_test
-from ocds.storage import TendersStorage
+from openprocurement.ocds.export.helpers import mode_test
+from openprocurement.ocds.export.storage import TendersStorage, package_tenders
 from uuid import uuid4
 
 

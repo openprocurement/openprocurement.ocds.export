@@ -1,25 +1,36 @@
 # -*- coding: utf-8 -*-
+
 import itertools
 import simplejson as json
-import ocdsmerge
 import jsonpatch as jpatch
 import gevent
 import logging
 import os.path
 import json
 from requests.exceptions import HTTPError
-from .exceptions import LBMismatchError
-#from ocds.export.release import release_tender, release_tenders
-#from ocds.export import release_tender, release_tenders
-#from ocds.storage import release_tender, release_tenders
 from iso8601 import parse_date
 from datetime import datetime
 from collections import Counter
 from uuid import uuid4
 from copy import deepcopy
+from .exceptions import LBMismatchError
 
 
 logger = logging.getLogger(__name__)
+
+
+def now():
+    # uri = StringType()
+    return parse_date(datetime.now().isoformat()).isoformat()
+
+
+def generate_uri():
+    return 'https://fake-url/tenders-{}'.format(uuid4().hex)
+
+
+def get_ocid(prefix, tenderID):
+    """greates unique contracting identifier"""
+    return "{}-{}".format(prefix, tenderID)
 
 
 def tender_converter(tender):
@@ -63,11 +74,6 @@ def patch_converter(patch):
     return [{'property': op['path'], 'former_value': op.get('value')} for op in patch]
 
 
-def get_ocid(prefix, tenderID):
-    """greates unique contracting identifier"""
-    return "{}-{}".format(prefix, tenderID)
-
-
 def award_converter(tender):
     if 'lots' in tender:
         for award in tender['awards']:
@@ -89,20 +95,6 @@ def decoder(obj):
     return json.loads(obj)
 
 
-def get_compiled_release(releases):
-    compiled = ocdsmerge.merge(releases)
-    if 'bids' in compiled['tender'].keys():
-        for bid in compiled['tender']['bids']:
-            if 'lotValues' in bid.keys():
-                for lotval in bid['lotValues']:
-                    del lotval['id']
-    return compiled
-
-
-def generate_uri():
-    return 'https://fake-url/tenders-{}'.format(uuid4().hex)
-
-
 def add_revisions(tenders):
     prev_tender = tenders[0]
     new_tenders = []
@@ -118,11 +110,6 @@ def add_revisions(tenders):
 def mode_test(tender):
     """ drops all test mode tenders """
     return 'ТЕСТУВАННЯ'.decode('utf-8') not in tender['title']
-
-
-def now():
-    # uri = StringType()
-    return parse_date(datetime.now().isoformat()).isoformat()
 
 
 def get_start_point(forward, backward, cookie, queue,

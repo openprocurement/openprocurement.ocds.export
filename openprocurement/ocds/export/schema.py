@@ -1,33 +1,4 @@
-import jsonpatch
-from urllib import quote
-from urlparse import urlparse, urlunparse
-from schematics.models import Model
-from schematics.types.compound import ModelType, ListType
-from schematics.types.serializable import serializable
-from schematics.transforms import convert
-from schematics.types import (
-    BaseType,
-    StringType,
-    FloatType,
-    IntType,
-)
-from .helpers import (
-    tender_converter,
-    unique_tenderers,
-    unique_documents,
-    patch_converter,
-    now
-)
-from .convert import Converter
-
-
-invalidsymbols = ["`","~","!", "@","#","$", '"']
-
-
-class BaseModel(Model):
-
-    class Options(object):
-        serialize_when_none = False
+class TenderModel(BaseModel):
 
     def convert(self, raw_data, strict=False, **kw):
         if 'documents' in raw_data:
@@ -49,7 +20,7 @@ class Url(BaseType):
         return ''.join(c for c in value.encode('ascii','ignore') if c not in invalidsymbols)
 
 
-class Identifier(BaseModel):
+class Identifier(TenderModel):
 
     scheme = StringType()
     id = StringType()
@@ -57,7 +28,7 @@ class Identifier(BaseModel):
     uri = Url()
 
 
-class Document(BaseModel):
+class Document(TenderModel):
 
     id = StringType()
     documentType = StringType()
@@ -70,7 +41,7 @@ class Document(BaseModel):
     language = StringType()
 
 
-class Classification(BaseModel):
+class Classification(TenderModel):
 
     scheme = StringType()
     id = StringType()
@@ -79,25 +50,25 @@ class Classification(BaseModel):
     uri = Url() 
 
 
-class Period(BaseModel):
+class Period(TenderModel):
 
     startDate = StringType()
     endDate = StringType()
 
 
-class Value(BaseModel):
+class Value(TenderModel):
 
     amount = FloatType()
     currency = StringType()
 
 
-class Unit(BaseModel):
+class Unit(TenderModel):
 
     name = StringType()
     value = ModelType(Value)
 
 
-class Address(BaseModel):
+class Address(TenderModel):
 
     streetAddress = StringType()
     locality = StringType()
@@ -105,7 +76,7 @@ class Address(BaseModel):
     countryName = StringType()
 
 
-class Contact(BaseModel):
+class Contact(TenderModel):
 
     name = StringType()
     email = StringType()
@@ -114,7 +85,7 @@ class Contact(BaseModel):
     url = Url()
 
 
-class Organization(BaseModel):
+class Organization(TenderModel):
 
     identifier = ModelType(Identifier)
     additionalIdentifiers = ListType(ModelType(Identifier))
@@ -123,7 +94,7 @@ class Organization(BaseModel):
     contactPoint = ModelType(Contact)
 
 
-class Item(BaseModel):
+class Item(TenderModel):
 
     id = StringType()
     description = StringType()
@@ -133,19 +104,19 @@ class Item(BaseModel):
     unit = ModelType(Unit)
 
 
-class Change(BaseModel):
+class Change(TenderModel):
     property = StringType()
     former_value = BaseType()
 
 
-class Amendment(BaseModel):
+class Amendment(TenderModel):
 
     date = StringType(default=now)
     changes = ListType(ModelType(Change))
     rationale = StringType()
 
 
-class Award(BaseModel, Converter):
+class Award(TenderModel, Converter):
     """See: http://standard.open-contracting.org/latest/en/schema/reference/#award"""
 
     id = StringType()
@@ -161,7 +132,7 @@ class Award(BaseModel, Converter):
     amendment = ModelType(Amendment)
 
 
-class Contract(BaseModel, Converter):
+class Contract(TenderModel, Converter):
     """See: http://standard.open-contracting.org/latest/en/schema/reference/#contract"""
 
     id = StringType()
@@ -177,7 +148,7 @@ class Contract(BaseModel, Converter):
     amendment = ModelType(Amendment)
     
 
-class Tender(BaseModel, Converter):
+class Tender(TenderModel, Converter):
     """See: http://standard.open-contracting.org/latest/en/schema/reference/#tender"""
 
     _id = StringType()

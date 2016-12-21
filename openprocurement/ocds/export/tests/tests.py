@@ -2,7 +2,7 @@ import os.path
 import json
 from copy import deepcopy
 from schematics.types import StringType
-from ocds.export.helpers import (
+from openprocurement.ocds.export.helpers import (
     patch_converter,
     tender_converter,
     award_converter,
@@ -10,7 +10,7 @@ from ocds.export.helpers import (
     unique_documents,
     get_ocid
 )
-from ocds.export.schema import (
+from openprocurement.ocds.export.schema import (
     BaseModel,
     Status,
     Award,
@@ -18,13 +18,13 @@ from ocds.export.schema import (
     Tender
 )
 
-from ocds.export.models import (
-    Release,
-    ReleasePackage,
-    Record,
-    RecordPackage,
-)
-from ocds.export import release_tender
+#from openprocurement.ocds.export.models import (
+#    Release,
+#    ReleasePackage,
+#    Record,
+#    RecordPackage,
+#)
+from openprocurement.ocds.export import release_tender
 
 TEST_PERIOD = { "startDate": "2016-08-18T14:19:24.770873+03:00", "endDate": "2016-08-18T14:32:59.793234+03:00"}
 TEST_ORGANIZATION = { "name": "test_name", "rogue_field": "rogue_field", "address": { "postalCode": "02221", "countryName": "TESK", "streetAddress": "STREET", "region": "Londod", "locality": "LONDON" }, "contactPoint": { "telephone": "11111111", "faxNumber": "", "name": "John Doe", "email": "john.doe@mail.net" }, "identifier": { "scheme": "UA-EDR", "legalName_en": "FOP-5", "id": "9009900990", "legalName": "legal name" }}
