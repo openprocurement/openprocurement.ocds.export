@@ -1,10 +1,10 @@
-import pdb
 import itertools
 from couchdb import Database
 from uuid import uuid4
 from couchdb.design import ViewDefinition
 from .models import Release
-from ocds.export import Tender, get_ocid
+from openprocurement.ocds.export import Tender, get_ocid, Release
+from couchdb_schematics.document import Document
 
 
 _releases_ocid = ViewDefinition('releases', 'ocid', map_fun="function(doc) { emit(doc.ocid, doc._id); }", reduce_fun="function(key, values, rereduce) { var k = key[0][0]; var result = result || {}; result[k] = result[k] || []; result[k].push(values); return result; }")
@@ -12,6 +12,10 @@ _releases_all = ViewDefinition('releases', 'all', map_fun="function(doc) { emit(
 _releases_tag = ViewDefinition('releases', 'tag', map_fun="function(doc) { emit(doc._id, doc.tag); }")
 _tenders_all = ViewDefinition('tenders', 'all', map_fun="function(doc) { if(doc.doc_type !== 'Tender') {return;}; if(doc.status.indexOf('draft') !== -1) {return;}; emit(doc._id, doc); }")
 _tenders_dateModified = ViewDefinition('tenders', 'byDateModified', map_fun="function(doc) { if(doc.doc_type !== 'Tender') {return;}; emit(doc.dateModified, doc); }")
+
+
+class Release(Document, Release):
+   pass
 
 
 class TendersStorage(Database):
@@ -46,6 +50,7 @@ def clean_up(data):
     if 'amendment' in data:
         del data['amendment']
     return data
+
 
 def release_tenders(tenders, prefix):
     """ returns list of Release object created from `tenders` with amendment info and ocid `prefix` """
