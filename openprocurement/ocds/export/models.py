@@ -14,7 +14,7 @@ from schematics.types import (
     IntType,
 )
 from schematics.types.serializable import serializable
-from schematics.types.compound import ModelType, ListType
+from schematics.types.compound import ModelType, ListType, MultiType 
 from schematics.transforms import convert, blacklist
 from openprocurement.ocds.export.helpers import (
     tender_converter,
@@ -27,15 +27,7 @@ from openprocurement.ocds.export.helpers import (
 )
 from openprocurement.ocds.export.convert import Converter
 from couchdb.design import ViewDefinition
-from couchdb_schematics.document import Document
-
-
-_releases_ocid = ViewDefinition('releases', 'ocid', map_fun="function(doc) { emit(doc.ocid, doc._id); }", reduce_fun="function(key, values, rereduce) { var k = key[0][0]; var result = result || {}; result[k] = result[k] || []; result[k].push(values); return result; }")
-_releases_all = ViewDefinition('releases', 'all', map_fun="function(doc) { emit(doc._id, doc); }")
-_releases_tag = ViewDefinition('releases', 'tag', map_fun="function(doc) { emit(doc._id, doc.tag); }")
-_tenders_all = ViewDefinition('tenders', 'all', map_fun="function(doc) { if(doc.doc_type !== 'Tender') {return;}; if(doc.status.indexOf('draft') !== -1) {return;}; emit(doc._id, doc); }")
-_tenders_dateModified = ViewDefinition('tenders', 'byDateModified', map_fun="function(doc) { if(doc.doc_type !== 'Tender') {return;}; emit(doc.dateModified, doc); }")
-
+from couchdb_schematics.document import SchematicsDocument
 
 
 invalidsymbols = ["`","~","!", "@","#","$", '"']
@@ -348,7 +340,7 @@ class RecordPackage(Package):
     records = ListType(ModelType(Record))
 
 
-class ReleaseDocument(Document, Release):
+class ReleaseDocument(SchematicsDocument, Release):
    pass
 
 
@@ -389,9 +381,21 @@ def release_tenders(tenders, prefix):
 
 
 def release_tender(tender, prefix):
-    ocid = get_ocid(prefix, tender['tenderID'])
-    return ReleaseDocument(dict(tender=tender, ocid=ocid, **tender))
-
+    data = {}
+    for field in Release._fields:
+        if field in tender and isinstance(getattr(Release, field), MultiType):
+            vals = tender.get(field)
+            model = getattr(Release, field).model_class
+            if isinstance(vals, list):
+                data[field] = [model(v) for v in vals]
+            else:
+                data[field] = model(vals)
+        elif field == 'tender':
+            model = getattr(Release, field).model_class
+            data['tender'] = model(tender)
+    data['ocid'] = get_ocid(prefix, tender['tenderID'])
+    data['_id'] = uuid4().hex
+    return ReleaseDocument(data)
 
 def package_tenders(tenders, params):
     data = {}
