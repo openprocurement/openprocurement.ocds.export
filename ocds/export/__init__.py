@@ -22,8 +22,16 @@ def release_tenders(tenders, prefix):
     """ returns list of Release object created from `tenders` with amendment info and ocid `prefix` """
     prev_tender = next(tenders)
     for tender in tenders:
-        yield Tender.with_diff(prev_tender, tender)
+        data = {}
+        for field in ['tender', 'awards', 'contracts']:
+            model = getattr(Release, field).model_class
+            if field in tender:
+                data[field] = model.fromDiff(prev_tender.get(field, ''), new_tender.get(field, ''))
+            elif field == 'tender':
+                data['tender'] = model.fromDiff(prev_tender, tender)
+        yield Release(data)
         prev_tender = tender
+
 
 def package_tenders(tenders, params):
     data = {}
