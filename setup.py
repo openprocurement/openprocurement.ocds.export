@@ -15,7 +15,10 @@ install_requires = [
     'jsonpatch'
     'CouchDB',
     'couchdb-schematics',
-    'python-dateutil'
+    'python-dateutil',
+    'requests',
+    'gevent',
+    'PyYaml',
 ]
 
 test_requires = [
@@ -23,6 +26,14 @@ test_requires = [
     'pytest-cov'
 ]
 
+
+entry_points = {
+    'console_scripts': [
+        'bridge = ocds.databridge.scripts.run:run',
+        'get_pack = ocds.databridge.scripts.packages:run',
+        'releases = ocds.databridge.scripts.release:run'
+    ]
+}
 
 setup(name='openprocurement.ocds.export',
       version='0.1.0',
@@ -36,4 +47,5 @@ setup(name='openprocurement.ocds.export',
       zip_safe=False,
       install_requires=install_requires,
       tests_require=test_requires,
+      entry_points=entry_points
       )
