@@ -20,6 +20,10 @@ def tender_converter(tender):
         del tender['bids']
     elif 'tenderers' not in tender:
         tender['tenderers'] = []
+    tender['tenderers'] = unique_tenderers(tender['tenderers'])
+    if 'id' in tender:
+        tender['_id'] = tender['id']
+        del tender['id']
 
     if 'minimalStep' in tender:
         tender['minValue'] = tender['minimalStep']
@@ -34,6 +38,8 @@ def unique_tenderers(tenderers):
 
 def unique_documents(documents):
     """adds `-<number>` to docs with same ids"""
+    if not documents:
+        return
     cout = Counter(doc['id'] for doc in documents)
     for i in [i for i, c in cout.iteritems() if c > 1]:
         for index, d in enumerate([d for d in documents if d['id'] == i]):
@@ -42,7 +48,7 @@ def unique_documents(documents):
 
 def patch_converter(patch):
     """creates OCDS Amendment dict"""
-    return [{'property': op['path'], 'former_value': op['value']} for op in patch]
+    return [{'property': op['path'], 'former_value': op.get('value')} for op in patch]
 
 
 def get_ocid(prefix, tenderID):
