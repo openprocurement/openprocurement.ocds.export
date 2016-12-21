@@ -6,7 +6,7 @@ from schematics.types.compound import ModelType, ListType
 from schematics.types.serializable import serializable
 from schematics.transforms import convert, blacklist
 from .helpers import get_compiled_release, get_ocid, now, generate_uri
-from ocds.export.schema import (
+from .schema import (
     Tender,
     Award,
     Contract,

@@ -26,7 +26,7 @@ def release_tenders(tenders, prefix):
         for field in ['tender', 'awards', 'contracts']:
             model = getattr(Release, field).model_class
             if field in tender:
-                data[field] = model.fromDiff(prev_tender.get(field, ''), new_tender.get(field, ''))
+                data[field] = model.fromDiff(prev_tender.get(field, ''), tender.get(field, ''))
             elif field == 'tender':
                 data['tender'] = model.fromDiff(prev_tender, tender)
         yield Release(data)
