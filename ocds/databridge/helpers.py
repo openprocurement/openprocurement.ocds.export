@@ -4,7 +4,9 @@ import os.path
 import json
 from requests.exceptions import HTTPError
 from .exceptions import LBMismatchError
-from ocds.export.release import release_tender, release_tenders
+#from ocds.export.release import release_tender, release_tenders
+#from ocds.export import release_tender, release_tenders
+from ocds.storage import release_tender, release_tenders
 
 
 logger = logging.getLogger(__name__)
@@ -50,6 +52,7 @@ def fetch_tender_versioned(client, src, dest):
             for _id in [i['id'] for i in feed]:
                 tenders = []
                 version, tender = client.get_tender(_id)
+                tender['_id'] = tender['id']
                 tenders.append(tender)
                 logger.info('Got tender id={}, version={}'.format(tender['id'], version))
                 try:
@@ -99,7 +102,7 @@ def save_items(storage, src, dest):
     while True:
         for item in src:
             for obj in item:
-                storage.save(obj)
+                obj.store(storage)
                 logger.info('Saved doc {}'.format(obj['id']))
 
 

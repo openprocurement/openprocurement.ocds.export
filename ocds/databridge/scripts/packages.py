@@ -59,7 +59,7 @@ def run():
 
     if args.dates:
         datestart, datefinish  = parse_dates(args.dates)
-        tenders = [t['value'] for t in _tenders.db.view('tenders/byDateModified', startkey=datestart, endkey=datefinish) if t['value'].get('status') not in ['draft']]
+        tenders = [t['value'] for t in _tenders.db.view('tenders/byDateModified', startkey=datestart, endkey=datefinish)]
         dump_package(tenders, config)
     else:
         count = 0

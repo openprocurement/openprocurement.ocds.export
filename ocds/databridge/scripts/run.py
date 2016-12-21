@@ -5,8 +5,7 @@ import sys
 import yaml
 import logging
 import functools
-from ocds.storage import TendersStorage, FSStorage
-from ocds.storage.helpers import ocid_path
+from ocds.storage import TendersStorage, ReleasesStorage
 from ..contrib.client import APIClient
 from logging.config import dictConfig
 from ..bridge import APIDataBridge
@@ -40,9 +39,8 @@ def run():
     else:
         logging.basicConfig(level=logging.DEBUG)
 
-#    storage = TendersStorage(config['tenders_db'])
+    storage = ReleasesStorage(config['releases_db']['url'], config['releases_db']['name'])
 
-    storage = FSStorage(config.get('path'), ocid_path)
     client = APIClient(
         config['api']['api_key'],
         config['api']['api_host'],
