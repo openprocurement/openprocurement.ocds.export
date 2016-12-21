@@ -58,3 +58,8 @@ bin/
 
 cover/
 output.html
+.installed*
+.mr*
+etc/
+bin/
+src/

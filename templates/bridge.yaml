@@ -1,0 +1,46 @@
+api:
+    api_host: ${options['api_host']}
+    api_key: ${options['api_key']}
+    api_version: ${options['api_version']}
+
+releases_db:
+    url: ${options['releases_db_url']}
+    name: ${options['releases_db_name']}
+
+tenders_db:
+    url: ${options['tenders_db_url']}
+    name: ${options['tenders_db_name']}
+
+release:
+    publisher:
+        name: "\u0414\u041f \"\u041f\u0440\u043e\u0437\u043e\u0440\u0440\u043e\""
+    license: https://creativecommons.org/publicdomain/zero/1.0/
+    initiationType: tender
+    publicationPolicy: https://prozorro.gov.ua/publication-policy
+    prefix: ocds-xxxxxx
+
+
+path: ${options['path_for_release']}
+
+logging:
+    version: 1
+    disable_existing_loggers: False
+
+    formatters:
+      simple:
+        format: '%(asctime)s  %(name)-30s %(levelname)-7s %(message)s'
+
+    handlers:
+        file:
+            class: logging.handlers.RotatingFileHandler
+            formatter: simple
+            filename: ${parts.buildout.directory}/var/log/bridge.log
+        console:
+            class: logging.StreamHandler
+            formatter: simple
+    root:
+        level: DEBUG
+        handlers:
+            - file
+            - console
+
