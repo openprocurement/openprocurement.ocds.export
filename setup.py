@@ -12,7 +12,7 @@ install_requires = [
     'schematics',
     'simplejson',
     'ocdsmerge',
-    'jsonpatch'
+    'jsonpatch',
     'CouchDB',
     'couchdb-schematics',
     'python-dateutil',
