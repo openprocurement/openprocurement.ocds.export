@@ -173,7 +173,10 @@ def save_items(storage, src, dest):
     while True:
         for item in src:
             for obj in item:
-                obj.store(storage)
+                if hasattr(obj, 'store'):
+                    obj.store(storage)
+                else:
+                    storage.save(obj)
                 logger.info('Saved doc {}'.format(obj['id']))
 
 
