@@ -29,9 +29,9 @@ test_requires = [
 
 entry_points = {
     'console_scripts': [
-        'bridge = ocds.databridge.scripts.run:run',
-        'get_pack = ocds.databridge.scripts.packages:run',
-        'releases = ocds.databridge.scripts.release:run'
+        'bridge = openprocurement.ocds.export.scripts.run:run',
+        'get_pack = openprocurement.ocds.export.scripts.packages:run',
+        'releases = openprocurement.ocds.export.scripts.release:run'
     ]
 }
 
