@@ -10,21 +10,19 @@ from openprocurement.ocds.export.helpers import (
     unique_documents,
     get_ocid
 )
-from openprocurement.ocds.export.schema import (
+from openprocurement.ocds.export.models import (
     BaseModel,
+    TenderModel,
     Status,
     Award,
     Contract,
-    Tender
+    Tender,
+    Release,
+    ReleasePackage,
+    Record,
+    RecordPackage,
+    release_tender
 )
-
-#from openprocurement.ocds.export.models import (
-#    Release,
-#    ReleasePackage,
-#    Record,
-#    RecordPackage,
-#)
-from openprocurement.ocds.export import release_tender
 
 TEST_PERIOD = { "startDate": "2016-08-18T14:19:24.770873+03:00", "endDate": "2016-08-18T14:32:59.793234+03:00"}
 TEST_ORGANIZATION = { "name": "test_name", "rogue_field": "rogue_field", "address": { "postalCode": "02221", "countryName": "TESK", "streetAddress": "STREET", "region": "Londod", "locality": "LONDON" }, "contactPoint": { "telephone": "11111111", "faxNumber": "", "name": "John Doe", "email": "john.doe@mail.net" }, "identifier": { "scheme": "UA-EDR", "legalName_en": "FOP-5", "id": "9009900990", "legalName": "legal name" }}
@@ -93,7 +91,7 @@ class TestSchema(object):
 
     def test_base_model(self):
 
-        class M(BaseModel):
+        class M(TenderModel):
             a = StringType()
 
         test_data = {'a': 'aa', 'b': 'bb'}
@@ -123,7 +121,6 @@ class TestSchema(object):
         doc_ids = set([d.id for d in contract.documents])
         assert len(doc_ids) == 3
 
-
     def test_tender_model(self):
         tender = Tender(TEST_TENDER)
         assert not hasattr(tender, 'owner')
@@ -134,7 +131,7 @@ class TestSchema(object):
         tender2 = deepcopy(TEST_TENDER)
         tender2['tenderPeriod']['startDate'] = 'new_date'
 
-        tender = Tender.with_diff(tender1, tender2)
+        tender = Tender.fromDiff(tender1, tender2)
 
         assert tender.tenderPeriod.startDate == 'new_date'
         assert tender.amendment.date == tender2['dateModified']

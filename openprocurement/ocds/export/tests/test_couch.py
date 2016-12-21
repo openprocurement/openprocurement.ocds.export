@@ -1,18 +1,16 @@
 import pytest
 import couchdb
-from ocds.storage import TendersStorage
-from ocds.storage.errors import DocumentNotFound
+from openprocurement.ocds.export.storage import (
+    TendersStorage,
+    ReleasesStorage
+)
 
-CONFIG = {
-    "username": "",
-    "password": "",
-    "host": "127.0.0.1",
-    "port": "5984",
-    "name": "test"
-}
-DB = 'test'
-SERVER = couchdb.Server("http://{}:{}".format(CONFIG['host'], CONFIG['port']))
-test_data = {
+
+coudb_url = 'http://127.0.0.1:5984'
+db_name  = 'test'
+SERVER = couchdb.Server(coudb_url)
+
+test_tender = {
     "date": "2016-09-28t14:57:14.846483+03:00",
     "id": "0009417e6dd1413585426be68bf6a4dd",
     "test": "test",
@@ -20,77 +18,141 @@ test_data = {
     "tenderID": "test"
 }
 
+test_release = {
+   "_id": "kjndsafjnaioej1029i31029i21",
+   "date": "2016-12-22T00:01:21.412411+00:00",
+   "ocid": "ocds-xxxxxx-UA-2016-12-21-000333-a",
+   "language": "uk",
+   "initiationType": "tender",
+   "buyer": {
+       "identifier": {
+           "scheme": "UA-EDR",
+           "id": "01208375",
+           "legalName": "test"
+       },
+       "name": "test",
+       "address": {
+           "streetAddress": "test",
+           "locality": "test",
+           "postalCode": "test",
+           "countryName": "test"
+       },
+       "contactPoint": {
+           "name": "sdjfkfdsflk ",
+           "email": "skdnfdslf n",
+           "telephone": "",
+           "faxNumber": ""
+       }
+   },
+   "tender": {
+       "title": "sdnfsdjdk nsldjn",
+       "description": "skdjnf dsnf",
+       "status": "complete",
+       "items": [
+           {
+               "id": "fac6e50704d97448eddc563c5d7ac5d2",
+               "description": "skdj nfdsln",
+               "classification": {
+                   "scheme": "CPV",
+                   "id": "45223810-7",
+                   "description": "skdjfnsd jn"
+               },
+               "additionalClassifications": [
+                   {
+                       "scheme": "sld jfd",
+                       "id": "1261.9",
+                       "description": "kjds nflj "
+                   }
+               ],
+               "quantity": 1,
+               "unit": {
+                   "name": "i"
+               }
+           }
+       ],
+       "value": {
+           "amount": 1243242,
+           "currency": "UAH"
+       },
+       "procurementMethod": "limited",
+       "procuringEntity": {
+           "identifier": {
+               "scheme": "UA-EDR",
+               "id": "01208375",
+               "legalName": "sdkjf ns"
+           },
+           "name": "isdf kjnsj",
+           "address": {
+               "streetAddress": "dskj nf",
+               "locality": "skdjf nslkjn",
+               "postalCode": "30421",
+               "countryName": "sd nfkjnds kn"
+           },
+           "contactPoint": {
+               "name": "sdkjf nkdsj nfjdsk ",
+               "email": "ksjnfdskjnf@ukr.net",
+               "telephone": "skd jfds kj",
+               "faxNumber": "sdkj nfkjds nkjd s"
+           }
+       },
+       "id": "ccff2b43sdf2o223je30932e2",
+       "numberOfTenderers": 0
+   },
+   "tag": [
+       "tender",
+   ]
+}
+
 
 @pytest.fixture(scope='function')
 def db(request):
-    if DB not in SERVER:
-        SERVER.create(DB)
-
     def delete():
-        del SERVER[DB]
+        del SERVER[db_name]
 
+    if db_name in SERVER:
+        delete() 
+    SERVER.create(db_name)
     request.addfinalizer(delete)
 
-
-def test_create():
-    assert DB not in SERVER
-    storage = TendersStorage(CONFIG)
-    assert DB in SERVER
-    del SERVER[DB]
-
-
-def test_save(db):
-    storage = TendersStorage(CONFIG)
-    storage.save(test_data)
-    assert test_data['id'] in SERVER[DB]
-    doc = SERVER[DB].get(test_data['id'])
-    assert doc['_id'] == test_data['id']
-    assert doc['date'] == test_data['date']
-    assert doc['test'] == test_data['test']
+@pytest.fixture(scope='function')
+def storage(request):
+    storage = TendersStorage(coudb_url, db_name)
+    storage.save(test_tender)
+    return storage
 
 
-def test_load(db):
-    storage = TendersStorage(CONFIG)
-    storage.save(test_data)
-    loaded = storage.get(test_data['id'])
-    assert loaded['date'] == test_data['date']
-    assert loaded['id'] == test_data['id']
-    assert loaded['test'] == test_data['test']
-    with pytest.raises(DocumentNotFound):
-        loaded = storage.get('Invalid')
+@pytest.fixture(scope='function')
+def releases(request):
+    releases = ReleasesStorage(coudb_url, db_name)
+    releases.save(test_release)
+    return releases
 
 
-def test_contains(db):
-    storage = TendersStorage(CONFIG)
-    storage.save(test_data)
-    assert "0009417e6dd1413585426be68bf6a4dd" in storage
-    assert "fake" not in storage
+class TestStorage(object):
+    
+    @pytest.mark.parametrize('storage', [TendersStorage, ReleasesStorage])
+    def test_create(self, storage):
+        if db_name in SERVER:
+            del SERVER[db_name]
+        storage = storage(coudb_url, db_name)
+        assert db_name in SERVER
+    
+    def test_tender_iter(self, db, storage):
+        for item in storage:
+            assert item == test_tender
 
+    def test_tender_date_modified(self, db, storage):
+        for resp in storage.view('tenders/by_dateModified'):
+            assert resp['value'] == test_tender['dateModified']
+    
+    def test_release_iter(self, db, releases):
+        for item in releases:
+            assert item == test_release
 
-def test_iter(db):
-    storage = TendersStorage(CONFIG)
-    storage.save(test_data)
-    for item in storage:
-        assert item[0] == test_data
+    def test_get_release_tag(self, db, releases):
+        for resp in releases.view('releases/tag', key=test_release['_id']):
+            assert resp['value'] == ['tender']
 
-
-def test_count(db):
-    storage = TendersStorage(CONFIG)
-    storage.save(test_data)
-    assert len(storage) == 2
-
-
-def test_remove(db):
-    storage = TendersStorage(CONFIG)
-    storage.save(test_data)
-    assert test_data['id'] in storage
-    del storage[test_data['id']]
-    assert not test_data['id'] in storage
-
-
-def test_get_set(db):
-    storage = TendersStorage(CONFIG)
-    storage.save(test_data)
-    storage[test_data['id']] = test_data
-    assert test_data['id'] in storage
-    assert test_data == storage[test_data['id']]
+    def test_get_release_ocid(self, db, releases):
+        for results in releases.ocid_list(test_release['ocid']):
+            assert results == [test_release['_id']]
