@@ -395,6 +395,7 @@ def release_tender(tender, prefix):
             data['tender'] = model(tender)
     data['ocid'] = get_ocid(prefix, tender['tenderID'])
     data['_id'] = uuid4().hex
+    data['date'] = tender.get('dateModified')
     return ReleaseDocument(data)
 
 def package_tenders(tenders, params):

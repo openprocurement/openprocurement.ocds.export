@@ -23,7 +23,6 @@ def now():
     # uri = StringType()
     return parse_date(datetime.now().isoformat()).isoformat()
 
-
 def generate_uri():
     return 'https://fake-url/tenders-{}'.format(uuid4().hex)
 
@@ -137,7 +136,7 @@ def fetch_tenders(client, src, dest):
             resp = client.fetch(feed)
             if resp:
                 logger.info('fetched {} tenders'.format(len(resp)))
-            dest.put(resp)
+                dest.put(resp)
         gevent.sleep(0.5)
 
 
@@ -178,13 +177,14 @@ def save_items(storage, src, dest):
     logger.info('Start saving')
     while True:
         for item in src:
-            if isinstance(item, list):
-                for obj in item:
-                    save(obj)
-                    logger.info('Saved doc {}'.format(obj['id']))
-            else:
-                save(item)
-                logger.info('Saved doc {}'.format(item['id']))
+            item.store(storage)
+            #if isinstance(item, list):
+            #    for obj in item:
+            #        save(obj)
+            #        logger.info('Saved doc {}'.format(obj['id']))
+            #else:
+            #    save(item)
+            #    logger.info('Saved doc {}'.format(item['id']))
 
 
 def exists_or_modified(db, doc):
@@ -192,3 +192,23 @@ def exists_or_modified(db, doc):
     if not resp or resp['value'] < doc['dateModified']:
         return True
     return False
+
+
+def save_patched(storage, tender):
+    resp = storage.view('tenders/by_dateModified', key=tender['id'])
+    try:
+        date_mod = next(r['value'] for r in resp) 
+    except StopIteration:
+        date_mod = None
+    if date_mod is None:
+        logger.info('savig tender id={}'.format(tender['id']))
+        storage.save(tender)
+        return
+
+    if date_mod < tender['dateModified']:
+        logger.info('Updated tender id={}'.format(tender['id']))
+        doc = storage.get(tender['id'])
+        revisions = doc.pop('revisions', [])
+        patch = jpatch.make_patch(doc, tender).patch
+        revisions.append(patch)
+        tender['revisions'] = revisions

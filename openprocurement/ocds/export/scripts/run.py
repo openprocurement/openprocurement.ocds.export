@@ -15,7 +15,8 @@ from ..helpers import (
     exists_or_modified,
     fetch_tenders,
     fetch_tender_versioned,
-    save_items
+    save_items,
+    save_patched
 )
 
 
@@ -24,27 +25,31 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
-def batch_releases(prefix, src, dest):
+def batch_releases(prefix, src, dest, tenders_db=None):
     logger.info('Starting generating releases')
     while True:
         for batch in src:
             logger.info('Got {} tenders'.format(len(batch)))
+            if tenders_db:
+                save_patched(tenders_db, batch)
             releases = release_tenders(iter(batch), prefix)
             dest.put(releases)
             gevent.sleep(0.5)
         gevent.sleep(2)
 
 
-def create_releases(prefix, src, dest):
+def create_releases(prefix, src, dest, tenders_db=None):
     logger.info('Starting generating releases')
     while True:
         for batch in src:
             logger.info('Got {} tenders'.format(len(batch)))
             for tender in batch:
+                if tenders_db:
+                    save_patched(tenders_db, tender)
                 try:
                     release = release_tender(tender, prefix)
                     logger.info("generated release for tender "
-                                "{}".format(tender['id']))
+                                "{}".format(tender['_id']))
                     dest.put(release)
                 except Exception as e:
                     logger.fatal('Error {} during'
@@ -68,7 +73,7 @@ def run():
         dictConfig(config['logging'])
     else:
         logging.basicConfig(level=logging.DEBUG)
-
+    tenders = TendersStorage(config['tenders_db']['url'], config['tenders_db']['name'])
     storage = ReleasesStorage(config['releases_db']['url'], config['releases_db']['name'])
 
     client = APIClient(
@@ -78,8 +83,10 @@ def run():
     )
 
     #_filter = functools.partial(exists_or_modified, storage)
-    _fetch = functools.partial(fetch_tender_versioned, client)
-    _batch = functools.partial(batch_releases, config.get('release').get('prefix'))
+    #_fetch = functools.partial(fetch_tender_versioned, client)
+    #_batch = functools.partial(batch_releases, config.get('release').get('prefix'))
+    _fetch = functools.partial(fetch_tenders, client)
+    _batch = functools.partial(create_releases, config.get('release').get('prefix'), tenders_db=tenders)
     _save = functools.partial(save_items, storage)
 
     bridge = APIDataBridge(config)
