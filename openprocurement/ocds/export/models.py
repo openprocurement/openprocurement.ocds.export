@@ -1,5 +1,7 @@
 import jsonpatch
+import itertools
 from datetime import datetime
+from couchdb import Database
 from uuid import uuid4
 from urllib import quote
 from urlparse import urlparse, urlunparse
@@ -24,6 +26,16 @@ from openprocurement.ocds.export.helpers import (
     get_ocid
 )
 from openprocurement.ocds.export.convert import Converter
+from couchdb.design import ViewDefinition
+from couchdb_schematics.document import Document
+
+
+_releases_ocid = ViewDefinition('releases', 'ocid', map_fun="function(doc) { emit(doc.ocid, doc._id); }", reduce_fun="function(key, values, rereduce) { var k = key[0][0]; var result = result || {}; result[k] = result[k] || []; result[k].push(values); return result; }")
+_releases_all = ViewDefinition('releases', 'all', map_fun="function(doc) { emit(doc._id, doc); }")
+_releases_tag = ViewDefinition('releases', 'tag', map_fun="function(doc) { emit(doc._id, doc.tag); }")
+_tenders_all = ViewDefinition('tenders', 'all', map_fun="function(doc) { if(doc.doc_type !== 'Tender') {return;}; if(doc.status.indexOf('draft') !== -1) {return;}; emit(doc._id, doc); }")
+_tenders_dateModified = ViewDefinition('tenders', 'byDateModified', map_fun="function(doc) { if(doc.doc_type !== 'Tender') {return;}; emit(doc.dateModified, doc); }")
+
 
 
 invalidsymbols = ["`","~","!", "@","#","$", '"']
@@ -334,3 +346,57 @@ class ReleasePackage(Package):
 class RecordPackage(Package):
 
     records = ListType(ModelType(Record))
+
+
+class ReleaseDocument(Document, Release):
+   pass
+
+
+def clean_up(data):
+    if 'amendment' in data:
+        del data['amendment']
+    return data
+
+
+def release_tenders(tenders, prefix):
+    """ returns list of Release object created from `tenders` with amendment info and ocid `prefix` """
+    prev_tender = next(tenders)
+    for tender in tenders:
+        data = {}
+        for field in ['tender', 'awards', 'contracts']:
+            model = getattr(Release, field).model_class
+            if field in tender:
+                collection_prev = prev_tender.get(field, [])
+                collection_new = tender.get(field, [])
+                collection = []
+                for a, b in itertools.izip_longest(collection_prev, collection_new, fillvalue={}):
+                    obj = model.fromDiff(clean_up(b), clean_up(a))
+                    if obj:
+                        collection.append(obj)
+                if collection:
+                    data[field] = collection
+            elif field == 'tender':
+                rel = model.fromDiff(clean_up(prev_tender), clean_up(tender))
+                if rel:
+                    data['tender'] = rel
+        if data:
+
+            data['ocid'] = get_ocid(prefix, tender['tenderID'])
+            data['_id'] = uuid4().hex
+            if data:
+                yield ReleaseDocument(data)
+        prev_tender = tender
+
+
+def release_tender(tender, prefix):
+    ocid = get_ocid(prefix, tender['tenderID'])
+    return ReleaseDocument(dict(tender=tender, ocid=ocid, **tender))
+
+
+def package_tenders(tenders, params):
+    data = {}
+    for field in ReleasePackage._fields:
+        if field in params:
+            data[field] = params.get(field, '')
+    data['releases'] = [release_tender(tender, params.get('prefix')) for tender in tenders]
+    return ReleasePackage(dict(**data)).serialize()

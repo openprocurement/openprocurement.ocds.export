@@ -13,10 +13,6 @@ _tenders_all = ViewDefinition('tenders', 'all', map_fun="function(doc) { if(doc.
 _tenders_dateModified = ViewDefinition('tenders', 'byDateModified', map_fun="function(doc) { if(doc.doc_type !== 'Tender') {return;}; emit(doc.dateModified, doc); }")
 
 
-class Release(Document, Release):
-   pass
-
-
 class TendersStorage(Database):
 
     def __init__(self, db_url, name=None):
@@ -43,53 +39,3 @@ class ReleasesStorage(Database):
     def __iter__(self):
         for item in self.iterview('releases/all', 1000):
             yield item['value']
-
-
-def clean_up(data):
-    if 'amendment' in data:
-        del data['amendment']
-    return data
-
-
-def release_tenders(tenders, prefix):
-    """ returns list of Release object created from `tenders` with amendment info and ocid `prefix` """
-    prev_tender = next(tenders)
-    for tender in tenders:
-        data = {}
-        for field in ['tender', 'awards', 'contracts']:
-            model = getattr(Release, field).model_class
-            if field in tender:
-                collection_prev = prev_tender.get(field, [])
-                collection_new = tender.get(field, [])
-                collection = []
-                for a, b in itertools.izip_longest(collection_prev, collection_new, fillvalue={}):
-                    obj = model.fromDiff(clean_up(b), clean_up(a))
-                    if obj:
-                        collection.append(obj)
-                if collection:
-                    data[field] = collection
-            elif field == 'tender':
-                rel = model.fromDiff(clean_up(prev_tender), clean_up(tender))
-                if rel:
-                    data['tender'] = rel
-        if data:
-
-            data['ocid'] = get_ocid(prefix, tender['tenderID'])
-            data['_id'] = uuid4().hex
-            if data:
-                yield Release(data)
-        prev_tender = tender
-
-
-def release_tender(tender, prefix):
-    ocid = get_ocid(prefix, tender['tenderID'])
-    return Release(dict(tender=tender, ocid=ocid, **tender))
-
-
-def package_tenders(tenders, params):
-    data = {}
-    for field in ReleasePackage._fields:
-        if field in params:
-            data[field] = params.get(field, '')
-    data['releases'] = [release_tender(tender, params.get('prefix')) for tender in tenders]
-    return ReleasePackage(dict(**data)).serialize()

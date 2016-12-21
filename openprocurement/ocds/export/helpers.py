@@ -156,7 +156,7 @@ def fetch_tender_versioned(client, src, dest):
                 tenders.append(tender)
                 logger.info('Got tender id={}, version={}'.format(tender['id'], version))
                 try:
-                    while version != '1':
+                    while version not in ['1', '0', '']:
                         version = str(int(version) - 1)
                         logger.info('Getting prev version = {}'.format(version))
                         version, tender = client.get_tender(_id, version)
@@ -166,35 +166,6 @@ def fetch_tender_versioned(client, src, dest):
                                  "version {}".format(tender['id'], version))
                     continue
                 dest.put(tenders)
-
-
-def create_releases(prefix, src, dest):
-    logger.info('Starting generating releases')
-    while True:
-        for batch in src:
-            logger.info('Got {} tenders'.format(len(batch)))
-            for tender in batch:
-                try:
-                    release = release_tender(tender, prefix)
-                    logger.info("generated release for tender "
-                                "{}".format(tender['id']))
-                    dest.put(release)
-                except Exception as e:
-                    logger.fatal('Error {} during'
-                                 ' generation release'.format(e))
-            gevent.sleep(0.5)
-        gevent.sleep(2)
-
-
-def batch_releases(prefix, src, dest):
-    logger.info('Starting generating releases')
-    while True:
-        for batch in src:
-            logger.info('Got {} tenders'.format(len(batch)))
-            releases = release_tenders(iter(batch), prefix)
-            dest.put(releases)
-            gevent.sleep(0.5)
-        gevent.sleep(2)
 
 
 def save_items(storage, src, dest):

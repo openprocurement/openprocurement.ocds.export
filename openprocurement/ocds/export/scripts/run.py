@@ -5,7 +5,9 @@ import sys
 import yaml
 import logging
 import functools
+import gevent
 from openprocurement.ocds.export.storage import TendersStorage, ReleasesStorage
+from openprocurement.ocds.export.models import release_tenders, release_tender
 from ..contrib.client import APIClient
 from logging.config import dictConfig
 from ..bridge import APIDataBridge
@@ -13,7 +15,6 @@ from ..helpers import (
     exists_or_modified,
     fetch_tenders,
     fetch_tender_versioned,
-    batch_releases,
     save_items
 )
 
@@ -21,6 +22,35 @@ from ..helpers import (
 logger = logging.getLogger(__name__)
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+
+def batch_releases(prefix, src, dest):
+    logger.info('Starting generating releases')
+    while True:
+        for batch in src:
+            logger.info('Got {} tenders'.format(len(batch)))
+            releases = release_tenders(iter(batch), prefix)
+            dest.put(releases)
+            gevent.sleep(0.5)
+        gevent.sleep(2)
+
+
+def create_releases(prefix, src, dest):
+    logger.info('Starting generating releases')
+    while True:
+        for batch in src:
+            logger.info('Got {} tenders'.format(len(batch)))
+            for tender in batch:
+                try:
+                    release = release_tender(tender, prefix)
+                    logger.info("generated release for tender "
+                                "{}".format(tender['id']))
+                    dest.put(release)
+                except Exception as e:
+                    logger.fatal('Error {} during'
+                                 ' generation release'.format(e))
+            gevent.sleep(0.5)
+        gevent.sleep(2)
 
 
 def run():
@@ -53,7 +83,7 @@ def run():
     _save = functools.partial(save_items, storage)
 
     bridge = APIDataBridge(config)
-    bridge.add_worker(_fetch)
-    bridge.add_worker(_batch)
-    bridge.add_worker(_save)
+    bridge.add_gt(_fetch)
+    bridge.add_gt(_batch)
+    bridge.add_gt(_save, last=True)
     bridge.run()

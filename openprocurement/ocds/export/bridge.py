@@ -19,21 +19,24 @@ class APIDataBridge(object):
             config['api'], filter_callback=filter_feed)
 
         self.src = self.retreiver
-        self.workers = {}
+        self.jobs = {}
 
-    def add_worker(self, worker):
+    def add_gt(self, func, last=False, side_effect=None):
         try:
-            name = worker.__name__
+            name = func.__name__
         except AttributeError:
-            name = worker.func.__name__
-        q = "{}_queue".format(name)
-        setattr(self, q, Queue(maxsize=250))
-        self.workers[name] = Monitor(worker, self.src, getattr(self, q))
-        self.src = getattr(self, q)
+            name = func.func.__name__
+        q = None
+        if not last:
+            setattr(self, "{}_queue".format(name), Queue(maxsize=250))
+            q = getattr(self, "{}_queue".format(name))
+        self.jobs[name] = Monitor(func, self.src, q)
+        if not last:
+            self.src = q
 
     def run(self):
         logger.info('Starting databridge')
-        for n, w in self.workers.items():
+        for n, w in self.jobs.items():
             logger.info('starting {}'.format(n))
             w.start()
-        gevent.joinall([w.g for w in self.workers.values()])
+        gevent.joinall([w.g for w in self.jobs.values()])

@@ -42,7 +42,7 @@ class APIClient(object):
             args.update(dict(headers={version_header: version}))
         resp = self.session.get(**args)
         if resp.ok:
-            return resp.headers[version_header], resp.json()['data']
+            return resp.headers.get(version_header, ''), resp.json()['data']
         else:
             resp.raise_for_status()
 
