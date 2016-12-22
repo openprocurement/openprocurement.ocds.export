@@ -24,6 +24,9 @@ class APIRetreiver(object):
 
         self.tender_queue = Queue(maxsize=config.get('queue_max_size', 250))
         self.filter_callback = filter_callback
+        
+    def _start(self):
+        logger.info('Retreivers starting')
         self.origin_cookie, self.forward_client, self.backward_client = get_retreive_clients(
             self.api_key,
             self.api_host,
@@ -32,8 +35,6 @@ class APIRetreiver(object):
         self.forward = functools.partial(retreiver, self.forward_client)
         self.backward = functools.partial(retreiver, self.backward_client)
 
-    def _start(self):
-        logger.info('Retreivers starting')
         forward_params, backward_params = get_start_point(
             self.forward_client,
             self.backward_client,
