@@ -37,6 +37,9 @@ class BaseModel(Model):
 
     class Options(object):
         serialize_when_none = False
+        roles = {
+            'package': blacklist('_id')
+        }
 
 
 class TenderModel(BaseModel):
@@ -88,7 +91,7 @@ class Classification(TenderModel):
     id = StringType()
     description = StringType()
     # uri = StringType()
-    uri = Url() 
+    uri = Url()
 
 
 class Period(TenderModel):
@@ -187,7 +190,7 @@ class Contract(TenderModel, Converter):
     dateSigned = StringType()
     documents = ListType(ModelType(Document))
     amendment = ModelType(Amendment)
-    
+
 
 class Tender(TenderModel, Converter):
     """See: http://standard.open-contracting.org/latest/en/schema/reference/#tender"""
@@ -214,15 +217,15 @@ class Tender(TenderModel, Converter):
     procuringEntity = ModelType(Organization)
     documents = ListType(ModelType(Document))
     amendment = ModelType(Amendment)
-    
+
     @serializable(serialized_name='id')
     def tender_id(self):
-        return self._id 
+        return self._id
 
     @serializable
     def numberOfTenderers(self):
         return len(self.tenderers) if self.tenderers else 0
-    
+
     @classmethod
     def _convert(cls, raw_data):
         return cls(raw_data).serialize()
@@ -239,11 +242,12 @@ class Release(BaseModel):
 
     class Options:
         roles = {
-            'public': blacklist('procuringEntity')
+            'public': blacklist('procuringEntity'),
+            'package': blacklist('_id')
         }
 
     # required by standard
-    _id = StringType(default=uuid4(), required=True)
+    _id = StringType(default=lambda: uuid4().hex, required=True)
     date = StringType(default=now, required=True)
     ocid = StringType(required=True)
     language = StringType(default='uk', required=True)
@@ -256,7 +260,7 @@ class Release(BaseModel):
     tender = ModelType(Tender)
     awards = ListType(ModelType(Award))
     contracts = ListType(ModelType(Contract))
-    
+
     @serializable(serialize_when_none=False)
     def buyer(self):
         return self.procuringEntity.to_native()
@@ -294,19 +298,17 @@ class Release(BaseModel):
         data['tender'] = tender
         return convert(self.__class__, data, **kw)
 
-    @serializable(serialize_when_none=False, serialized_name='id')
-    def doc_id(self):
-        if hasattr(self, '_id'):
-            return self._id
-        return None
+    @serializable(serialized_name='id')
+    def release_id(self):
+        return self._id
 
 
 class Record(BaseModel):
     releases = ListType(ModelType(Release))
 
-    #@serializable
-    #def compiledRelease(self):
-    #    return get_compiled_release(self.releases)
+    # @serializable
+    # def compiledRelease(self):
+    #     return get_compiled_release(self.releases)
 
     @serializable
     def ocid(self):
@@ -331,7 +333,10 @@ class Package(BaseModel):
 
 
 class ReleasePackage(Package):
-
+    class Options:
+        roles = {
+            'package': blacklist('_url')
+        }
     releases = ListType(ModelType(Release), required=True)
 
 
@@ -341,7 +346,11 @@ class RecordPackage(Package):
 
 
 class ReleaseDocument(SchematicsDocument, Release):
-   pass
+
+    class Options:
+        roles = {
+            'package': blacklist('_id')
+        }
 
 
 def clean_up(data):
@@ -372,7 +381,6 @@ def release_tenders(tenders, prefix):
                 if rel:
                     data['tender'] = rel
         if data:
-
             data['ocid'] = get_ocid(prefix, tender['tenderID'])
             data['_id'] = uuid4().hex
             if data:
@@ -392,11 +400,12 @@ def release_tender(tender, prefix):
                 data[field] = model(vals)
         elif field == 'tender':
             model = getattr(Release, field).model_class
-            data['tender'] = model(tender)
+            data['tender'] = model(tender).serialize('package')
     data['ocid'] = get_ocid(prefix, tender['tenderID'])
     data['_id'] = uuid4().hex
     data['date'] = tender.get('dateModified')
-    return ReleaseDocument(data)
+    return ReleaseDocument(data).serialize('package')
+
 
 def package_tenders(tenders, params):
     data = {}
@@ -404,4 +413,4 @@ def package_tenders(tenders, params):
         if field in params:
             data[field] = params.get(field, '')
     data['releases'] = [release_tender(tender, params.get('prefix')) for tender in tenders]
-    return ReleasePackage(dict(**data)).serialize()
+    return ReleasePackage(data).serialize('package')
