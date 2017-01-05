@@ -19,6 +19,8 @@ install_requires = [
     'requests',
     'gevent',
     'PyYaml',
+    'boto',
+    'filechunkio'
 ]
 
 test_requires = [
