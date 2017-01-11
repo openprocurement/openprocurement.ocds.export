@@ -20,7 +20,13 @@ from filechunkio import FileChunkIO
 
 URI = 'https://fake-url/tenders-{}'.format(uuid4().hex)
 Logger = logging.getLogger(__name__)
-
+CONN = connect_to_region(
+            'eu-west-1',
+            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+            calling_format=OrdinaryCallingFormat()
+            )
+BUCKET = CONN.get_bucket('ocds.prozorro.openprocurement.io')
 
 def read_config(path):
     with open(path) as cfg:
@@ -59,19 +65,12 @@ def dump_package(tenders, config, pack_num=None, pprint=None):
 
 
 def put_to_s3(path):
-    conn = connect_to_region(
-            'eu-west-1',
-            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-            calling_format=OrdinaryCallingFormat()
-            )
-    bucket = conn.get_bucket('ocds.prozorro.openprocurement.io')
     dir_name = 'merged_{}'.format(time.strftime('%d-%m-%Y'))
     for file in os.listdir(path):
         aws_path = os.path.join(dir_name, file)
         file_path = os.path.join(path, file)
         if file.split('.')[1] == 'zip':
-            mp = bucket.initiate_multipart_upload(aws_path)
+            mp = BUCKET.initiate_multipart_upload(aws_path)
             source_size = os.stat(file_path).st_size
             chunk_size = 52428800
             chunk_count = int(math.ceil(source_size / chunk_size))
@@ -83,7 +82,7 @@ def put_to_s3(path):
                     mp.upload_part_from_file(fp, part_num=i + 1)
             mp.complete_upload()
         else:
-            key = bucket.new_key(aws_path)
+            key = BUCKET.new_key(aws_path)
             key.set_contents_from_filename(file_path)
 
 
@@ -94,6 +93,18 @@ def create_html(path):
             link = "<li><a href='{}'>{}</a></li>\n".format(file, file)
             stream.write(link)
         stream.write("</ol></body>\n</html>")
+
+
+def update_index():
+    key = BUCKET.new_key('index.html')
+    key.get_contents_to_filename('index.html')
+    dir_name = 'merged_{}'.format(time.strftime('%d-%m-%Y'))
+    with open('index.html', 'r+') as f:
+        lines = f.readlines()
+    lines.insert(lines.index('</ol></body>\n'), "<li><a href='{}'>{}</a></li>\n".format(dir_name, dir_name))
+    with open('index.html', 'w') as f:
+        f.write(''.join(lines))
+    key.set_contents_from_filename('index.html')
 
 
 def run():
@@ -133,3 +144,4 @@ def run():
     shutil.make_archive('releases_archived', 'zip', 'patches')
     if args.s3:
         put_to_s3(config.get('path'))
+    update_index()
