@@ -3,12 +3,11 @@ import argparse
 import yaml
 import iso8601
 import os
-import time
 import logging
 import shutil
 import math
 from logging.config import dictConfig
-from simplejson import dump
+from simplejson import dump, load
 from openprocurement.ocds.export.helpers import mode_test
 from openprocurement.ocds.export.storage import TendersStorage
 from openprocurement.ocds.export.models import package_tenders
@@ -64,8 +63,8 @@ def dump_package(tenders, config, pack_num=None, pprint=None):
             dump(package, outfile)
 
 
-def put_to_s3(path):
-    dir_name = 'merged_{}'.format(time.strftime('%d-%m-%Y'))
+def put_to_s3(path, time):
+    dir_name = 'merged_{}'.format(time)
     for file in os.listdir(path):
         aws_path = os.path.join(dir_name, file)
         file_path = os.path.join(path, file)
@@ -95,16 +94,26 @@ def create_html(path):
         stream.write("</ol></body>\n</html>")
 
 
-def update_index():
+def update_index(time):
     key = BUCKET.new_key('index.html')
     key.get_contents_to_filename('index.html')
-    dir_name = 'merged_{}'.format(time.strftime('%d-%m-%Y'))
+    dir_name = 'merged_{}'.format(time)
     with open('index.html', 'r+') as f:
         lines = f.readlines()
     lines.insert(lines.index('</ol></body>\n'), "<li><a href='{}'>{}</a></li>\n".format(dir_name, dir_name))
     with open('index.html', 'w') as f:
         f.write(''.join(lines))
     key.set_contents_from_filename('index.html')
+
+
+def get_max_date(path):
+    max_dates = []
+    for file in os.listdir(path):
+        with open(os.path.join(path, file)) as stream:
+            data = load(stream)
+            dates = [release['date'] for release in data['releases']]
+            max_dates.append(max(dates))
+    return max(max_dates).split('T')[0]
 
 
 def run():
@@ -140,7 +149,6 @@ def run():
     shutil.make_archive('releases', 'zip', config.get('path'))
     shutil.move('releases.zip', 'var/releases/releases.zip')
     create_html(config.get('path'))
-    shutil.make_archive('releases_archived', 'zip', 'patches')
     if args.s3:
-        put_to_s3(config.get('path'))
-    update_index()
+        put_to_s3(config.get('path'), get_max_date(config.get('path')))
+    update_index(get_max_date(config.get('path')))
