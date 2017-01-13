@@ -6,6 +6,7 @@ import os
 import logging
 import shutil
 import math
+import zipfile
 from logging.config import dictConfig
 from simplejson import dump, load
 from openprocurement.ocds.export.helpers import mode_test
@@ -21,8 +22,8 @@ URI = 'https://fake-url/tenders-{}'.format(uuid4().hex)
 Logger = logging.getLogger(__name__)
 CONN = connect_to_region(
             'eu-west-1',
-            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+            aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID', ''),
+            aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY', ''),
             calling_format=OrdinaryCallingFormat()
             )
 BUCKET = CONN.get_bucket('ocds.prozorro.openprocurement.io')
@@ -45,6 +46,14 @@ def parse_args():
 
 def parse_dates(dates):
     return iso8601.parse_date(dates[0]).isoformat(), iso8601.parse_date(dates[1]).isoformat()
+
+
+def make_zip(name, base_dir, skip=[]):
+    skip.append(name)
+    with zipfile.ZipFile(os.path.join(base_dir, name), 'w', allowZip64=True) as zf:
+        for f in [f for f in os.listdir(base_dir) if f not in skip]:
+            zf.write(os.path.join(base_dir, f))
+
 
 
 def dump_package(tenders, config, pack_num=None, pprint=None):
@@ -156,8 +165,7 @@ def run():
                 pack_num += 1
                 count = 0
                 tenders = []
-    shutil.make_archive('releases', 'zip', config.get('path'))
-    shutil.move('releases.zip', 'var/releases/releases.zip')
+    make_zip('releases.zip', config.get('path'))
     create_html(config.get('path'))
     if args.s3:
         put_to_s3(config.get('path'), get_max_date(config.get('path')))
