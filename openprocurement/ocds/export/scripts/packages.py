@@ -14,19 +14,23 @@ from openprocurement.ocds.export.storage import TendersStorage
 from openprocurement.ocds.export.models import package_tenders
 from uuid import uuid4
 from boto.s3 import connect_to_region
-from boto.s3.connection import OrdinaryCallingFormat
+from boto.s3.connection import OrdinaryCallingFormat, S3ResponseError
 from filechunkio import FileChunkIO
 
 
 URI = 'https://fake-url/tenders-{}'.format(uuid4().hex)
 Logger = logging.getLogger(__name__)
-CONN = connect_to_region(
-            'eu-west-1',
-            aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID', ''),
-            aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY', ''),
-            calling_format=OrdinaryCallingFormat()
-            )
-BUCKET = CONN.get_bucket('ocds.prozorro.openprocurement.io')
+try:
+    CONN = connect_to_region(
+                'eu-west-1',
+                aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID', ''),
+                aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY', ''),
+                calling_format=OrdinaryCallingFormat()
+                )
+    BUCKET = CONN.get_bucket('ocds.prozorro.openprocurement.io')
+except S3ResponseError as e:
+    Logger.warn('Unable to connect to s3. Error: {}'.format(e))
+
 
 def read_config(path):
     with open(path) as cfg:
@@ -40,7 +44,8 @@ def parse_args():
     parser.add_argument('-c', '--config', required=True, help="Path to configuration file")
     parser.add_argument('-d', action='append', dest='dates', default=[], help='Start-end dates to generate package')
     parser.add_argument('-n', '--number')
-    parser.add_argument('-s3', action='store_true', help="Choose to start uploading to aws s3")
+    parser.add_argument('-s3', action='store_true', help="Choose to start uploading to aws s3", default=False)
+    parser.add_argument('-p', '--pretty', action='store_true', default=False, help='Create pretty printed release')
     return parser.parse_args()
 
 
@@ -59,6 +64,8 @@ def make_zip(name, base_dir, skip=[]):
 def dump_package(tenders, config, pack_num=None, pprint=None):
     try:
         package = package_tenders(tenders, config.get('release'))
+        date = max(map(lambda x: x.get('date', ''), package['releases']))
+
     except Exception as e:
         Logger.info('Error: {}'.format(e))
         return
@@ -70,6 +77,7 @@ def dump_package(tenders, config, pack_num=None, pprint=None):
         path = os.path.join(config['path'], 'release-{0:07d}.json'.format(pack_num))
         with open(path, 'w') as outfile:
             dump(package, outfile)
+    return date
 
 
 def put_to_s3(path, time):
@@ -125,48 +133,48 @@ def update_index(time):
     key.set_contents_from_filename('index.html')
 
 
-def get_max_date(path):
-    max_dates = []
-    for file in os.listdir(path):
-        with open(os.path.join(path, file)) as stream:
-            data = load(stream)
-            dates = [release['date'] for release in data['releases']]
-            max_dates.append(max(dates))
-    return max(max_dates).split('T')[0]
-
-
 def run():
     args = parse_args()
     config = read_config(args.config)
     pack_num = 1
     _tenders = TendersStorage(config['tenders_db']['url'], config['tenders_db']['name'])
     Logger.info('Start packaging')
+    max_date = None
     if not os.path.exists(config.get('path')):
         os.makedirs(config.get('path'))
     if args.dates:
         datestart, datefinish = parse_dates(args.dates)
-        tenders = [t['value'] for t in _tenders.db.view('tenders/byDateModified', startkey=datestart, endkey=datefinish)]
-        dump_package(tenders, config)
+        tenders = [t['value'] for t in _tenders.db.view('tenders/byDateModified',
+                                                        startkey=datestart,
+                                                        endkey=datefinish)]
+        max_date = dump_package(tenders, config)
     else:
         count = 0
-        total = int(args.number) if args.number else 2048
+        total = int(args.number) if args.number else 4096
         tenders = []
         gen_pprinted = True
         for tender in _tenders:
             tenders.append(tender)
             count += 1
             if count == 24 and gen_pprinted:
-                dump_package(tenders, config, pprint=True)
+                date = dump_package(tenders, config, pprint=True)
+                if max_date is None or max_date < date:
+                    max_date = date
+
                 Logger.info('dumping pprint {} packages'.format(len(tenders)))
                 gen_pprinted = False
             if count == total:
                 Logger.info('dumping {} packages'.format(len(tenders)))
-                dump_package(tenders, config, pack_num)
+                date = dump_package(tenders, config, pack_num)
+                if max_date is None or max_date < date:
+                    max_date = date
                 pack_num += 1
                 count = 0
                 tenders = []
+    date = max_date.split('T')[0]
+    Logger.fatal(date)
     make_zip('releases.zip', config.get('path'))
     create_html(config.get('path'))
     if args.s3:
-        put_to_s3(config.get('path'), get_max_date(config.get('path')))
-    update_index(get_max_date(config.get('path')))
+        put_to_s3(config.get('path'), date)
+    update_index(date)
