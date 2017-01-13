@@ -55,11 +55,11 @@ def dump_package(tenders, config, pack_num=None, pprint=None):
         Logger.info('Error: {}'.format(e))
         return
     if pprint:
-        path = os.path.join(config['path'], 'pretty_printed_release.json')
+        path = os.path.join(config['path'], 'example.json')
         with open(path, 'w') as outfile:
             dump(package, outfile, indent=4)
     else:
-        path = os.path.join(config['path'], 'release-000000{}.json'.format(pack_num))
+        path = os.path.join(config['path'], 'release-{0:07d}.json'.format(pack_num))
         with open(path, 'w') as outfile:
             dump(package, outfile)
 
@@ -137,9 +137,8 @@ def run():
                 pack_num += 1
                 count = 0
                 tenders = []
-        if tenders:
-            Logger.info('dumping {} packages'.format(len(tenders)))
-            dump_package(tenders, config)
+    shutil.make_archive('releases', 'zip', config.get('path'))
+    shutil.move('releases.zip', 'var/releases/releases.zip')
     create_html(config.get('path'))
     shutil.make_archive('releases_archived', 'zip', 'patches')
     if args.s3:
