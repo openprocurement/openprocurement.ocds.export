@@ -86,12 +86,22 @@ def put_to_s3(path, time):
 
 
 def create_html(path):
+    lines = ['<html>\n', "<head></head>\n", "<body>\n", "<ol>\n"]
+    blacklist = ['example.json', 'index.html', 'releases.zip']
+    for file in os.listdir(path):
+        source_size = (os.stat('var/releases/' + file).st_size) / 1000000
+        if all(_ not in file for _ in blacklist):
+            link = "<li><a href='{}'>{}({}MB)</a></li>\n".format(file, file, source_size)
+            lines.append(link)
+        elif 'releases.zip' in file:
+            link = "<p><a href='{}'>{}({}MB)</a>      <a href='{}?torrent'>.torrent</a></p>\n".format(file, file, source_size, file)
+            lines.insert(lines.index("<body>\n"), link)
+        elif 'example.json' in file:
+            link = "<p><a href='{}'>{}</a></p>\n".format(file, file)
+            lines.insert(lines.index("<body>\n"), link)
+    lines.append("</ol></body>\n</html>")
     with open(path + '/' + 'index.html', 'w') as stream:
-        stream.write("<html>\n<head></head>\n<body>\n<ol>\n")
-        for file in os.listdir(path):
-            link = "<li><a href='{}'>{}</a></li>\n".format(file, file)
-            stream.write(link)
-        stream.write("</ol></body>\n</html>")
+        stream.write(''.join(lines))
 
 
 def update_index(time):
