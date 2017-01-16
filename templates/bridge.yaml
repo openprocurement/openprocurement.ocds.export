@@ -21,6 +21,7 @@ release:
 
 
 path: ${options['path_for_release']}
+bucket: ${options['bucket']}
 
 logging:
     version: 1

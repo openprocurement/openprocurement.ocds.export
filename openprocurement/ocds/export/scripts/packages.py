@@ -9,6 +9,7 @@ import math
 import zipfile
 from logging.config import dictConfig
 from simplejson import dump, load
+from jinja2 import Environment, PackageLoader
 from openprocurement.ocds.export.helpers import mode_test
 from openprocurement.ocds.export.storage import TendersStorage
 from openprocurement.ocds.export.models import package_tenders
@@ -20,6 +21,7 @@ from filechunkio import FileChunkIO
 
 URI = 'https://fake-url/tenders-{}'.format(uuid4().hex)
 Logger = logging.getLogger(__name__)
+ENV =  Environment(loader=PackageLoader('openprocurement.ocds.export', 'templates'))
 try:
     CONN = connect_to_region(
                 'eu-west-1',
@@ -102,23 +104,25 @@ def put_to_s3(path, time):
             key.set_contents_from_filename(file_path)
 
 
-def create_html(path):
-    lines = ['<html>\n', "<head></head>\n", "<body>\n", "<ol>\n"]
-    blacklist = ['example.json', 'index.html', 'releases.zip']
-    for file in os.listdir(path):
-        source_size = (os.stat('var/releases/' + file).st_size) / 1000000
-        if all(_ not in file for _ in blacklist):
-            link = "<li><a href='{}'>{}({}MB)</a></li>\n".format(file, file, source_size)
-            lines.append(link)
-        elif 'releases.zip' in file:
-            link = "<p><a href='{}'>{}({}MB)</a>      <a href='{}?torrent'>.torrent</a></p>\n".format(file, file, source_size, file)
-            lines.insert(lines.index("<body>\n"), link)
-        elif 'example.json' in file:
-            link = "<p><a href='{}'>{}</a></p>\n".format(file, file)
-            lines.insert(lines.index("<body>\n"), link)
-    lines.append("</ol></body>\n</html>")
-    with open(path + '/' + 'index.html', 'w') as stream:
-        stream.write(''.join(lines))
+def file_size(path, name):
+    return (os.stat(os.path.join(path, name)).st_size) / 1000000
+
+def get_torrent_link(bucket, path):
+    return 'https://s3-eu-west-1.amazonaws.com/{}/{}/releases.zip?torrent'.format(bucket, path)
+
+def create_html(path, config, date):
+    template = ENV.get_template('index.html')
+    links = []
+    for file in [f for f in os.listdir(path) if
+                 f not in ['example.json', 'index.html', 'releases.zip']]:
+        link = {}
+        link['size'] = file_size(path, file) 
+        link['link'] = file
+        links.append(link)
+    torrent_link = get_torrent_link(config.get('bucket'), 'merged_{}'.format(date))
+    zip_size = file_size(path, 'releases.zip')
+    with open(os.path.join(path, 'index.html'), 'w') as stream:
+        stream.write(template.render(dict(zip_size=zip_size, torrent_link=torrent_link, links=links)))
 
 
 def update_index(time):
@@ -174,7 +178,7 @@ def run():
     date = max_date.split('T')[0]
     Logger.fatal(date)
     make_zip('releases.zip', config.get('path'))
-    create_html(config.get('path'))
+    create_html(config.get('path'), config, date)
     if args.s3:
         put_to_s3(config.get('path'), date)
     update_index(date)

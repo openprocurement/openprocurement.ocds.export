@@ -20,7 +20,9 @@ install_requires = [
     'gevent',
     'PyYaml',
     'boto',
-    'filechunkio'
+    'filechunkio',
+    'ujson',
+    'Jinja2'
 ]
 
 test_requires = [
