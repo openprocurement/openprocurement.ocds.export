@@ -30,8 +30,10 @@ try:
                 calling_format=OrdinaryCallingFormat()
                 )
     BUCKET = CONN.get_bucket('ocds.prozorro.openprocurement.io')
+    connected = True
 except S3ResponseError as e:
     Logger.warn('Unable to connect to s3. Error: {}'.format(e))
+    connected = False
 
 
 def read_config(path):
@@ -47,7 +49,6 @@ def parse_args():
     parser.add_argument('-d', action='append', dest='dates', default=[], help='Start-end dates to generate package')
     parser.add_argument('-n', '--number')
     parser.add_argument('-s3', action='store_true', help="Choose to start uploading to aws s3", default=False)
-    parser.add_argument('-p', '--pretty', action='store_true', default=False, help='Create pretty printed release')
     return parser.parse_args()
 
 
@@ -178,9 +179,8 @@ def run():
                 count = 0
                 tenders = []
     date = max_date.split('T')[0]
-    Logger.fatal(date)
     make_zip('releases.zip', config.get('path'))
     create_html(config.get('path'), config, date)
-    if args.s3:
+    if args.s3 and connected:
         put_to_s3(config.get('path'), date)
-    update_index(date)
+        update_index(date)
