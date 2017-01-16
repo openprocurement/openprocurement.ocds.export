@@ -158,6 +158,8 @@ def run():
         tenders = []
         gen_pprinted = True
         for tender in _tenders:
+            if mode_test(tender):
+                continue
             tenders.append(tender)
             count += 1
             if count == 24 and gen_pprinted:
