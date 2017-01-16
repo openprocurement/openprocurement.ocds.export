@@ -30,7 +30,9 @@ _releases_tag = ViewDefinition('releases', 'tag',
 _tenders_all = ViewDefinition('tenders', 'all', 
     map_fun="""function(doc) { 
                     if(doc.status.indexOf('draft') !== -1) {return;}; 
-                    emit(doc._id, doc); 
+                    if(doc.status.indexOf('terminated') !== -1) {return;}; 
+                    if(('doc_type' in doc) && (doc.doc_type !== 'Tender')) {return;}
+                    emit(doc._id, null); 
     }"""
 )
 _tenders_date_modified = ViewDefinition('tenders', 'by_dateModified', 
@@ -57,8 +59,8 @@ class TendersStorage(Database):
         ViewDefinition.sync_many(self, [_tenders_all, _tenders_date_modified])
 
     def __iter__(self):
-        for item in self.iterview('tenders/all', 1000):
-            yield item['value']
+        for item in self.iterview('tenders/all', 1000, include_docs=True):
+            yield item.doc
 
 
 class ReleasesStorage(Database):
