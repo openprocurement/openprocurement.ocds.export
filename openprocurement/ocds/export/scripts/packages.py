@@ -7,6 +7,12 @@ import logging
 import shutil
 import math
 import zipfile
+import simplejson
+import couchdb.json
+import multiprocessing as mp
+import sys
+from functools import partial
+from itertools import izip_longest, count
 from logging.config import dictConfig
 from simplejson import dump, load
 from jinja2 import Environment, PackageLoader
@@ -19,6 +25,7 @@ from boto.s3.connection import OrdinaryCallingFormat, S3ResponseError
 from filechunkio import FileChunkIO
 
 
+couchdb.json.use('simplejson')
 URI = 'https://fake-url/tenders-{}'.format(uuid4().hex)
 Logger = logging.getLogger(__name__)
 ENV =  Environment(loader=PackageLoader('openprocurement.ocds.export', 'templates'))
@@ -64,22 +71,37 @@ def make_zip(name, base_dir, skip=[]):
 
 
 
-def dump_package(tenders, config, pack_num=None, pprint=None):
+def fetch_and_dump(conn, config, params):
+    nth, (start, end) = params
+    Logger.info('start {}th dump startdoc={} enddoc={}'.format(nth, start, end))
+    db = conn()
+    if not start and not end:
+        return
+    if end:
+        result = [r.doc for r in list(db.view('tenders/all',
+                                              startkey=start,
+                                              endkey=end,
+                                              include_docs=True)) if not mode_test(r.doc)]
+    else:
+        result = [r.doc for r in list(db.view('tenders/all',
+                                              startkey=start,
+                                              include_docs=True)) if not mode_test(r.doc)]
     try:
-        package = package_tenders(tenders, config.get('release'))
+        package = package_tenders(result, config.get('release'))
         date = max(map(lambda x: x.get('date', ''), package['releases']))
 
     except Exception as e:
         Logger.info('Error: {}'.format(e))
         return
-    if pprint:
-        path = os.path.join(config['path'], 'example.json')
-        with open(path, 'w') as outfile:
-            dump(package, outfile, indent=4)
-    else:
-        path = os.path.join(config['path'], 'release-{0:07d}.json'.format(pack_num))
-        with open(path, 'w') as outfile:
-            dump(package, outfile)
+    path = os.path.join(config['path'], 'release-{0:07d}.json'.format(nth))
+    if nth == 1:
+        pretty_package = package_tenders(result[:24], config.get('release'))
+        Logger.info('Dump example.json')
+        with open(os.path.join(config['path'], 'example.json'), 'w') as outfile:
+            dump(pretty_package, outfile, indent=4)
+    with open(path, 'w') as outfile:
+        dump(package, outfile)
+    Logger.info('end {}th dump startdoc={} enddoc={}'.format(nth, start, end))
     return date
 
 
@@ -138,6 +160,10 @@ def update_index(time):
     key.set_contents_from_filename('index.html')
 
 
+def fetch_ids(db, batch_count):
+    return [r['id'] for r in db.view('tenders/all')][::batch_count]
+
+
 def run():
     args = parse_args()
     config = read_config(args.config)
@@ -154,31 +180,15 @@ def run():
                                                         endkey=datefinish)]
         max_date = dump_package(tenders, config)
     else:
-        count = 0
         total = int(args.number) if args.number else 4096
-        tenders = []
-        gen_pprinted = True
-        for tender in _tenders:
-            if mode_test(tender):
-                continue
-            tenders.append(tender)
-            count += 1
-            if count == 24 and gen_pprinted:
-                date = dump_package(tenders, config, pprint=True)
-                if max_date is None or max_date < date:
-                    max_date = date
+        key_ids = fetch_ids(_tenders, total)
+        Logger.info('Fetched key doc ids')
+        pool = mp.Pool(mp.cpu_count())
+        get_db = lambda: TendersStorage(config['tenders_db']['url'], config['tenders_db']['name'])
+        _conn = partial(fetch_and_dump, get_db, config)
+        dates = pool.map(_conn, enumerate(izip_longest(key_ids, key_ids[1::], fillvalue=''), 1))
 
-                Logger.info('dumping pprint {} packages'.format(len(tenders)))
-                gen_pprinted = False
-            if count == total:
-                Logger.info('dumping {} packages'.format(len(tenders)))
-                date = dump_package(tenders, config, pack_num)
-                if max_date is None or max_date < date:
-                    max_date = date
-                pack_num += 1
-                count = 0
-                tenders = []
-    date = max_date.split('T')[0]
+    date = max(dates).split('T')[0]
     make_zip('releases.zip', config.get('path'))
     create_html(config.get('path'), config, date)
     if args.s3 and connected:
