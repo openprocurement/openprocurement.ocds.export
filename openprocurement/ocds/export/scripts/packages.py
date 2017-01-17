@@ -65,16 +65,16 @@ def parse_dates(dates):
 
 def make_zip(name, base_dir, skip=[]):
     skip.append(name)
-    with zipfile.ZipFile(os.path.join(base_dir, name), 'w', allowZip64=True) as zf:
+    with zipfile.ZipFile(os.path.join(base_dir, name), 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as zf:
         for f in [f for f in os.listdir(base_dir) if f not in skip]:
             zf.write(os.path.join(base_dir, f))
 
 
 
-def fetch_and_dump(conn, config, params):
+def fetch_and_dump(config, params):
     nth, (start, end) = params
     Logger.info('start {}th dump startdoc={} enddoc={}'.format(nth, start, end))
-    db = conn()
+    db = TendersStorage(config['tenders_db']['url'], config['tenders_db']['name'])
     if not start and not end:
         return
     if end:
@@ -184,8 +184,7 @@ def run():
         key_ids = fetch_ids(_tenders, total)
         Logger.info('Fetched key doc ids')
         pool = mp.Pool(mp.cpu_count())
-        get_db = lambda: TendersStorage(config['tenders_db']['url'], config['tenders_db']['name'])
-        _conn = partial(fetch_and_dump, get_db, config)
+        _conn = partial(fetch_and_dump, config)
         dates = pool.map(_conn, enumerate(izip_longest(key_ids, key_ids[1::], fillvalue=''), 1))
 
     date = max(dates).split('T')[0]
