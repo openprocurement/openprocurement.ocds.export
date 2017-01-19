@@ -32,7 +32,8 @@ _tenders_all = ViewDefinition('tenders', 'all',
                     if(doc.status.indexOf('draft') !== -1) {return;}; 
                     if(doc.status.indexOf('terminated') !== -1) {return;}; 
                     if(('doc_type' in doc) && (doc.doc_type !== 'Tender')) {return;}
-                    emit(doc._id, null); 
+                    if(doc.title.search("ТЕСТУВАННЯ") !== -1) {return;}
+                    emit(doc._id, null);
     }"""
 )
 _tenders_date_modified = ViewDefinition('tenders', 'by_dateModified', 

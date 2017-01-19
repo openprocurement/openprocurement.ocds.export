@@ -81,11 +81,11 @@ def fetch_and_dump(config, params):
         result = [r.doc for r in list(db.view('tenders/all',
                                               startkey=start,
                                               endkey=end,
-                                              include_docs=True)) if not mode_test(r.doc)]
+                                              include_docs=True))]
     else:
         result = [r.doc for r in list(db.view('tenders/all',
                                               startkey=start,
-                                              include_docs=True)) if not mode_test(r.doc)]
+                                              include_docs=True))]
     try:
         package = package_tenders(result, config.get('release'))
         date = max(map(lambda x: x.get('date', ''), package['releases']))
@@ -136,8 +136,8 @@ def get_torrent_link(bucket, path):
 def create_html(path, config, date):
     template = ENV.get_template('index.html')
     links = []
-    for file in [f for f in os.listdir(path) if
-                 f not in ['example.json', 'index.html', 'releases.zip']]:
+    for file in sorted([f for f in os.listdir(path) if
+                        f not in ['example.json', 'index.html', 'releases.zip']]):
         link = {}
         link['size'] = file_size(path, file) 
         link['link'] = file
@@ -167,7 +167,6 @@ def fetch_ids(db, batch_count):
 def run():
     args = parse_args()
     config = read_config(args.config)
-    pack_num = 1
     _tenders = TendersStorage(config['tenders_db']['url'], config['tenders_db']['name'])
     Logger.info('Start packaging')
     max_date = None
@@ -180,13 +179,12 @@ def run():
                                                         endkey=datefinish)]
         max_date = dump_package(tenders, config)
     else:
-        total = int(args.number) if args.number else 4096
+        total = int(args.number) if args.number else 4095
         key_ids = fetch_ids(_tenders, total)
         Logger.info('Fetched key doc ids')
         pool = mp.Pool(mp.cpu_count())
         _conn = partial(fetch_and_dump, config)
         dates = pool.map(_conn, enumerate(izip_longest(key_ids, key_ids[1::], fillvalue=''), 1))
-
     date = max(dates).split('T')[0]
     make_zip('releases.zip', config.get('path'))
     create_html(config.get('path'), config, date)
