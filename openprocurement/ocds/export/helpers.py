@@ -44,6 +44,9 @@ def tender_converter(tender):
         tender['_id'] = tender['id']
     awards = tender.get('awards')
     contracts = tender.get('contracts')
+    bids = tender.get('bids')
+    if bids:
+        tender['bids'] = convert_bids(bids)
     if 'items' in tender:
         tender['items'] = [convert_unit_and_location(item) for item in tender['items'] if 'items' in tender]
     if awards:
@@ -68,6 +71,19 @@ def convert_unit_and_location(item):
         if item['deliveryLocation']['latitude']:
             item['deliveryLocation']['coordinates'] = item['deliveryLocation'].values()
     return item
+
+
+def convert_bids(bids):
+    new = []
+    for bid in bids:
+        if 'lotValues' in bid:
+            for lotval in bid['lotValues']:
+                bid['relatedLot'] = lotval['relatedLot']
+                bid['value'] = lotval['value']
+                new.append(bid)
+        else:
+            new.append(bid)
+    return new
 
 
 def unique_tenderers(tenderers):

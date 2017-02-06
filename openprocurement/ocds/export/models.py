@@ -181,6 +181,18 @@ class Amendment(TenderModel):
     rationale = StringType()
 
 
+class Bid(TenderModel):
+
+    id = StringType()
+    date = StringType()
+    status = StringType()
+    tenderers = ListType(ModelType(Organization))
+    value = ModelType(Value)
+    documents = ListType(ModelType(Document))
+    relatedLot = StringType()
+    participationUrl = StringType()
+
+
 class Award(TenderModel, Converter):
     """See: http://standard.open-contracting.org/latest/en/schema/reference/#award"""
 
@@ -284,6 +296,7 @@ class Release(BaseModel):
     tender = ModelType(Tender)
     awards = ListType(ModelType(Award))
     contracts = ListType(ModelType(Contract))
+    bids = ListType(ModelType(Bid))
 
     @serializable(serialize_when_none=False)
     def buyer(self):
