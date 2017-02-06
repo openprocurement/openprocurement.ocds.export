@@ -57,6 +57,8 @@ def tender_converter(tender):
         for contract in contracts:
             if 'items' in contract:
                 contract['items'] = [convert_unit_and_location(item) for item in contract['items'] if 'items' in contract]
+    if 'cancellations' in tender:
+        tender = convert_cancellation(tender)
     return tender
 
 
@@ -84,6 +86,29 @@ def convert_bids(bids):
         else:
             new.append(bid)
     return new
+
+
+def convert_cancellation(tender):
+    for cancellation in tender['cancellations']:
+        if cancellation['cancellationOf'] == 'tender':
+            tender['pendingCancellation'] = True
+        if 'documents' in cancellation:
+            for document in cancellation['documents']:
+                document['documentType'] = 'tenderCancellation'
+                documents = tender.get('documents', [])
+                documents.append(document)
+            tender['documents'] = documents
+        elif cancellation['cancellationOf'] == 'lot':
+            for lot in tender['lots']:
+                if lot['id'] == cancellation['relatedLot']:
+                    lot['pendingCancellation'] = True
+            if 'documents' in cancellation:
+                for document in cancellation['documents']:
+                    document['documentType'] = 'lotCancellation'
+                    documents = tender.get('documents', [])
+                    documents.append(document)
+                tender['documents'] = documents
+    return tender
 
 
 def unique_tenderers(tenderers):

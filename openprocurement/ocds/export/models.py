@@ -11,7 +11,8 @@ from schematics.types import (
     StringType,
     DateTimeType,
     FloatType,
-    IntType
+    IntType,
+    BooleanType
 )
 from schematics.types.serializable import serializable
 from schematics.types.compound import ModelType, ListType, MultiType
@@ -167,6 +168,7 @@ class Lot(TenderModel, Converter):
     description = StringType()
     status = StringType()
     value = ModelType(Value)
+    pendingCancellation = BooleanType()
 
 
 class Change(TenderModel):
@@ -253,6 +255,7 @@ class Tender(TenderModel, Converter):
     amendment = ModelType(Amendment)
     lots = ListType(ModelType(Lot))
     tenderID = StringType()
+    pendingCancellation = BooleanType()
 
     @serializable(serialized_name='id')
     def tender_id(self):
