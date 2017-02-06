@@ -61,7 +61,14 @@ def tender_converter(tender):
                 contract['items'] = [convert_unit_and_location(item) for item in contract['items'] if 'items' in contract]
     if 'cancellations' in tender:
         tender = convert_cancellation(tender)
+    tender = convert_status(tender)
     tender['auctions'] = create_auction(tender)
+    return tender
+
+
+def convert_status(tender):
+    if '.' in tender['status']:
+        tender['currentStage'] = tender['status']
     return tender
 
 

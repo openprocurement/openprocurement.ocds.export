@@ -272,6 +272,8 @@ class Tender(TenderModel, Converter):
     tenderID = StringType()
     pendingCancellation = BooleanType()
     auctions = ListType(ModelType(Auction))
+    currentStage = StringType()
+    procurementMethodType = StringType()
 
     @serializable(serialized_name='id')
     def tender_id(self):
