@@ -84,6 +84,8 @@ class Document(TenderModel):
     dateModified = StringType()
     format = StringType()
     language = StringType()
+    relatedItem = StringType()
+    documentOf = StringType(serialized_name='documentScope')
 
 
 class Classification(TenderModel):
@@ -236,6 +238,9 @@ class Contract(TenderModel, Converter):
     dateSigned = StringType()
     documents = ListType(ModelType(Document))
     amendment = ModelType(Amendment)
+    contractID = StringType()
+    contractNumber = StringType()
+    suppliers = ListType(ModelType(Organization))
 
 
 class Tender(TenderModel, Converter):
