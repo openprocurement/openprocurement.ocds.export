@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import yaml
 import itertools
 import simplejson as json
 import jsonpatch as jpatch
@@ -23,6 +23,7 @@ def now():
     # uri = StringType()
     return parse_date(datetime.now().isoformat()).isoformat()
 
+
 def generate_uri():
     return 'https://fake-url/tenders-{}'.format(uuid4().hex)
 
@@ -32,25 +33,41 @@ def get_ocid(prefix, tenderID):
     return "{}-{}".format(prefix, tenderID)
 
 
+def read_unit():
+    with open('/data/dimon.obert/ocds/openprocurement.ocds.export/var/unit_codes/en.yaml', 'r') as stream:
+        return yaml.load(stream)
+
+
 def tender_converter(tender):
     """ converts raw openprocurement data into acceptable by OCDS standard """
-    if 'bids' in tender:
-        tender['tenderers'] = list(itertools.chain.from_iterable(
-            map(lambda b: b.get('tenderers', ''), tender['bids'])))
-
-        del tender['numberOfBids']
-        del tender['bids']
-    elif 'tenderers' not in tender:
-        tender['tenderers'] = []
-    tender['tenderers'] = unique_tenderers(tender['tenderers'])
     if 'id' in tender:
         tender['_id'] = tender['id']
-        del tender['id']
-
-    if 'minimalStep' in tender:
-        tender['minValue'] = tender['minimalStep']
-        del tender['minimalStep']
+    awards = tender.get('awards')
+    contracts = tender.get('contracts')
+    if 'items' in tender:
+        tender['items'] = [convert_unit_and_location(item) for item in tender['items'] if 'items' in tender]
+    if awards:
+        for award in awards:
+            if 'items' in award:
+                award['items'] = [convert_unit_and_location(item) for item in award['items'] if 'items' in award]
+    if contracts:
+        for contract in contracts:
+            if 'items' in contract:
+                contract['items'] = [convert_unit_and_location(item) for item in contract['items'] if 'items' in contract]
     return tender
+
+
+def convert_unit_and_location(item):
+    try:
+        unit_code = item['unit']['code']
+        item['unit'] = read_unit()[unit_code]
+        item['unit']['code'] = unit_code
+    except KeyError:
+        pass
+    if 'deliveryLocation' in item:
+        if item['deliveryLocation']['latitude']:
+            item['deliveryLocation']['coordinates'] = item['deliveryLocation'].values()
+    return item
 
 
 def unique_tenderers(tenderers):

@@ -11,10 +11,10 @@ from schematics.types import (
     StringType,
     DateTimeType,
     FloatType,
-    IntType,
+    IntType
 )
 from schematics.types.serializable import serializable
-from schematics.types.compound import ModelType, ListType, MultiType 
+from schematics.types.compound import ModelType, ListType, MultiType
 from schematics.transforms import convert, blacklist
 from openprocurement.ocds.export.helpers import (
     tender_converter,
@@ -110,6 +110,9 @@ class Unit(TenderModel):
 
     name = StringType()
     value = ModelType(Value)
+    code = StringType(serialized_name='id')
+    symbol = StringType()
+    scheme = StringType(default="UNCEFACT")
 
 
 class Address(TenderModel):
@@ -138,6 +141,11 @@ class Organization(TenderModel):
     contactPoint = ModelType(Contact)
 
 
+class Location(TenderModel):
+
+    coordinates = ListType(StringType())
+
+
 class Item(TenderModel):
 
     id = StringType()
@@ -146,6 +154,9 @@ class Item(TenderModel):
     additionalClassifications = ListType(ModelType(Classification))
     quantity = IntType()
     unit = ModelType(Unit)
+    deliveryAddress = ModelType(Address)
+    deliveryDate = ModelType(Period)
+    deliveryLocation = ModelType(Location)
 
 
 class Change(TenderModel):
