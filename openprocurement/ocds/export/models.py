@@ -157,6 +157,16 @@ class Item(TenderModel):
     deliveryAddress = ModelType(Address)
     deliveryDate = ModelType(Period)
     deliveryLocation = ModelType(Location)
+    relatedLot = StringType()
+
+
+class Lot(TenderModel, Converter):
+
+    id = StringType()
+    title = StringType()
+    description = StringType()
+    status = StringType()
+    value = ModelType(Value)
 
 
 class Change(TenderModel):
@@ -185,6 +195,7 @@ class Award(TenderModel, Converter):
     contractPeriod = ModelType(Period)
     documents = ListType(ModelType(Document))
     amendment = ModelType(Amendment)
+    lotID = StringType()
 
 
 class Contract(TenderModel, Converter):
@@ -228,6 +239,8 @@ class Tender(TenderModel, Converter):
     procuringEntity = ModelType(Organization)
     documents = ListType(ModelType(Document))
     amendment = ModelType(Amendment)
+    lots = ListType(ModelType(Lot))
+    tenderID = StringType()
 
     @serializable(serialized_name='id')
     def tender_id(self):
