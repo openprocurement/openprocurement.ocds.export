@@ -42,6 +42,8 @@ def tender_converter(tender):
     """ converts raw openprocurement data into acceptable by OCDS standard """
     if 'id' in tender:
         tender['_id'] = tender['id']
+    if 'auctions' in tender or not tender:
+        return tender
     awards = tender.get('awards')
     contracts = tender.get('contracts')
     bids = tender.get('bids')
@@ -59,7 +61,27 @@ def tender_converter(tender):
                 contract['items'] = [convert_unit_and_location(item) for item in contract['items'] if 'items' in contract]
     if 'cancellations' in tender:
         tender = convert_cancellation(tender)
+    tender['auctions'] = create_auction(tender)
     return tender
+
+
+def create_auction(tender):
+    auctions = []
+    auction = {}
+    fields = ['auctionUrl', 'minimalStep', 'auctionPeriod']
+    lots = tender.get('lots', [])
+    for lot in lots:
+        auction = {field: lot.get(field) for field in fields}
+        auction['relatedLot'] = lot['id']
+        auction['auctionOf'] = 'lot'
+        auctions.append(auction)
+        auction = {}
+    auction = {field: tender.get(field) for field in fields}
+    if any(auction.values()):
+        auction['auctionOf'] = 'tender'
+        auctions.append(auction)
+        return auctions
+    return auctions
 
 
 def convert_unit_and_location(item):

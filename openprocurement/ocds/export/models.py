@@ -195,6 +195,16 @@ class Bid(TenderModel):
     participationUrl = StringType()
 
 
+class Auction(TenderModel):
+
+    auctionOf = StringType()
+    auctionUrl = StringType()
+    minimalStep = ModelType(Value)
+    relatedLot = StringType()
+    participationUrl = Url()
+    auctionPeriod = ModelType(Period)
+
+
 class Award(TenderModel, Converter):
     """See: http://standard.open-contracting.org/latest/en/schema/reference/#award"""
 
@@ -256,6 +266,7 @@ class Tender(TenderModel, Converter):
     lots = ListType(ModelType(Lot))
     tenderID = StringType()
     pendingCancellation = BooleanType()
+    auctions = ListType(ModelType(Auction))
 
     @serializable(serialized_name='id')
     def tender_id(self):
