@@ -63,6 +63,8 @@ def tender_converter(tender):
         tender = convert_cancellation(tender)
     tender = convert_status(tender)
     tender['auctions'] = create_auction(tender)
+    if 'questions' in tender:
+        tender['enquiries'] = convert_questions(tender['questions'])
     return tender
 
 
@@ -80,12 +82,10 @@ def create_auction(tender):
     for lot in lots:
         auction = {field: lot.get(field) for field in fields}
         auction['relatedLot'] = lot['id']
-        auction['auctionOf'] = 'lot'
         auctions.append(auction)
         auction = {}
     auction = {field: tender.get(field) for field in fields}
     if any(auction.values()):
-        auction['auctionOf'] = 'tender'
         auctions.append(auction)
         return auctions
     return auctions
@@ -138,6 +138,14 @@ def convert_cancellation(tender):
                     documents.append(document)
                 tender['documents'] = documents
     return tender
+
+
+def convert_questions(questions):
+    for question in questions:
+        if question['questionOf'] == 'lot':
+            question['relatedLot'] = question['relatedItem']
+            del question['relatedItem']
+    return questions
 
 
 def unique_tenderers(tenderers):

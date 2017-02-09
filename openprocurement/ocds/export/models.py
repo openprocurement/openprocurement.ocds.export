@@ -107,6 +107,7 @@ class Value(TenderModel):
 
     amount = FloatType()
     currency = StringType()
+    valueAddedTaxIncluded = BooleanType()
 
 
 class Unit(TenderModel):
@@ -163,6 +164,19 @@ class Item(TenderModel):
     relatedLot = StringType()
 
 
+class Enquiry(TenderModel):
+
+    id = StringType()
+    date = StringType()
+    author = ModelType(Organization)
+    title = StringType()
+    description = StringType()
+    answer = StringType()
+    dateAnswered = StringType()
+    relatedItem = StringType()
+    relatedLot = StringType()
+
+
 class Lot(TenderModel, Converter):
 
     id = StringType()
@@ -200,11 +214,10 @@ class Bid(TenderModel):
 class Auction(TenderModel):
 
     auctionOf = StringType()
-    auctionUrl = StringType()
+    auctionUrl = StringType(serialized_name='url')
     minimalStep = ModelType(Value)
     relatedLot = StringType()
-    participationUrl = Url()
-    auctionPeriod = ModelType(Period)
+    auctionPeriod = ModelType(Period, serialized_name='period')
 
 
 class Award(TenderModel, Converter):
@@ -274,6 +287,7 @@ class Tender(TenderModel, Converter):
     auctions = ListType(ModelType(Auction))
     currentStage = StringType()
     procurementMethodType = StringType()
+    enquiries = ListType(ModelType(Enquiry))
 
     @serializable(serialized_name='id')
     def tender_id(self):
