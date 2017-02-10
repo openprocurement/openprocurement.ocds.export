@@ -1,8 +1,8 @@
+# -*- coding: utf-8 -*-
 import itertools
 from couchdb import Database, http
 from uuid import uuid4
 from couchdb.design import ViewDefinition
-from openprocurement.ocds.export.models import Release, ReleasePackage, get_ocid, Tender
 from couchdb_schematics.document import Document
 
 

@@ -5,17 +5,7 @@ from couchdb import Database
 from uuid import uuid4
 from urllib import quote
 from urlparse import urlparse, urlunparse
-from schematics.models import Model
-from schematics.types import (
-    BaseType,
-    StringType,
-    DateTimeType,
-    FloatType,
-    IntType,
-)
-from schematics.types.serializable import serializable
-from schematics.types.compound import ModelType, ListType, MultiType 
-from schematics.transforms import convert, blacklist
+from itertools import chain
 from openprocurement.ocds.export.helpers import (
     tender_converter,
     unique_tenderers,
@@ -32,385 +22,283 @@ from couchdb_schematics.document import SchematicsDocument
 
 invalidsymbols = ["`","~","!", "@","#","$", '"']
 
-
-class BaseModel(Model):
-
-    class Options(object):
-        serialize_when_none = False
-        roles = {
-            'package': blacklist('_id')
-        }
-
-
-class TenderModel(BaseModel):
-
-    def convert(self, raw_data, strict=False, **kw):
-        if 'documents' in raw_data:
-            unique_documents(raw_data['documents'])
-        return convert(self.__class__, raw_data, strict=False, **kw)
+callbacks = {
+    'minimalStep': ('minValue', lambda raw_data: raw_data.get('minimalStep')),
+    'status': ('status', lambda raw_data: raw_data.get('status').split('.')[0]),
+    'bids': ('tenderers', lambda raw_data: list(chain.from_iterable([b.get('tenderers') for b in raw_data.get('bids')]))),
+    '_id': ('id', lambda raw_data: raw_data.get('_id')),
+    'awards': ('awards', lambda raw_data: raw_data.get('awards')),
+    'contracts': ('contracts', lambda raw_data: raw_data.get('contracts')),
+    'dateModified': ('date', lambda raw_data: raw_data.get('dateModified')),
+}
 
 
-class Status(BaseType):
-    """Only active status in standard"""
+class Model(object):
 
-    def to_native(self, value):
-        return value.split('.')[0]
+    __slots__ = ()
 
+    def __init__(self, raw_data):
+        if isinstance(raw_data, dict):
+            for key in raw_data:
+                if key in callbacks:
+                    self_key, func = callbacks[key]
+                    data = func(raw_data)
+                else:
+                    self_key = key
+                    data = raw_data.get(key)
+                if data:
+                    if self_key in self.__slots__ and self_key in modelsMap:
+                        klass, _type = modelsMap.get(self_key)
+                        if isinstance(_type, list):
+                            setattr(self, self_key, [klass(x) for x
+                                                     in data])
+                        else:
+                            setattr(self, self_key, klass(data))
+                    elif self_key in self.__slots__:
+                        setattr(self, self_key, data)
 
-class Url(BaseType):
-    """Fixes invalid urls in validator"""
-
-    def to_native(self, value, **kw):
-        return ''.join(c for c in value.encode('ascii','ignore') if c not in invalidsymbols)
-
-
-class Identifier(TenderModel):
-
-    scheme = StringType()
-    id = StringType()
-    legalName = StringType()
-    uri = Url()
-
-
-class Document(TenderModel):
-
-    id = StringType()
-    documentType = StringType()
-    title = StringType()
-    description = StringType()
-    url = Url()
-    datePublished = StringType()
-    dateModified = StringType()
-    format = StringType()
-    language = StringType()
-
-
-class Classification(TenderModel):
-
-    scheme = StringType()
-    id = StringType()
-    description = StringType()
-    # uri = StringType()
-    uri = Url()
+    def __export__(self):
+        data = {}
+        for k in [f for f in dir(self) if not f.startswith('__')]:
+            attr = hasattr(self, k) and getattr(self, k)
+            if attr:
+                if isinstance(attr, Model):
+                    data[k] = attr.__export__()
+                elif isinstance(attr, (tuple, list)):
+                    data[k] = [x.__export__() for x in attr]
+                else:
+                    data[k] = attr
+        return data
 
 
-class Period(TenderModel):
+class Document(Model):
 
-    startDate = StringType()
-    endDate = StringType()
-
-
-class Value(TenderModel):
-
-    amount = FloatType()
-    currency = StringType()
-
-
-class Unit(TenderModel):
-
-    name = StringType()
-    value = ModelType(Value)
+    __slots__ = (
+        'id',
+        'documentType',
+        'title',
+        'description',
+        'url',
+        'datePublised',
+        'dateModified',
+        'format',
+        'language'
+    )
 
 
-class Address(TenderModel):
+class Classification(Model):
 
-    streetAddress = StringType()
-    locality = StringType()
-    postalCode = StringType()
-    countryName = StringType()
-
-
-class Contact(TenderModel):
-
-    name = StringType()
-    email = StringType()
-    telephone = StringType()
-    faxNumber = StringType()
-    url = Url()
+    __slots__ = (
+        'scheme',
+        'id',
+        'description',
+        'uri'
+    )
 
 
-class Organization(TenderModel):
+class Contact(Model):
 
-    identifier = ModelType(Identifier)
-    additionalIdentifiers = ListType(ModelType(Identifier))
-    name = StringType()
-    address = ModelType(Address)
-    contactPoint = ModelType(Contact)
-
-
-class Item(TenderModel):
-
-    id = StringType()
-    description = StringType()
-    classification = ModelType(Classification)
-    additionalClassifications = ListType(ModelType(Classification))
-    quantity = IntType()
-    unit = ModelType(Unit)
+    __slots__ = (
+        'name',
+        'email',
+        'telephone',
+        'faxNumber',
+        'url'
+    )
 
 
-class Change(TenderModel):
-    property = StringType()
-    former_value = BaseType()
+class Unit(Model):
+
+    __slots__ = (
+        'name',
+        'value'
+    )
 
 
-class Amendment(TenderModel):
+class Period(Model):
 
-    date = StringType(default=now)
-    changes = ListType(ModelType(Change))
-    rationale = StringType()
-
-
-class Award(TenderModel, Converter):
-    """See: http://standard.open-contracting.org/latest/en/schema/reference/#award"""
-
-    id = StringType()
-    title = StringType()
-    description = StringType()
-    status = StringType(choices=['pending', 'active', 'unsuccessful', 'cancelled'])
-    date = StringType()
-    value = ModelType(Value)
-    suppliers = ListType(ModelType(Organization))
-    items = ListType(ModelType(Item))
-    contractPeriod = ModelType(Period)
-    documents = ListType(ModelType(Document))
-    amendment = ModelType(Amendment)
+    __slots__ = (
+        'startDate',
+        'endDate'
+    )
 
 
-class Contract(TenderModel, Converter):
-    """See: http://standard.open-contracting.org/latest/en/schema/reference/#contract"""
+class Identifier(Model):
 
-    id = StringType()
-    awardID = StringType()
-    title = StringType()
-    description = StringType()
-    status = StringType(choices=['pending', 'active', 'cancelled', 'terminated'])
-    period = ModelType(Period)
-    value = ModelType(Value)
-    items = ListType(ModelType(Item))
-    dateSigned = StringType()
-    documents = ListType(ModelType(Document))
-    amendment = ModelType(Amendment)
+    __slots__ = (
+        'scheme',
+        'id',
+        'legalName',
+        'uri'
+    )
 
 
-class Tender(TenderModel, Converter):
-    """See: http://standard.open-contracting.org/latest/en/schema/reference/#tender"""
+class Value(Model):
 
-    _id = StringType()
-    title = StringType()
-    description = StringType()
-    status = Status()
-    items = ListType(ModelType(Item))
-    minValue = ModelType(Item)
-    value = ModelType(Value)
-    procurementMethod = StringType()
-    procurementMethodRationale = StringType()
-    awardCriteria = StringType()
-    awardCriteriaDetails = StringType()
-    submissionMethod = ListType(StringType)
-    submissionMethodDetails = StringType()
-    tenderPeriod = ModelType(Period)
-    enquiryPeriod = ModelType(Period)
-    hasEnquiries = StringType()
-    eligibilityCriteria = StringType()
-    awardPeriod = ModelType(Period)
-    tenderers = ListType(ModelType(Organization))
-    procuringEntity = ModelType(Organization)
-    documents = ListType(ModelType(Document))
-    amendment = ModelType(Amendment)
+    __slots__ = (
+        'amount',
+        'currency'
+    )
 
-    @serializable(serialized_name='id')
-    def tender_id(self):
-        return self._id
 
-    @serializable
+class Address(Model):
+
+    __slots__ = (
+        'streetAddress',
+        'locality',
+        'postalCode',
+        'countryName',
+    )
+
+
+class Item(Model):
+
+    __slots__ = (
+        'id',
+        'description',
+        'classification',
+        'additionalClassifications',
+        'quantity',
+        'unit'
+    )
+
+
+class Organization(Model):
+
+    __slots__ = (
+        'identifier',
+        'additionalIdentifiers',
+        'name',
+        'address',
+        'contactPoint'
+    )
+
+
+class Award(Model):
+
+    __slots__ = (
+        'id',
+        'title',
+        'description',
+        'status',
+        'date',
+        'value',
+        'suppliers',
+        'items',
+        'contractPeriod',
+        'documents',
+    )
+
+class Contract(Model):
+
+    __slots__ = (
+        'id',
+        'awardID',
+        'title',
+        'description',
+        'status',
+        'period',
+        'value',
+        'items',
+        'dateSigned',
+        'documents',
+
+    )
+
+
+class Tender(Model):
+
+    __slots__ = (
+        'id',
+        'title',
+        'description',
+        'status',
+        'items',
+        'minValue',
+        'value',
+        'procurementMethod',
+        'procurementMethodRationale',
+        'awardCriteria',
+        'awardCriteriaDetails',
+        'submissionMethod',
+        'submissionMethodDetails',
+        'tenderPeriod',
+        'enquiryPeriod',
+        'hasEnquiries',
+        'eligibilityCriteria',
+        'awardPeriod',
+        'tenderers',
+        'procuringEntity',
+        'documents',
+    )
+
+    @property
     def numberOfTenderers(self):
-        return len(self.tenderers) if self.tenderers else 0
-
-    @classmethod
-    def _convert(cls, raw_data):
-        return cls(raw_data).serialize()
-
-    def convert(self, raw_data, **kw):
-        return super(Tender, self).convert(tender_converter(raw_data), **kw)
+        return len(self.tenderers)
 
 
-class Publisher(BaseModel):
-    name = StringType()
+class Release(Model):
 
+    __slots__ = (
+        'id',
+        'date',
+        'ocid',
+        'language',
+        'initiationType',
+        'tender',
+        'awards',
+        'contracts',
+        'buyer',
+        'tag'
+    )
+    initiationType = 'tender'
+    language = 'uk'
 
-class Release(BaseModel):
-
-    class Options:
-        roles = {
-            'public': blacklist('procuringEntity'),
-            'package': blacklist('_id')
-        }
-
-    # required by standard
-    _id = StringType(default=lambda: uuid4().hex, required=True)
-    date = StringType(default=now, required=True)
-    ocid = StringType(required=True)
-    language = StringType(default='uk', required=True)
-
-    # Only one choice. See: http://standard.open-contracting.org/latest/en/schema/codelists/#initiation-type
-    initiationType = StringType(default='tender', choices=['tender'], required=True)
-
-    # exported from openprocurement.api data
-    procuringEntity = ModelType(Organization, serialized_name="buyer")
-    tender = ModelType(Tender)
-    awards = ListType(ModelType(Award))
-    contracts = ListType(ModelType(Contract))
-
-    @serializable(serialize_when_none=False)
-    def buyer(self):
-        return self.procuringEntity.to_native()
-
-    @serializable(serialize_when_none=False)
-    def tag(self):
-        tags = []
-        if self.tender:
-            tags.append('tender')
-            if hasattr(self.tender, 'amendment')\
-               and getattr(self.tender, 'amendment'):
-                tags.append('tenderUpdate')
-
-        for op in ['award', 'contract']:
-            field = '{}s'.format(op)
-            if getattr(self, field):
-                tags.append(op)
-                if any([hasattr(i, 'amendment') for i in getattr(self, field, [])
-                        if getattr(i, 'amendment')]):
-                    tags.append('{}Update'.format(op))
-        return tags
-
-    def convert(self, raw_data, **kw):
-        if all(f in raw_data for f in self._fields):
-            return convert(self.__class__, raw_data, **kw)
+    def __init__(self, raw_data, ocid='ocds-xxxx-'):
         data = {}
-        tender = raw_data.get('tender', raw_data)
-        if not isinstance(tender, dict):
-            tender = dict(tender)
-
-        for f in self._fields:
-            value = raw_data.get(f, '') or tender.get(f, '') 
-            if value:
-                data[f] = value
-        data['tender'] = tender
-        return convert(self.__class__, data, **kw)
-
-    @serializable(serialized_name='id')
-    def release_id(self):
-        return self._id
+        data['tender'] = raw_data
+        data['awards'] = raw_data.get('awards')
+        data['contracts'] = raw_data.get('contracts')
+        data['buyer'] = raw_data.get('procuringEntity')
+        data.update(dict(ocid=ocid + raw_data.get('tenderID'),
+                             id=uuid4().hex))
+        super(Release, self).__init__(data)
 
 
-class Record(BaseModel):
-    releases = ListType(ModelType(Release))
-
-    # @serializable
-    # def compiledRelease(self):
-    #     return get_compiled_release(self.releases)
-
-    @serializable
-    def ocid(self):
-        return self.releases[0].ocid
-
-
-class Package(BaseModel):
-
-    publishedDate = StringType(default=now, required=True)
-    publisher = ModelType(Publisher, required=True)
-    license = StringType()
-    _url = StringType(default=generate_uri)
-    _policy_url = StringType()
-
-    @serializable
-    def publicationPolicy(self):
-        return self._policy_url
-
-    @serializable
-    def uri(self):
-        return self._url
-
-
-class ReleasePackage(Package):
-    class Options:
-        roles = {
-            'package': blacklist('_url')
-        }
-    releases = ListType(ModelType(Release), required=True)
-
-
-class RecordPackage(Package):
-
-    records = ListType(ModelType(Record))
-
-
-class ReleaseDocument(SchematicsDocument, Release):
-
-    class Options:
-        roles = {
-            'package': blacklist('_id')
-        }
-
-
-def clean_up(data):
-    if 'amendment' in data:
-        del data['amendment']
-    return data
-
-
-def release_tenders(tenders, prefix):
-    """ returns list of Release object created from `tenders` with amendment info and ocid `prefix` """
-    prev_tender = next(tenders)
-    for tender in tenders:
-        data = {}
-        for field in ['tender', 'awards', 'contracts']:
-            model = getattr(Release, field).model_class
-            if field in tender:
-                collection_prev = prev_tender.get(field, [])
-                collection_new = tender.get(field, [])
-                collection = []
-                for a, b in itertools.izip_longest(collection_prev, collection_new, fillvalue={}):
-                    obj = model.fromDiff(clean_up(b), clean_up(a))
-                    if obj:
-                        collection.append(obj)
-                if collection:
-                    data[field] = collection
-            elif field == 'tender':
-                rel = model.fromDiff(clean_up(prev_tender), clean_up(tender))
-                if rel:
-                    data['tender'] = rel
-        if data:
-            data['ocid'] = get_ocid(prefix, tender['tenderID'])
-            data['_id'] = uuid4().hex
-            if data:
-                yield ReleaseDocument(data)
-        prev_tender = tender
-
+modelsMap = {
+    'documents': (Document, []),
+    'tender': (Tender, {}),
+    'tenderPeriod': (Period, {}),
+    'enquiryPeriod': (Period, {}),
+    'contractPeriod': (Period, {}),
+    'period': (Period, {}),
+    'awardPeriod': (Period, {}),
+    'tenderers': (Organization, []),
+    'suppliers': (Organization, []),
+    'procuringEntity': (Organization, {}),
+    'buyer': (Organization, {}),
+    'address': (Address, {}),
+    'value': (Value, {}),
+    'minValue': (Value, {}),
+    'items': (Item, []),
+    'identifier': (Identifier, {}),
+    'classification': (Classification, {}),
+    'unit': (Unit, {}),
+    'contactPoint': (Contact, {}),
+    'additionalIdentifiers': (Identifier, []),
+    'additionalClassifications': (Classification, []),
+    'awards': (Award, []),
+    'contracts': (Contract, [])
+}
 
 def release_tender(tender, prefix):
-    data = {}
-    for field in Release._fields:
-        if field in tender and isinstance(getattr(Release, field), MultiType):
-            vals = tender.get(field)
-            model = getattr(Release, field).model_class
-            if isinstance(vals, list):
-                data[field] = [model(v) for v in vals]
-            else:
-                data[field] = model(vals)
-        elif field == 'tender':
-            model = getattr(Release, field).model_class
-            data['tender'] = model(tender).serialize('package')
-    data['ocid'] = get_ocid(prefix, tender['tenderID'])
-    data['_id'] = uuid4().hex
-    data['date'] = tender.get('dateModified')
-    return ReleaseDocument(data).serialize('package')
+    release = Release(tender, prefix)
+    return release.__export__()
 
-
-def package_tenders(tenders, params):
-    data = {}
-    for field in ReleasePackage._fields:
-        if field in params:
-            data[field] = params.get(field, '')
-    data['releases'] = [release_tender(tender, params.get('prefix')) for tender in tenders]
-    return ReleasePackage(data).serialize('package')
+def package_tenders(tenders, config):
+    package = {}
+    package['releases'] = [Release(r).__export__() for r in tenders]
+    package['publishedDate'] = datetime.now().isoformat()
+    package['publisher'] = config.get('publisher')
+    package['license'] = 'https://creativecommons.org/publicdomain/zero/1.0/'
+    return package
