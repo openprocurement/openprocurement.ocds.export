@@ -1,33 +1,25 @@
 import jsonpatch
 import itertools
 from datetime import datetime
-from couchdb import Database
 from uuid import uuid4
-from urllib import quote
-from urlparse import urlparse, urlunparse
 from itertools import chain
 from openprocurement.ocds.export.helpers import (
-    tender_converter,
     unique_tenderers,
     unique_documents,
-    patch_converter,
+    award_converter,
     now,
-    generate_uri,
-    get_ocid
+    get_ocid,
+    build_package
 )
-from openprocurement.ocds.export.convert import Converter
-from couchdb.design import ViewDefinition
-from couchdb_schematics.document import SchematicsDocument
 
-
-invalidsymbols = ["`","~","!", "@","#","$", '"']
 
 callbacks = {
     'minimalStep': ('minValue', lambda raw_data: raw_data.get('minimalStep')),
     'status': ('status', lambda raw_data: raw_data.get('status').split('.')[0]),
-    'bids': ('tenderers', lambda raw_data: list(chain.from_iterable([b.get('tenderers') for b in raw_data.get('bids')]))),
+    'documents': ('documents', lambda raw_data: unique_documents(raw_data.get('documents'))),
+    'bids': ('tenderers', lambda raw_data: unique_tenderers(list(chain.from_iterable([b.get('tenderers') for b in raw_data.get('bids')])))),
     '_id': ('id', lambda raw_data: raw_data.get('_id')),
-    'awards': ('awards', lambda raw_data: raw_data.get('awards')),
+    'awards': ('awards', lambda raw_data: award_converte(raw_data)),
     'contracts': ('contracts', lambda raw_data: raw_data.get('contracts')),
     'dateModified': ('date', lambda raw_data: raw_data.get('dateModified')),
 }
@@ -291,14 +283,13 @@ modelsMap = {
     'contracts': (Contract, [])
 }
 
+
 def release_tender(tender, prefix):
     release = Release(tender, prefix)
     return release.__export__()
 
+
 def package_tenders(tenders, config):
-    package = {}
-    package['releases'] = [Release(r).__export__() for r in tenders]
-    package['publishedDate'] = datetime.now().isoformat()
-    package['publisher'] = config.get('publisher')
-    package['license'] = 'https://creativecommons.org/publicdomain/zero/1.0/'
+    package = build_package(config)
+    package['releases'] = [release_tender(t, config.get('prefix')) for t in tenders]
     return package

@@ -23,34 +23,18 @@ def now():
     # uri = StringType()
     return parse_date(datetime.now().isoformat()).isoformat()
 
-def generate_uri():
-    return 'https://fake-url/tenders-{}'.format(uuid4().hex)
-
 
 def get_ocid(prefix, tenderID):
     """greates unique contracting identifier"""
     return "{}-{}".format(prefix, tenderID)
 
-
-def tender_converter(tender):
-    """ converts raw openprocurement data into acceptable by OCDS standard """
-    if 'bids' in tender:
-        tender['tenderers'] = list(itertools.chain.from_iterable(
-            map(lambda b: b.get('tenderers', ''), tender['bids'])))
-
-        del tender['numberOfBids']
-        del tender['bids']
-    elif 'tenderers' not in tender:
-        tender['tenderers'] = []
-    tender['tenderers'] = unique_tenderers(tender['tenderers'])
-    if 'id' in tender:
-        tender['_id'] = tender['id']
-        del tender['id']
-
-    if 'minimalStep' in tender:
-        tender['minValue'] = tender['minimalStep']
-        del tender['minimalStep']
-    return tender
+def build_package(config):
+    package = {}
+    package['publishedDate'] = now()
+    for k in ['publisher', 'license', 'publicationPolicy']:
+        if k in config:
+            package[k] = config.get(k)
+    return package
 
 
 def unique_tenderers(tenderers):
@@ -68,11 +52,6 @@ def unique_documents(documents):
             d['id'] = d['id'] + '-{}'.format(index)
 
 
-def patch_converter(patch):
-    """creates OCDS Amendment dict"""
-    return [{'property': op['path'], 'former_value': op.get('value')} for op in patch]
-
-
 def award_converter(tender):
     if 'lots' in tender:
         for award in tender['awards']:
@@ -81,17 +60,8 @@ def award_converter(tender):
     else:
         for award in tender['awards']:
             award['items'] = tender['items']
-    return tender
+    return tender['awards']
 
-
-def encoder(obj):
-    if hasattr(obj, 'to_json'):
-        return obj.to_json()
-    return json.dumps(obj)
-
-
-def decoder(obj):
-    return json.loads(obj)
 
 
 def add_revisions(tenders):
@@ -150,7 +120,7 @@ def fetch_tender_versioned(client, src, dest):
 
             for _id in [i['id'] for i in feed]:
                 tenders = []
-                version, tender = client.get_tender(_id)
+                version, tender = client.get_tender(_id, version='10000')
                 tender['_id'] = tender['id']
                 tenders.append(tender)
                 logger.info('Got tender id={}, version={}'.format(tender['id'], version))
