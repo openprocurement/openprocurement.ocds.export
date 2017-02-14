@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import jsonpatch
-import gevent
 import logging
 import ocdsmerge
 import yaml
 import os
-from requests.exceptions import HTTPError
 from iso8601 import parse_date
 from datetime import datetime
 from collections import Counter
@@ -206,65 +204,6 @@ def get_start_point(forward, backward, cookie, queue,
     queue.put(filter(callback, r['data']))
     return forward_params, backward_params
 
-
-def fetch_tenders(client, src, dest):
-    logger.info('Starting downloading tenders')
-    while True:
-        for feed in src:
-            if not feed:
-                continue
-            logger.info('Uploading {} tenders'.format(len(feed)))
-            resp = client.fetch(feed)
-            if resp:
-                logger.info('fetched {} tenders'.format(len(resp)))
-                dest.put(resp)
-        gevent.sleep(0.5)
-
-
-def fetch_tender_versioned(client, src, dest):
-    logger.info('Starting downloading tender')
-    while True:
-        for feed in src:
-            if not feed:
-                gevent.sleep(0.5)
-                continue
-
-            for _id in [i['id'] for i in feed]:
-                tenders = []
-                version, tender = client.get_tender(_id, version='10000')
-                tender['_id'] = tender['id']
-                tenders.append(tender)
-                logger.info('Got tender id={}, version={}'.format(tender['id'], version))
-                try:
-                    while version and version not in ['1', '0']:
-                        version = str(int(version) - 1)
-                        logger.info('Getting prev version = {}'.format(version))
-                        version, tender = client.get_tender(_id, version)
-                        tenders.append(tender)
-                except HTTPError:
-                    logger.fatal("Falied to retreive tender id={} \n"
-                                 "version {}".format(tender['id'], version))
-                    continue
-                dest.put(tenders)
-
-
-def save_items(storage, src, dest):
-    def save(obj):
-        if hasattr(obj, 'store'):
-            obj.store(storage)
-        else:
-            storage.save(obj)
-
-    logger.info('Start saving')
-    while True:
-        for item in src:
-            if isinstance(item, list):
-                for obj in item:
-                    save(obj)
-                    logger.info('Saved doc {}'.format(obj['id']))
-            else:
-                save(item)
-                logger.info('Saved doc {}'.format(item['id']))
 
 
 def exists_or_modified(storage, doc):

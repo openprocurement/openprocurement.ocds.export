@@ -25,6 +25,7 @@ def retreiver(client, params, cookie, queue, _filter, name='forward'):
             logger.warn('{} queue is full, waiting'.format(name))
             while queue.full():
                 gevent.sleep(random.uniform(0, 2))
+            queue.put(filter(_filter, r['data']))
         gevent.sleep(random.uniform(0, 2) * 5)
         params['offset'] = r['next_page']['offset']
     logger.warn('{} finished'.format(name))
