@@ -54,14 +54,15 @@ def unique_documents(documents):
 
 def award_converter(tender):
     if 'lots' in tender:
-        for award in tender['awards']:
-            award['items'] = [item for item in tender['items']
-                              if item['relatedLot'] == award['lotID']]
+        for award in tender.get('awards', []):
+            award['items'] = [
+                item for item in tender.get('items')
+                if item.get('relatedLot') == award.get('lotID')
+            ]
     else:
-        for award in tender['awards']:
-            award['items'] = tender['items']
-    return tender['awards']
-
+        for award in tender.get('awards', []):
+            award['items'] = tender.get('items')
+    return tender.get('awards', [])
 
 
 def add_revisions(tenders):

@@ -14,14 +14,16 @@ from openprocurement.ocds.export.helpers import (
 
 
 callbacks = {
-    'minimalStep': ('minValue', lambda raw_data: raw_data.get('minimalStep')),
-    'status': ('status', lambda raw_data: raw_data.get('status').split('.')[0]),
-    'documents': ('documents', lambda raw_data: unique_documents(raw_data.get('documents'))),
-    'bids': ('tenderers', lambda raw_data: unique_tenderers(list(chain.from_iterable([b.get('tenderers') for b in raw_data.get('bids')])))),
-    '_id': ('id', lambda raw_data: raw_data.get('_id')),
-    'awards': ('awards', lambda raw_data: award_converte(raw_data)),
-    'contracts': ('contracts', lambda raw_data: raw_data.get('contracts')),
-    'dateModified': ('date', lambda raw_data: raw_data.get('dateModified')),
+    'minValue': lambda raw_data: raw_data.get('minimalStep'),
+    'status': lambda raw_data: raw_data.get('status').split('.')[0],
+    'documents': lambda raw_data: unique_documents(raw_data.get('documents')),
+    'tenderers': lambda raw_data: unique_tenderers(list(chain.from_iterable([b.get('tenderers') for b in raw_data.get('bids', [])]))),
+    'id': lambda raw_data: raw_data.get('_id') if '_id' in raw_data else raw_data.get('id'),
+    'awards': lambda raw_data: award_converter(raw_data),
+    'contracts': lambda raw_data: raw_data.get('contracts'),
+    'date': lambda raw_data: raw_data.get('dateModified'),
+    'tender': lambda raw_data: raw_data,
+    'buyer': lambda raw_data: raw_data.get('procuringEntity')
 }
 
 
@@ -30,24 +32,21 @@ class Model(object):
     __slots__ = ()
 
     def __init__(self, raw_data):
-        if isinstance(raw_data, dict):
-            for key in raw_data:
-                if key in callbacks:
-                    self_key, func = callbacks[key]
-                    data = func(raw_data)
+        for key in self.__slots__:
+            data = None
+            if key in callbacks:
+                data = callbacks[key](raw_data)
+            elif key in raw_data:
+                data = raw_data.get(key)
+            if data:
+                if key in modelsMap:
+                    klass, _type = modelsMap.get(key)
+                    if isinstance(_type, list):
+                        setattr(self, key, [klass(x) for x in data])
+                    else:
+                        setattr(self, key, klass(data))
                 else:
-                    self_key = key
-                    data = raw_data.get(key)
-                if data:
-                    if self_key in self.__slots__ and self_key in modelsMap:
-                        klass, _type = modelsMap.get(self_key)
-                        if isinstance(_type, list):
-                            setattr(self, self_key, [klass(x) for x
-                                                     in data])
-                        else:
-                            setattr(self, self_key, klass(data))
-                    elif self_key in self.__slots__:
-                        setattr(self, self_key, data)
+                    setattr(self, key, data)
 
     def __export__(self):
         data = {}
@@ -243,18 +242,13 @@ class Release(Model):
         'buyer',
         'tag'
     )
-    initiationType = 'tender'
-    language = 'uk'
-
+    
     def __init__(self, raw_data, ocid='ocds-xxxx-'):
-        data = {}
-        data['tender'] = raw_data
-        data['awards'] = raw_data.get('awards')
-        data['contracts'] = raw_data.get('contracts')
-        data['buyer'] = raw_data.get('procuringEntity')
-        data.update(dict(ocid=ocid + raw_data.get('tenderID'),
-                             id=uuid4().hex))
-        super(Release, self).__init__(data)
+        self.initiationType = 'tender'
+        self.language = 'uk'
+        super(Release, self).__init__(raw_data)
+        self.ocid = get_ocid(ocid, raw_data.get('tenderID'))
+        self.id = uuid4().hex
 
 
 modelsMap = {
