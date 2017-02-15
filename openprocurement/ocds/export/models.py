@@ -1,15 +1,13 @@
 import jsonpatch
-import itertools
-from datetime import datetime
 from uuid import uuid4
 from itertools import chain
 from openprocurement.ocds.export.helpers import (
     unique_tenderers,
     unique_documents,
     award_converter,
-    now,
     get_ocid,
-    build_package
+    build_package,
+    compile_releases
 )
 
 
@@ -17,7 +15,8 @@ callbacks = {
     'minValue': lambda raw_data: raw_data.get('minimalStep'),
     'status': lambda raw_data: raw_data.get('status').split('.')[0],
     'documents': lambda raw_data: unique_documents(raw_data.get('documents')),
-    'tenderers': lambda raw_data: unique_tenderers(list(chain.from_iterable([b.get('tenderers') for b in raw_data.get('bids', [])]))),
+    'tenderers': lambda raw_data: unique_tenderers(list(chain.from_iterable(
+        [b.get('tenderers') for b in raw_data.get('bids', [])]))),
     'id': lambda raw_data: raw_data.get('_id') if '_id' in raw_data else raw_data.get('id'),
     'awards': lambda raw_data: award_converter(raw_data),
     'contracts': lambda raw_data: raw_data.get('contracts'),
@@ -180,6 +179,7 @@ class Award(Model):
         'documents',
     )
 
+
 class Contract(Model):
 
     __slots__ = (
@@ -242,7 +242,7 @@ class Release(Model):
         'buyer',
         'tag'
     )
-    
+
     def __init__(self, raw_data, ocid='ocds-xxxx-'):
         self.initiationType = 'tender'
         self.language = 'uk'
@@ -283,7 +283,55 @@ def release_tender(tender, prefix):
     return release.__export__()
 
 
+def release_tenders(tender, prefix):
+
+    def prepare_first_tags(release):
+        tag = ['tender']
+        for f in ['awards', 'contracts']:
+            if f in release:
+                tag.append(f[:-1])
+        return set(tag)
+
+    assert 'patches' in tender
+    patches = tender.pop('patches')
+
+    first_release = Release(tender).__export__()
+    first_release['tag'] = prepare_first_tags(first_release)
+    releases = [first_release]
+    for patch in patches:
+        tender = jsonpatch.apply_patch(tender, patch)
+        next_release = Release(tender).__export__()
+        if first_release != next_release:
+            diff = jsonpatch.make_patch(first_release, next_release).patch
+            tag = []
+            for op in diff:
+                if op['op'] != 'add':
+                    if not any(p in op['path'] for p in ['awards', 'contracts']):
+                        tag.append('tenderUpdate')
+                    else:
+                        for p in ['awards', 'contracts']:
+                            if p in op['path']:
+                                tag.append(p[:-1] + 'Update')
+                else:
+                    for p in ['awards', 'contracts']:
+                        if p in op['path']:
+                            tag.append(p[:-1])
+            next_release['tag'] = set(tag)
+            releases.append(next_release)
+        first_release = next_release
+    return releases
+
+
+def record_tenders(tender, prefix):
+    record = {}
+    record['releases'] = release_tenders(tender, prefix)
+    record['compiledRelease'] = compile_releases(record['releases'])
+    record['ocid'] = record['releases'][0]['ocid']
+    return record
+
+
 def package_tenders(tenders, config):
     package = build_package(config)
-    package['releases'] = [release_tender(t, config.get('prefix')) for t in tenders]
+    package['releases'] = [release_tender(t, config.get('prefix'))
+                           for t in tenders]
     return package
