@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import itertools
-import simplejson as json
-import jsonpatch as jpatch
+import jsonpatch
 import gevent
 import logging
-import os.path
-import json
+import ocdsmerge
 from requests.exceptions import HTTPError
 from iso8601 import parse_date
 from datetime import datetime
 from collections import Counter
-from uuid import uuid4
 from copy import deepcopy
 from .exceptions import LBMismatchError
 
@@ -20,13 +16,13 @@ logger = logging.getLogger(__name__)
 
 
 def now():
-    # uri = StringType()
     return parse_date(datetime.now().isoformat()).isoformat()
 
 
 def get_ocid(prefix, tenderID):
     """greates unique contracting identifier"""
     return "{}-{}".format(prefix, tenderID)
+
 
 def build_package(config):
     package = {}
@@ -69,7 +65,7 @@ def add_revisions(tenders):
     prev_tender = tenders[0]
     new_tenders = []
     for tender in tenders[1:]:
-        patch = jpatch.make_patch(prev_tender, tender)
+        patch = jsonpatch.make_patch(prev_tender, tender)
         tender['revisions'] = list(patch)
         prev_tender = deepcopy(tender)
         new_tenders.append(tender)
@@ -160,7 +156,7 @@ def save_items(storage, src, dest):
 def exists_or_modified(storage, doc):
     resp = storage.view('tenders/by_dateModified', key=doc['id'])
     try:
-        date_mod = next(r['value'] for r in resp) 
+        date_mod = next(r['value'] for r in resp)
         return date_mod < doc.get('dateModified')
     except StopIteration:
         return True
@@ -171,7 +167,7 @@ def save_patched(storage, tender):
         tender['_id'] = tender['id']
     resp = storage.view('tenders/by_dateModified', key=tender['id'])
     try:
-        date_mod = next(r['value'] for r in resp) 
+        date_mod = next(r['value'] for r in resp)
     except StopIteration:
         date_mod = None
     if date_mod is None:
@@ -183,8 +179,13 @@ def save_patched(storage, tender):
         logger.info('Updated tender id={}'.format(tender['id']))
         doc = storage.get(tender['id'])
         revisions = doc.pop('revisions', [])
-        patch = [p for p in jpatch.make_patch(doc, tender).patch if not p['path'].startswith('/_rev')]
+        patch = [p for p in jsonpatch.make_patch(doc, tender).patch if not p['path'].startswith('/_rev')]
         revisions.append(patch)
         doc.update(tender)
         doc['revisions'] = revisions
         storage.save(doc)
+
+
+def compile_releases(releases, versioned=False):
+    return ocdsmerge.merge(releases) if not versioned\
+            else ocdsmerge.merge_versioned(releases)
