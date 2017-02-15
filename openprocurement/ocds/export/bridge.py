@@ -40,7 +40,6 @@ class APIDataBridge(object):
         self.fetch_pool = gevent.pool.Pool(20)
 
     def prepare_pached(self, tenders, version, first=True):
-        tenders = list(reversed(tenders))
         if first:
             first_tender = tenders[0]
             tenders = tenders[1:]
@@ -52,6 +51,8 @@ class APIDataBridge(object):
             for patch in patches:
                 first_tender = jsonpatch.apply_patch(first_tender, patch)
         for tender in tenders:
+            if not tender:
+                continue
             patch = jsonpatch.make_patch(first_tender, tender).patch
             if patch:
                 patches.append(patch)
@@ -61,33 +62,30 @@ class APIDataBridge(object):
         origin['_id'] = origin['id']
         return origin
 
-    def fetch_tender(self, _id, version):
-        gversion, tender = self.client.get_tender(_id, version)
-        if gversion != str(version):
-            return '', {}
-        return gversion, tender
-
     def fetch_tender_versioned(self, feed_item):
-        tenders = []
         _id = feed_item['id']
         version, tender = self.client.get_tender(_id, version='100000')
-        pool = gevent.pool.Pool(20)
-        tenders.append(tender)
         logger.info('Got tender id={}, version={}'.format(tender['id'], version))
         last_date_modified = self._db.view('tenders/by_dateModified', key=tender['id']).rows
         first = False if last_date_modified else True
         last_version = 1 if first else self._db.get(_id).get('version')
         try:
-            retreiver = partial(self.fetch_tender, _id)
-            revisions = pool.map(retreiver, range(int(last_version), int(version)))
-            tenders.extend([r[1] for r in 
-                            reversed(sorted([r for r in revisions if r], key=lambda x: x[0]))
-                            if r[1]])
+            revisions = []
+            for i in range(int(last_version), int(version)):
+                try:
+                    gversion, tender = self.client.get_tender(_id, i)
+                except:
+                    break
+                if gversion == str(i):
+                    logger.info('Got tender id={} revision {}'.format(_id, i))
+                    revisions.append(tender)
+            revisions.append(tender)
         except HTTPError:
             logger.fatal("Falied to retreive tender id={} \n"
                          "version {}".format(tender['id'], version))
         logger.info('Finishing fetching revisions of {}'.format(_id))
-        self.tenders_queue.put(self.prepare_pached(tenders, version, first=first))
+        self.tenders_queue.put(self.prepare_pached(revisions, version,
+                                                   first=first))
 
     def save_items(self):
         logger.info('Start saving')
