@@ -279,8 +279,13 @@ modelsMap = {
 
 
 def release_tender(tender, prefix):
-    release = Release(tender, prefix)
-    return release.__export__()
+    release = Release(tender, prefix).__export__()
+    tag = ['tender']
+    for op in ['awards', 'contracts']:
+        if op in release:
+            tag.append(op[:-1])
+    release['tag'] = tag
+    return release
 
 
 def release_tenders(tender, prefix):
@@ -290,7 +295,7 @@ def release_tenders(tender, prefix):
         for f in ['awards', 'contracts']:
             if f in release:
                 tag.append(f[:-1])
-        return set(tag)
+        return list(set(tag))
 
     assert 'patches' in tender
     patches = tender.pop('patches')
@@ -316,7 +321,7 @@ def release_tenders(tender, prefix):
                     for p in ['awards', 'contracts']:
                         if p in op['path']:
                             tag.append(p[:-1])
-            next_release['tag'] = set(tag)
+            next_release['tag'] = list(set(tag))
             releases.append(next_release)
         first_release = next_release
     return releases
@@ -332,6 +337,11 @@ def record_tenders(tender, prefix):
 
 def package_tenders(tenders, config):
     package = build_package(config)
-    package['releases'] = [release_tender(t, config.get('prefix'))
-                           for t in tenders]
+    releases = []
+    for tender in tenders:
+        if 'patches' in tender:
+            releases.extend(release_tenders(tender, config.get('prefix')))
+        else:
+            releases.append(release_tender(tender, config.get('prefix')))
+    package['releases'] = releases
     return package
