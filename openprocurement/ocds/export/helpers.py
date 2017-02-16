@@ -4,6 +4,7 @@ import jsonpatch
 import gevent
 import logging
 import ocdsmerge
+import yaml
 from requests.exceptions import HTTPError
 from iso8601 import parse_date
 from datetime import datetime
@@ -13,6 +14,10 @@ from .exceptions import LBMismatchError
 
 
 logger = logging.getLogger(__name__)
+
+
+with open('/data/dimon.obert/ocds/openprocurement.ocds.export/var/unit_codes/en.yaml', 'r') as stream:
+    units = yaml.load(stream)
 
 
 def now():
@@ -38,14 +43,55 @@ def unique_tenderers(tenderers):
     return {t['identifier']['id']: t for t in tenderers}.values() if tenderers else []
 
 
-def unique_documents(documents):
+def unique_documents(documents, extension=False):
     """adds `-<number>` to docs with same ids"""
     if not documents:
         return
+    if extension:
+        for doc in documents:
+            if 'documentOf' in doc:
+                doc['documentScope'] = doc.pop('documentOf')
     cout = Counter(doc['id'] for doc in documents)
     for i in [i for i, c in cout.iteritems() if c > 1]:
         for index, d in enumerate([d for d in documents if d['id'] == i]):
             d['id'] = d['id'] + '-{}'.format(index)
+    return documents
+
+
+def convert_cancellation(tender):
+    cancellations = tender.get('cancellations')
+    if cancellations:
+        for cancellation in cancellations:
+            if cancellation['cancellationOf'] == 'tender':
+                tender['pendingCancellation'] = True
+            if 'documents' in cancellation:
+                for document in cancellation['documents']:
+                    document['documentType'] = 'tenderCancellation'
+                    documents = tender.get('documents', [])
+                    documents.append(document)
+                tender['documents'] = documents
+            elif cancellation['cancellationOf'] == 'lot':
+                for lot in tender['lots']:
+                    if lot['id'] == cancellation['relatedLot']:
+                        lot['pendingCancellation'] = True
+                if 'documents' in cancellation:
+                    for document in cancellation['documents']:
+                        document['documentType'] = 'lotCancellation'
+                        documents = tender.get('documents', [])
+                        documents.append(document)
+                    tender['documents'] = documents
+    return tender
+
+
+def convert_questions(tender):
+    questions = tender.get('questions')
+    if not questions:
+        return
+    for question in questions:
+        if question['questionOf'] == 'lot':
+            question['relatedLot'] = question['relatedItem']
+            del question['relatedItem']
+    return questions
 
 
 def award_converter(tender):
@@ -59,6 +105,64 @@ def award_converter(tender):
         for award in tender.get('awards', []):
             award['items'] = tender.get('items')
     return tender.get('awards', [])
+
+
+def convert_bids(bids):
+    if not bids:
+        return
+    new = []
+    for bid in bids:
+        if 'lotValues' in bid:
+            for lotval in bid['lotValues']:
+                bid['relatedLot'] = lotval['relatedLot']
+                bid['value'] = lotval.get('value')
+                new.append(bid)
+        else:
+            new.append(bid)
+    return new
+
+
+def convert_unit_and_location(items):
+    if not items:
+        return
+    new = []
+    for item in items:
+        new_loc = {}
+        try:
+            unit_code = item['unit']['code']
+            item['unit'] = units[unit_code]
+            item['unit']['scheme'] = "UNCEFACT"
+            item['unit']['id'] = unit_code
+        except KeyError:
+            pass
+        if 'deliveryLocation' in item:
+            if item['deliveryLocation']['latitude']:
+                new_loc = {'geometry': {'coordinates': item['deliveryLocation'].values()}}
+                item['deliveryLocation'] = new_loc
+            else:
+                del item['deliveryLocation']
+        new.append(item)
+    return new
+
+
+def create_auction(tender):
+    auctions = []
+    auction = {}
+    lots = tender.get('lots', [])
+    for lot in lots:
+        auction['url'] = lot.get('auctionUrl')
+        auction['minimalStep'] = lot.get('minimalStep')
+        auction['period'] = lot.get('auctionPeriod')
+        auction['relatedLot'] = lot.get('id')
+        auctions.append(auction)
+        auction = {}
+    auction['url'] = tender.get('auctionUrl')
+    auction['minimalStep'] = tender.get('minimalStep')
+    auction['period'] = tender.get('auctionPeriod')
+    if any(auction.values()):
+        auctions.append(auction)
+        return auctions
+    return auctions
 
 
 def add_revisions(tenders):

@@ -6,7 +6,6 @@ import os
 import logging
 import math
 import zipfile
-import simplejson
 import couchdb.json
 import multiprocessing as mp
 from functools import partial
@@ -16,6 +15,7 @@ from simplejson import dump
 from jinja2 import Environment, PackageLoader
 from openprocurement.ocds.export.storage import TendersStorage
 from openprocurement.ocds.export.models import package_tenders
+from openprocurement.ocds.export.ext.models import package_tenders_ext
 from uuid import uuid4
 from boto.s3 import connect_to_region
 from boto.s3.connection import OrdinaryCallingFormat, S3ResponseError
@@ -64,6 +64,10 @@ def parse_args():
                         action='store_true',
                         help="Choose to start uploading to aws s3",
                         default=False)
+    parser.add_argument('-ext',
+                        action='store_true',
+                        help='Choose to start dump with extensions',
+                        default=False)
     return parser.parse_args()
 
 
@@ -80,7 +84,7 @@ def make_zip(name, base_dir, skip=[]):
             zf.write(os.path.join(base_dir, f))
 
 
-def fetch_and_dump(config, params):
+def fetch_and_dump(config, params, extensions=False):
     nth, (start, end) = params
     Logger.info('Start {}th dump startdoc={}'
                 ' enddoc={}'.format(nth, start, end))
@@ -98,7 +102,10 @@ def fetch_and_dump(config, params):
                                               startkey=start,
                                               include_docs=True))]
     try:
-        package = package_tenders(result, config.get('release'))
+        if extensions:
+            package = package_tenders_ext(result[:-1], config.get('release'))
+        else:
+            package = package_tenders(result[:-1], config.get('release'))
         date = max(map(lambda x: x.get('date', ''), package['releases']))
 
     except Exception as e:
@@ -187,7 +194,7 @@ def fetch_ids(db, batch_count):
 def run():
     args = parse_args()
     config = read_config(args.config)
-    bucket = connect_bucket(config)
+    # bucket = connect_bucket(config)
     _tenders = TendersStorage(config['tenders_db']['url'],
                               config['tenders_db']['name'])
     Logger.info('Start packaging')
@@ -202,11 +209,14 @@ def run():
         #                                                endkey=datefinish)]
         # max_date = dump_package(tenders, config)
     else:
-        total = int(args.number) if args.number else 4095
+        total = int(args.number) if args.number else 4096
         key_ids = fetch_ids(_tenders, total)
         Logger.info('Fetched key doc ids')
         pool = mp.Pool(mp.cpu_count()*2)
-        _conn = partial(fetch_and_dump, config)
+        if args.ext:
+            _conn = partial(fetch_and_dump, config, extensions=True)
+        else:
+            _conn = partial(fetch_and_dump, config)
         dates = pool.map(_conn, enumerate(izip_longest(key_ids, key_ids[1::],
                                                        fillvalue=''), 1))
     date = max(dates).split('T')[0]
