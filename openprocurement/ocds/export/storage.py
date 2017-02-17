@@ -1,46 +1,54 @@
 # -*- coding: utf-8 -*-
-import itertools
 from couchdb import Database, http
-from uuid import uuid4
 from couchdb.design import ViewDefinition
-from couchdb_schematics.document import Document
 
 
-_releases_ocid = ViewDefinition('releases', 'ocid', 
-    map_fun="""function(doc) { 
-                 emit(doc.ocid, doc._id);
-    }""",
-    reduce_fun="""function(key, values, rereduce) { 
-                        var result = result || [];
-                        result.push.apply(result, values);
-                        return result; 
-    }"""
+rel_red = """
+function(key, values, rereduce) {
+    var result = result || [];
+    result.push.apply(result, values);
+    return result;
+}
+"""
+
+tenders_map = """
+function(doc) {
+    if(doc.status.indexOf('draft') !== -1) {return;};
+    if(doc.status.indexOf('terminated') !== -1) {return;};
+    if(('doc_type' in doc) && (doc.doc_type !== 'Tender')) {return;};
+    if(doc.title.search("ТЕСТУВАННЯ") !== -1) {return;};
+    emit(doc._id, null);
+}
+"""
+
+releases_ocid = ViewDefinition(
+    'releases', 'ocid',
+    map_fun="""function(doc) {emit(doc.ocid, doc._id);}""",
+    reduce_fun=rel_red
 )
 
-_releases_all = ViewDefinition('releases', 'all', 
-    map_fun="""function(doc) { 
-                emit(doc._id, doc); 
-    }"""
+releases_all = ViewDefinition(
+    'releases', 'all',
+    map_fun="""function(doc) {emit(doc._id, doc.date);}"""
 )
-_releases_tag = ViewDefinition('releases', 'tag', 
-    map_fun="""function(doc) {
-                    emit(doc._id, doc.tag); 
-    }"""
+
+releases_tag = ViewDefinition(
+    'releases', 'tag',
+    map_fun="""function(doc) {emit(doc._id, doc.tag);}"""
 )
-_tenders_all = ViewDefinition('tenders', 'all', 
-    map_fun="""function(doc) { 
-                    if(doc.status.indexOf('draft') !== -1) {return;}; 
-                    if(doc.status.indexOf('terminated') !== -1) {return;}; 
-                    if(('doc_type' in doc) && (doc.doc_type !== 'Tender')) {return;}
-                    if(doc.title.search("ТЕСТУВАННЯ") !== -1) {return;}
-                    emit(doc._id, null);
-    }"""
+
+
+tenders_all = ViewDefinition(
+    'tenders', 'all',
+    map_fun=tenders_map
 )
-_tenders_date_modified = ViewDefinition('tenders', 'by_dateModified', 
-    map_fun="""function(doc) {
-                emit(doc.id, doc.dateModified);
-    }"""
+
+
+tenders_date_modified = ViewDefinition(
+    'tenders', 'by_dateModified',
+    map_fun="""function(doc) {emit(doc.id, doc.dateModified);}"""
 )
+
 
 def get_or_create(url, name):
     resource = http.Resource(url, session=None)
@@ -50,14 +58,13 @@ def get_or_create(url, name):
         resource.put_json(name)
 
 
-
 class TendersStorage(Database):
 
     def __init__(self, db_url, name=None):
         url = "{}/{}".format(db_url, name)
         get_or_create(db_url, name)
         super(TendersStorage, self).__init__(url=url)
-        ViewDefinition.sync_many(self, [_tenders_all, _tenders_date_modified])
+        ViewDefinition.sync_many(self, [tenders_all, tenders_date_modified])
 
     def __iter__(self):
         for item in self.iterview('tenders/all', 1000, include_docs=True):
@@ -70,7 +77,9 @@ class ReleasesStorage(Database):
         url = "{}/{}".format(db_url, name or 'releases')
         get_or_create(db_url, name)
         super(ReleasesStorage, self).__init__(url=url)
-        ViewDefinition.sync_many(self, [_releases_ocid, _releases_all, _releases_tag])
+        ViewDefinition.sync_many(self, [releases_ocid,
+                                        releases_all,
+                                        releases_tag])
 
     def ocid_list(self, ocid):
         for row in self.iterview('releases/ocid', 1000, key=ocid):
