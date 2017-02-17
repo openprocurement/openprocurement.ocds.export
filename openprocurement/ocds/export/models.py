@@ -22,7 +22,8 @@ callbacks = {
     'contracts': lambda raw_data: raw_data.get('contracts'),
     'date': lambda raw_data: raw_data.get('dateModified'),
     'tender': lambda raw_data: raw_data,
-    'buyer': lambda raw_data: raw_data.get('procuringEntity')
+    'buyer': lambda raw_data: raw_data.get('procuringEntity'),
+    'submissionMethod': lambda raw_data: [raw_data.get('submissionMethod', '')]
 }
 
 
@@ -52,12 +53,20 @@ class Model(object):
         for k in [f for f in dir(self) if not f.startswith('__')]:
             attr = hasattr(self, k) and getattr(self, k)
             if attr:
+                exported = {}
                 if isinstance(attr, Model):
-                    data[k] = attr.__export__()
+                    exported = attr.__export__()
                 elif isinstance(attr, (tuple, list)):
-                    data[k] = [x.__export__() for x in attr]
+                    exported = [
+                        x.__export__()
+                        if hasattr(x, '__export__')
+                        else x for x in attr
+                        if x
+                    ]
                 else:
-                    data[k] = attr
+                    exported = attr
+                if exported:
+                    data[k] = exported
         return data
 
 
@@ -339,6 +348,8 @@ def package_tenders(tenders, config):
     package = build_package(config)
     releases = []
     for tender in tenders:
+        if not tender:
+            continue
         if 'patches' in tender:
             releases.extend(release_tenders(tender, config.get('prefix')))
         else:
