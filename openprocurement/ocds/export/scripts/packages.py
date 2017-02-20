@@ -16,6 +16,7 @@ from jinja2 import Environment, PackageLoader
 from openprocurement.ocds.export.storage import TendersStorage
 from uuid import uuid4
 from boto.s3 import connect_to_region
+from openprocurement.ocds.export.models import package_tenders
 from boto.s3.connection import OrdinaryCallingFormat, S3ResponseError
 from filechunkio import FileChunkIO
 
@@ -82,7 +83,7 @@ def make_zip(name, base_dir, skip=[]):
             zf.write(os.path.join(base_dir, f))
 
 
-def fetch_and_dump(config, params, pack):
+def fetch_and_dump(config, max_date, params, extensions=False):
     nth, (start, end) = params
     Logger.info('Start {}th dump startdoc={}'
                 ' enddoc={}'.format(nth, start, end))
@@ -99,15 +100,27 @@ def fetch_and_dump(config, params, pack):
         result = [r.doc for r in list(db.view('tenders/all',
                                               startkey=start,
                                               include_docs=True))]
+    name = 'release-{0:07d}.json'.format(nth)
     try:
-        package = pack(result[:-1], config.get('release'))
+        if extensions:
+            from openprocurement.ocds.export.ext.models import package_tenders_ext
+            package = package_tenders_ext(result[:-1], config.get('release'))
+            package['uri'] = 'http://ocds.prozorro.openprocurement.io/merged_with_extensions_{}/{}'.format(max_date, name)
+        else:
+            package = package_tenders(result[:-1], config.get('release'))
+            package['uri'] = 'http://ocds.prozorro.openprocurement.io/merged_{}/{}'.format(max_date, name)
         date = max(map(lambda x: x.get('date', ''), package['releases']))
     except Exception as e:
         Logger.info('Error: {}'.format(e))
         return
     path = os.path.join(config['path'], 'release-{0:07d}.json'.format(nth))
     if nth == 1:
-        pretty_package = pack(result[:24], config.get('release'))
+        if extensions:
+            pretty_package = package_tenders_ext(result[:24], config.get('release'))
+            pretty_package['uri'] = 'http://ocds.prozorro.openprocurement.io/merged_with_extensions_{}/example.json'.format(max_date)
+        else:
+            pretty_package = package_tenders(result[:24], config.get('release'))
+            pretty_package['uri'] = 'http://ocds.prozorro.openprocurement.io/merged_{}/example.json'.format(max_date)
         Logger.info('Dump example.json')
         with open(os.path.join(config['path'], 'example.json'), 'w')\
                 as outfile:
@@ -118,8 +131,11 @@ def fetch_and_dump(config, params, pack):
     return date
 
 
-def put_to_s3(bucket, path, time):
-    dir_name = 'merged_{}'.format(time)
+def put_to_s3(bucket, path, time, extensions=False):
+    if extensions:
+        dir_name = 'merged_with_extensions_{}'.format(time)
+    else:
+        dir_name = 'merged_{}'.format(time)
     for file in os.listdir(path):
         aws_path = os.path.join(dir_name, file)
         file_path = os.path.join(path, file)
@@ -149,7 +165,7 @@ def get_torrent_link(bucket, path):
             '{}/{}/releases.zip?torrent'.format(bucket, path)
 
 
-def create_html(path, config, date):
+def create_html(path, config, date, extensions=False):
     template = ENV.get_template('index.html')
     links = []
     skip_files = ['example.json', 'index.html', 'releases.zip']
@@ -159,8 +175,12 @@ def create_html(path, config, date):
         link['size'] = file_size(path, file)
         link['link'] = file
         links.append(link)
-    torrent_link = get_torrent_link(config.get('bucket'),
-                                    'merged_{}'.format(date))
+    if extensions:
+        torrent_link = get_torrent_link(config.get('bucket'),
+                                        'merged_{}'.format(date))
+    else:
+        torrent_link = get_torrent_link(config.get('bucket'),
+                        'merged_with_extensions{}'.format(date))
     zip_size = file_size(path, 'releases.zip')
     with open(os.path.join(path, 'index.html'), 'w') as stream:
         stream.write(template.render(dict(zip_size=zip_size,
@@ -168,10 +188,13 @@ def create_html(path, config, date):
                                           links=links)))
 
 
-def update_index(bucket, time):
+def update_index(bucket, time, extensions=False):
     key = bucket.new_key('index.html')
     key.get_contents_to_filename('index.html')
-    dir_name = 'merged_{}'.format(time)
+    if extensions:
+        dir_name = 'merged_with_extensions_{}'.format(time)
+    else:
+        dir_name = 'merged_{}'.format(time)
     with open('index.html', 'r+') as f:
         lines = f.readlines()
     lines.insert(lines.index('</ol></body>\n'),
@@ -192,31 +215,29 @@ def run():
     _tenders = TendersStorage(config['tenders_db']['url'],
                               config['tenders_db']['name'])
     Logger.info('Start packaging')
-    if args.ext:
-        from openprocurement.ocds.export.ext.models import package_tenders_ext as package_tenders
-    else:
-        from openprocurement.ocds.export.models import package_tenders
     if not os.path.exists(config.get('path')):
         os.makedirs(config.get('path'))
     if args.dates:
-        # TODO: fix this method
-        pass
-        # datestart, datefinish = parse_dates(args.dates)
-        # tenders = [t['value'] for t in _tenders.db.view('tenders/byDateModified',
-        #                                                startkey=datestart,
-        #                                                endkey=datefinish)]
-        # max_date = dump_package(tenders, config)
+        datestart, datefinish = parse_dates(args.dates)
+        pack = package_tenders(list(_tenders.get_between_dates(datestart, datefinish)), config)
+        with open(os.path.join(config['path'],
+          'release_between_{}_{}'.format(datestart.split('T')[0],
+          datefinish).split('T')[0]), 'w') as stream:
+            dump(pack, stream)
     else:
+        max_date = list(_tenders.get_max_date())[-1].split('T')[0]
         total = int(args.number) if args.number else 4096
         key_ids = fetch_ids(_tenders, total)
         Logger.info('Fetched key doc ids')
-        pool = mp.Pool(mp.cpu_count()*2)
-        _conn = partial(fetch_and_dump, config, pack=package_tenders)
-        dates = pool.map(_conn, enumerate(izip_longest(key_ids, key_ids[1::],
+        pool = mp.Pool(mp.cpu_count())
+        if args.ext:
+            _conn = partial(fetch_and_dump, config, max_date, extensions=True)
+        else:
+            _conn = partial(fetch_and_dump, config, max_date)
+        pool.map(_conn, enumerate(izip_longest(key_ids, key_ids[1::],
                                                            fillvalue=''), 1))
-    date = max(dates).split('T')[0]
-    make_zip('releases.zip', config.get('path'))
-    create_html(config.get('path'), config, date)
-    if args.s3 and bucket:
-        put_to_s3(bucket, config.get('path'), date)
-        update_index(bucket, date)
+        make_zip('releases.zip', config.get('path'))
+        create_html(config.get('path'), config, max_date, extensions=args.ext)
+        if args.s3 and bucket:
+            put_to_s3(bucket, config.get('path'), max_date, extensions=args.ext)
+            update_index(bucket, max_date, extensions=args.ext)

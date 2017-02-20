@@ -15,8 +15,7 @@ callbacks = {
     'minValue': lambda raw_data: raw_data.get('minimalStep'),
     'status': lambda raw_data: raw_data.get('status').split('.')[0],
     'documents': lambda raw_data: unique_documents(raw_data.get('documents')),
-    'tenderers': lambda raw_data: unique_tenderers(list(chain.from_iterable(
-        [b.get('tenderers') for b in raw_data.get('bids', []) if 'tenderers' in raw_data.get('bids')]))),
+    'tenderers': lambda raw_data: unique_tenderers(raw_data.get('bids')),
     'id': lambda raw_data: raw_data.get('_id') if '_id' in raw_data else raw_data.get('id'),
     'awards': lambda raw_data: award_converter(raw_data),
     'contracts': lambda raw_data: raw_data.get('contracts'),

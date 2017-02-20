@@ -30,7 +30,6 @@ callbacks['tender'] = lambda raw_data: convert_cancellation(raw_data)
 callbacks['enquiries'] = lambda raw_data: convert_questions(raw_data)
 callbacks['currentStage'] = lambda raw_data: raw_data.get('status')
 callbacks['documents'] = lambda raw_data: unique_documents(raw_data.get('documents'), extension=True)
-callbacks['awards'] = lambda raw_data: raw_data.get('awards')
 
 
 class TenderExt(Tender):
@@ -184,7 +183,7 @@ modelsMap['awards'] = (AwardExt, [])
 def release_tender_ext(tender, prefix):
     release = ReleaseExt(tender, prefix).__export__()
     tag = ['tender']
-    for op in ['awards', 'contracts']:
+    for op in ['awards', 'contracts', 'bids']:
         if op in release:
             tag.append(op[:-1])
     release['tag'] = tag

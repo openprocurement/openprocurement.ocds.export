@@ -5,6 +5,7 @@ import gevent
 import logging
 import ocdsmerge
 import yaml
+import os
 from requests.exceptions import HTTPError
 from iso8601 import parse_date
 from datetime import datetime
@@ -16,7 +17,7 @@ from .exceptions import LBMismatchError
 logger = logging.getLogger(__name__)
 
 
-with open('/data/dimon.obert/ocds/openprocurement.ocds.export/var/unit_codes/en.yaml', 'r') as stream:
+with open(os.path.join(os.path.dirname(__file__), 'unit_codes.yaml'), 'r') as stream:
     units = yaml.load(stream)
 
 
@@ -38,8 +39,11 @@ def build_package(config):
     return package
 
 
-def unique_tenderers(tenderers):
+def unique_tenderers(bids):
     """leave only unique tenderers as required by standard"""
+    if not bids:
+        return
+    tenderers = [tenderer for bid in bids for tenderer in bid.get('tenderers', [])]
     return {t['identifier']['id']: t for t in tenderers}.values() if tenderers else []
 
 
@@ -128,17 +132,22 @@ def convert_unit_and_location(items):
     new = []
     for item in items:
         new_loc = {}
-        try:
-            unit_code = item['unit']['code']
-            item['unit'] = units[unit_code]
-            item['unit']['scheme'] = "UNCEFACT"
-            item['unit']['id'] = unit_code
-        except KeyError:
-            pass
+        if 'unit' in item:
+            unit_code = item['unit'].get('code')
+            if units.get(unit_code):
+                item['unit'] = units[unit_code]
+                item['unit']['scheme'] = "UNCEFACT"
+                item['unit']['id'] = unit_code
+            elif item['unit'].get('id'):
+                pass
+            else:
+                item['unit']['id'] = unit_code
         if 'deliveryLocation' in item:
-            if item['deliveryLocation']['latitude']:
+            if item['deliveryLocation'].get('latitude'):
                 new_loc = {'geometry': {'coordinates': item['deliveryLocation'].values()}}
                 item['deliveryLocation'] = new_loc
+            elif 'geometry' in item['deliveryLocation']:
+                pass
             else:
                 del item['deliveryLocation']
         new.append(item)
@@ -156,9 +165,10 @@ def create_auction(tender):
         auction['relatedLot'] = lot.get('id')
         auctions.append(auction)
         auction = {}
-    auction['url'] = tender.get('auctionUrl')
-    auction['minimalStep'] = tender.get('minimalStep')
-    auction['period'] = tender.get('auctionPeriod')
+    else:
+        auction['url'] = tender.get('auctionUrl')
+        auction['minimalStep'] = tender.get('minimalStep')
+        auction['period'] = tender.get('auctionPeriod')
     if any(auction.values()):
         auctions.append(auction)
         return auctions
