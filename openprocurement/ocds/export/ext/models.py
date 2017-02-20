@@ -10,7 +10,8 @@ from openprocurement.ocds.export.models import (
     callbacks,
     modelsMap,
     Release,
-
+    Organization,
+    Contact
 )
 from openprocurement.ocds.export.helpers import (
     convert_bids,
@@ -166,6 +167,20 @@ class ReleaseExt(Release):
     )
 
 
+class OrganizationExt(Organization):
+
+    __slots__ = Organization.__slots__ + (
+        'additionalContactPoints',
+    )
+
+
+class ContactExt(Contact):
+
+    __slots__ = Contact.__slots__ + (
+        'availableLanguage',
+    )
+
+
 modelsMap['contracts'] = (ContractExt, [])
 modelsMap['auctions'] = (Auction, [])
 modelsMap['tender'] = (TenderExt, {})
@@ -178,6 +193,12 @@ modelsMap['lots'] = (Lot, [])
 modelsMap['bids'] = (Bid, [])
 modelsMap['documents'] = (DocumentExt, [])
 modelsMap['awards'] = (AwardExt, [])
+modelsMap['additionalContactPoints'] = (ContactExt, [])
+modelsMap['contactPoint'] = (ContactExt, {})
+modelsMap['tenderers'] = (OrganizationExt, [])
+modelsMap['suppliers'] = (OrganizationExt, [])
+modelsMap['procuringEntity'] = (OrganizationExt, {})
+modelsMap['buyer'] = (OrganizationExt, {})
 
 
 def release_tender_ext(tender, prefix):
