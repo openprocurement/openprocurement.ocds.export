@@ -46,6 +46,11 @@ tenders_all = ViewDefinition(
 
 tenders_date_modified = ViewDefinition(
     'tenders', 'by_dateModified',
+    map_fun="""function(doc) {emit(doc.id, doc.dateModified);}"""
+)
+
+tenders_date_modified_for_package = ViewDefinition(
+    'tenders', 'by_dateModified_pack',
     map_fun="""function(doc) {emit(doc.dateModified, doc.id);}"""
 )
 
@@ -64,7 +69,7 @@ class TendersStorage(Database):
         url = "{}/{}".format(db_url, name)
         get_or_create(db_url, name)
         super(TendersStorage, self).__init__(url=url)
-        ViewDefinition.sync_many(self, [tenders_all, tenders_date_modified])
+        ViewDefinition.sync_many(self, [tenders_all, tenders_date_modified, tenders_date_modified_for_package])
 
     def __iter__(self):
         for item in self.iterview('tenders/all', 1000, include_docs=True):
@@ -72,10 +77,10 @@ class TendersStorage(Database):
 
     def get_max_date(self):
         for item in self.iterview('tenders/by_dateModified', 1000):
-            yield item['key']
+            yield item['value']
 
     def get_between_dates(self, sdate, edate):
-        for item in self.iterview('tenders/by_dateModified', 1000,
+        for item in self.iterview('tenders/by_dateModified_pack', 1000,
                                  startkey=sdate, endkey=edate, include_docs=True):
             yield item.doc
 
