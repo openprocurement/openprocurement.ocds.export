@@ -22,7 +22,7 @@ release:
 
 path: ${options['path_for_release']}
 bucket: ${options['bucket']}
-
+historical: ${options['historical']}
 logging:
     version: 1
     disable_existing_loggers: False
