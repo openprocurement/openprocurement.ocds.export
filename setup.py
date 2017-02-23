@@ -9,19 +9,16 @@ DESCRIPTION = """
 install_requires = [
     'setuptools',
     'iso8601',
-    'schematics',
     'simplejson',
     'ocdsmerge',
     'jsonpatch',
     'CouchDB',
-    'couchdb-schematics',
     'python-dateutil',
     'requests',
     'gevent',
     'PyYaml',
     'boto',
     'filechunkio',
-    'ujson',
     'Jinja2'
 ]
 
@@ -34,7 +31,7 @@ test_requires = [
 entry_points = {
     'console_scripts': [
         'bridge = openprocurement.ocds.export.scripts.run:run',
-        'get_pack = openprocurement.ocds.export.scripts.packages:run',
+        'packages = openprocurement.ocds.export.scripts.packages:run',
         'releases = openprocurement.ocds.export.scripts.release:run'
     ]
 }
@@ -46,7 +43,6 @@ setup(name='openprocurement.ocds.export',
       author_email='info@quintagroup.com',
       license='Apache License 2.0',
       include_package_data=True,
-      namespace_package=['openprocurement'],
       packages=['openprocurement.ocds.export'],
       zip_safe=False,
       install_requires=install_requires,
