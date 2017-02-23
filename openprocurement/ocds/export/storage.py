@@ -3,7 +3,7 @@ from couchdb import Database, http
 from couchdb.design import ViewDefinition
 
 
-tenders_map = """
+tenders_map = u"""
 function(doc) {
     if(doc.status.indexOf('draft') !== -1) {return;};
     if(doc.status.indexOf('terminated') !== -1) {return;};
@@ -22,12 +22,12 @@ tenders_all = ViewDefinition(
 
 tenders_date_modified = ViewDefinition(
     'tenders', 'by_dateModified',
-    map_fun="""function(doc) {emit(doc.id, doc.dateModified);}"""
+    map_fun=u"""function(doc) {emit(doc.id, doc.dateModified);}"""
 )
 
 tenders_date_modified_for_package = ViewDefinition(
     'tenders', 'by_dateModified_pack',
-    map_fun="""function(doc) {emit(doc.dateModified, doc.id);}"""
+    map_fun=u"""function(doc) {emit(doc.dateModified, doc.id);}"""
 )
 
 

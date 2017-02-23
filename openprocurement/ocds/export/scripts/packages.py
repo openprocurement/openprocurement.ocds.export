@@ -14,7 +14,6 @@ from logging.config import dictConfig
 from simplejson import dump
 from jinja2 import Environment, PackageLoader
 from openprocurement.ocds.export.storage import TendersStorage
-from uuid import uuid4
 from boto.s3 import connect_to_region
 from openprocurement.ocds.export.models import package_tenders
 from boto.s3.connection import OrdinaryCallingFormat, S3ResponseError
