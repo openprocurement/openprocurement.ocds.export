@@ -23,14 +23,21 @@ from openprocurement.ocds.export.helpers import (
     build_package
 )
 
+extensions = {
+    'bids': lambda raw_data: convert_bids(raw_data.get('bids')),
+    'auctions': lambda raw_data: create_auction(raw_data),
+    'items': lambda raw_data: convert_unit_and_location(raw_data.get('items')),
+    'tender': lambda raw_data: convert_cancellation(raw_data),
+    'enquiries': lambda raw_data: convert_questions(raw_data),
+    'currentStage': lambda raw_data: raw_data.get('status'),
+    'documents': lambda raw_data: unique_documents(raw_data.get('documents'), extension=True),
+}
 
-callbacks['bids'] = lambda raw_data: convert_bids(raw_data.get('bids'))
-callbacks['auctions'] = lambda raw_data: create_auction(raw_data)
-callbacks['items'] = lambda raw_data: convert_unit_and_location(raw_data.get('items'))
-callbacks['tender'] = lambda raw_data: convert_cancellation(raw_data)
-callbacks['enquiries'] = lambda raw_data: convert_questions(raw_data)
-callbacks['currentStage'] = lambda raw_data: raw_data.get('status')
-callbacks['documents'] = lambda raw_data: unique_documents(raw_data.get('documents'), extension=True)
+
+def update_callbacks():
+    global callbacks
+    global extensions
+    callbacks.update(extensions)
 
 
 class TenderExt(Tender):
@@ -180,25 +187,31 @@ class ContactExt(Contact):
         'availableLanguage',
     )
 
+modelsExt = {
+    'contracts': (ContractExt, []),
+    'auctions': (Auction, []),
+    'tender': (TenderExt, {}),
+    'unit': (UnitExt, {}),
+    'items': (ItemExt, []),
+    'value': (ValueExt, {}),
+    'enquiries': (Enquiry, []),
+    'lots': (Lot, []),
+    'bids': (Bid, []),
+    'documents': (DocumentExt, []),
+    'awards': (AwardExt, []),
+    'additionalContactPoints': (ContactExt, []),
+    'contactPoint': (ContactExt, {}),
+    'tenderers': (OrganizationExt, []),
+    'suppliers': (OrganizationExt, []),
+    'procuringEntity': (OrganizationExt, {}),
+    'buyer': (OrganizationExt, {}),
+}
 
-modelsMap['contracts'] = (ContractExt, [])
-modelsMap['auctions'] = (Auction, [])
-modelsMap['tender'] = (TenderExt, {})
-modelsMap['unit'] = (UnitExt, {})
-modelsMap['items'] = (ItemExt, [])
-modelsMap['value'] = (ValueExt, {})
-modelsMap['enquiries'] = (Enquiry, [])
-modelsMap['documents'] = (DocumentExt, [])
-modelsMap['lots'] = (Lot, [])
-modelsMap['bids'] = (Bid, [])
-modelsMap['documents'] = (DocumentExt, [])
-modelsMap['awards'] = (AwardExt, [])
-modelsMap['additionalContactPoints'] = (ContactExt, [])
-modelsMap['contactPoint'] = (ContactExt, {})
-modelsMap['tenderers'] = (OrganizationExt, [])
-modelsMap['suppliers'] = (OrganizationExt, [])
-modelsMap['procuringEntity'] = (OrganizationExt, {})
-modelsMap['buyer'] = (OrganizationExt, {})
+
+def update_models_map():
+    global modelsMap
+    global modelsExt
+    modelsMap.update(modelsExt)
 
 
 def release_tender_ext(tender, prefix):
@@ -212,6 +225,9 @@ def release_tender_ext(tender, prefix):
 
 
 def package_tenders_ext(tenders, config):
+    update_models_map()
+    update_callbacks()
     package = build_package(config)
-    package['releases'] = [release_tender_ext(t, config.get('prefix')) for t in tenders]
+    package['releases'] = [release_tender_ext(
+        t, config.get('prefix')) for t in tenders]
     return package
