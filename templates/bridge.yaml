@@ -17,7 +17,7 @@ release:
     license: https://creativecommons.org/publicdomain/zero/1.0/
     initiationType: tender
     publicationPolicy: https://prozorro.gov.ua/publication-policy
-    prefix: ocds-xxxxxx
+    prefix: ocds-be6bcu
 
 
 path: ${options['path_for_release']}
