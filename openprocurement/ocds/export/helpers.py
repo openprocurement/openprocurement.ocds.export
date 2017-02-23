@@ -122,7 +122,7 @@ def convert_bids(bids):
                 new.append(bid)
         else:
             new.append(bid)
-    return new
+    return {"details": new}
 
 
 def convert_unit_and_location(items):

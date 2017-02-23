@@ -187,6 +187,14 @@ class ContactExt(Contact):
         'availableLanguage',
     )
 
+
+class Bids(Model):
+
+    __slots__ = (
+        'details',
+    )
+
+
 modelsExt = {
     'contracts': (ContractExt, []),
     'auctions': (Auction, []),
@@ -196,7 +204,7 @@ modelsExt = {
     'value': (ValueExt, {}),
     'enquiries': (Enquiry, []),
     'lots': (Lot, []),
-    'bids': (Bid, []),
+    'details': (Bid, []),
     'documents': (DocumentExt, []),
     'awards': (AwardExt, []),
     'additionalContactPoints': (ContactExt, []),
@@ -205,6 +213,7 @@ modelsExt = {
     'suppliers': (OrganizationExt, []),
     'procuringEntity': (OrganizationExt, {}),
     'buyer': (OrganizationExt, {}),
+    'bids': (Bids, {})
 }
 
 
