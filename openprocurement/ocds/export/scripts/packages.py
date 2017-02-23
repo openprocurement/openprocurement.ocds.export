@@ -22,10 +22,10 @@ from filechunkio import FileChunkIO
 
 
 couchdb.json.use('simplejson')
-URI = 'https://fake-url/tenders-{}'.format(uuid4().hex)
 Logger = logging.getLogger(__name__)
 ENV = Environment(loader=PackageLoader('openprocurement.ocds.export',
                                        'templates'))
+logging.getLogger('boto').setLevel(logging.ERROR)
 
 
 def connect_bucket(config):
@@ -229,7 +229,7 @@ def run():
         total = int(args.number) if args.number else 4096
         key_ids = fetch_ids(_tenders, total)
         Logger.info('Fetched key doc ids')
-        pool = mp.Pool(mp.cpu_count())
+        pool = mp.Pool(mp.cpu_count()*2)
         if args.ext:
             _conn = partial(fetch_and_dump, config, max_date, extensions=True)
         else:
