@@ -15,7 +15,8 @@ from .exceptions import LBMismatchError
 logger = logging.getLogger(__name__)
 
 
-with open(os.path.join(os.path.dirname(__file__), 'unit_codes.yaml'), 'r') as stream:
+with open(os.path.join(os.path.dirname(__file__),
+                       'unit_codes.yaml'), 'r') as stream:
     units = yaml.load(stream)
 
 
@@ -61,28 +62,28 @@ def unique_documents(documents, extension=False):
 
 
 def convert_cancellation(tender):
-    cancellations = tender.get('cancellations')
+    cancellations = tender.get('cancellations', '')
     if cancellations:
         for cancellation in cancellations:
             if cancellation['cancellationOf'] == 'tender':
                 tender['pendingCancellation'] = True
-            if 'documents' in cancellation:
-                for document in cancellation['documents']:
-                    document['documentType'] = 'tenderCancellation'
-                    documents = tender.get('documents', [])
-                    documents.append(document)
-                tender['documents'] = documents
             elif cancellation['cancellationOf'] == 'lot':
-                for lot in tender['lots']:
+                for lot in tender.get('lots', []):
                     if lot['id'] == cancellation['relatedLot']:
                         lot['pendingCancellation'] = True
-                if 'documents' in cancellation:
-                    for document in cancellation['documents']:
-                        document['documentType'] = 'lotCancellation'
-                        documents = tender.get('documents', [])
-                        documents.append(document)
-                    tender['documents'] = documents
+            cancellation_docs = prepare_cancellation_documents(cancellation)
+            if 'documents' in tender:
+                tender['documents'].extend(cancellation_docs)
+            else:
+                tender['documents'] = cancellation_docs
     return tender
+
+
+def prepare_cancellation_documents(cancellation):
+    for doc in cancellation.get('documents', []):
+        doc['documentType'] = 'tenderCancellation' if \
+                cancellation['cancellationOf'] == 'tender' else 'lotCancellation'
+    return cancellation.get('documents', [])
 
 
 def convert_questions(tender):
@@ -203,7 +204,6 @@ def get_start_point(forward, backward, cookie, queue,
     forward_params['offset'] = r['prev_page']['offset']
     queue.put(filter(callback, r['data']))
     return forward_params, backward_params
-
 
 
 def exists_or_modified(storage, doc):
