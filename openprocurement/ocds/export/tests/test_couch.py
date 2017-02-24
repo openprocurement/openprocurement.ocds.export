@@ -2,11 +2,10 @@ import pytest
 import couchdb
 from openprocurement.ocds.export.storage import (
     TendersStorage,
-    ReleasesStorage
 )
 
 
-coudb_url = 'http://127.0.0.1:5984'
+coudb_url = 'http://admin:admin@127.0.0.1:5984'
 db_name  = 'test'
 SERVER = couchdb.Server(coudb_url)
 
@@ -121,16 +120,10 @@ def storage(request):
     return storage
 
 
-@pytest.fixture(scope='function')
-def releases(request):
-    releases = ReleasesStorage(coudb_url, db_name)
-    releases.save(test_release)
-    return releases
-
 
 class TestStorage(object):
     
-    @pytest.mark.parametrize('storage', [TendersStorage, ReleasesStorage])
+    @pytest.mark.parametrize('storage', [TendersStorage])
     def test_create(self, storage):
         if db_name in SERVER:
             del SERVER[db_name]
@@ -145,14 +138,6 @@ class TestStorage(object):
         for resp in storage.view('tenders/by_dateModified'):
             assert resp['value'] == test_tender['dateModified']
     
-    def test_release_iter(self, db, releases):
-        for item in releases:
+    def test_release_iter(self, db, storage):
+        for item in storage:
             assert item == test_release
-
-    def test_get_release_tag(self, db, releases):
-        for resp in releases.view('releases/tag', key=test_release['_id']):
-            assert resp['value'] == ['tender']
-
-    def test_get_release_ocid(self, db, releases):
-        for results in releases.ocid_list(test_release['ocid']):
-            assert results == [test_release['_id']]

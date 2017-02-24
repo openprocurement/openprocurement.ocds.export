@@ -32,61 +32,6 @@ TEST_CONTRACT = {"status": "active", "documents": [deepcopy(TEST_DOC) for _ in x
 TEST_TENDER = {"procurementMethod": "open", "numberOfBids": 3, "awardPeriod": deepcopy(TEST_PERIOD), "complaintPeriod": deepcopy(TEST_PERIOD), "auctionUrl": "https://auction-sandbox.openprocurement.org/tenders/3bfaccf5a42d4cc8b601e940e149af8b", "enquiryPeriod": deepcopy(TEST_PERIOD), "submissionMethod": "electronicAuction", "procuringEntity": deepcopy(TEST_ORGANIZATION), "owner": "test-tender.com.ua", "id": "3bfaccf5a42d4cc8b601e940e149af8b", "description": "OPEN-TENDER", "documents": [deepcopy(TEST_DOC) for _ in xrange(3)], "title": "OPEN-TENDER", "tenderID": "UA-2016-08-18-000186", "procurementMethodDetails": "quick, accelerator=2880", "dateModified": "2016-08-19T09:58:47.187060+03:00", "status": "temp", "tenderPeriod": deepcopy(TEST_PERIOD), "contracts": [deepcopy(TEST_CONTRACT) for _ in xrange(3)], "auctionPeriod": deepcopy(TEST_PERIOD), "procurementMethodType": "aboveThresholdUA", "awards": [deepcopy(TEST_AWARD) for _ in xrange(3)], "date": "2016-08-19T09:58:47.187060+03:00", "submissionMethodDetails": "quick", "items": [ { "description": "NAME", "classification": { "scheme": "CPV", "description": "NAME", "id": "22100000-1" }, "additionalClassifications": [ { "scheme": "sdfs", "id": "52.21.21", "description": "SKDJSK" } ], "deliveryLocation": { "latitude": "", "longitude": "" }, "deliveryAddress": { "countryName": "UKRAINE", "postalCode": "11111", "streetAddress": "LONDON", "region": "LONDON", "locality": "LONDON" }, "deliveryDate": { "endDate": "2016-08-31T00:00:00+03:00" }, "id": "718c539c751f48b6bd5b7cb5bfca65d3", "unit": { "code": "E54", "name": "test" }, "quantity": 1 } ], "bids": [ { "status": "active", "selfEligible": True, "value": { "currency": "UAH", "amount": 111, "valueAddedTaxIncluded": False }, "selfQualified": True, "tenderers": [deepcopy(TEST_ORGANIZATION)], "date": "2016-08-18T12:56:02.385607+03:00", "id": "8fc3313a4896483b87d2f4f8df22a7d4", "participationUrl": "https://auction-sandbox.openprocurement.org/tenders/3bfaccf5a42d4cc8b601e940e149af8b/login?bidder_id=8fc3313a4896483b87d2f4f8df22a7d4&hash=f57217716180524ef737b399a2a0b59ff050c568" }, ], "value": { "currency": "UAH", "amount": 5000, "valueAddedTaxIncluded": False }, "minimalStep": { "currency": "UAH", "amount": 300, "valueAddedTaxIncluded": False }, "awardCriteria": "lowestCost"}
 
 
-class TestHelpers(object):
-
-    def test_parse_tender(self):
-        tender = tender_converter(TEST_TENDER)
-        assert 'bids' not in tender
-        assert 'numberOfBids' not in tender
-        assert 'minimalStep' not in tender
-
-        assert 'tenderers' in tender
-        assert 'minValue' in tender
-
-    def test_parse_award(self):
-        parsed_tender = award_converter(deepcopy(TEST_TENDER))
-        assert TEST_TENDER != parsed_tender
-        assert 'awards' in parsed_tender
-        for award in parsed_tender['awards']:
-            assert 'items' in award
-
-    def test_parse_patch(self):
-        patch = [
-            { "op": "replace", "path": "/baz", "value": "boo" },
-        ]
-        amendment = patch_converter(patch)[0]
-        assert amendment['property'] == '/baz'
-        assert amendment['former_value'] == 'boo'
-
-    def test_unique_tenderers(self):
-        tenderers = unique_tenderers([TEST_ORGANIZATION, TEST_ORGANIZATION])
-        assert len(tenderers) == 1
-        assert tenderers[0] == TEST_ORGANIZATION
-        new_organization = deepcopy(TEST_ORGANIZATION)
-        new_organization['identifier']['id'] = '11111112222'
-        new_organization['name'] = 'new name'
-        assert new_organization['identifier']['id'] != TEST_ORGANIZATION['identifier']['id']
-
-        tenderers = unique_tenderers([deepcopy(TEST_ORGANIZATION), new_organization])
-        assert len(tenderers) == 2
-        if tenderers[0]['name'] == 'new name':
-            assert tenderers[0] == new_organization
-            assert tenderers[1] == TEST_ORGANIZATION 
-        else:
-            assert tenderers[1] == new_organization
-            assert tenderers[0] == TEST_ORGANIZATION 
-
-    def test_unique_documents_id(self):
-        doc1 = deepcopy(TEST_DOC)
-        doc2 = deepcopy(TEST_DOC)
-        docs = unique_documents([doc1, doc2])
-        assert doc1['id'] == 'test_id-0'
-        assert doc2['id'] == 'test_id-1'
-
-    def test_get_ocid(self):
-        assert get_ocid('a', 'b') == 'a-b'
-
-
 class TestSchema(object):
 
     def test_base_model(self):

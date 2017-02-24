@@ -1,0 +1,38 @@
+{
+	"status": "cancelled",
+	"lotID": "73039fc5ebf944b19d43a2122c4c3e8b",
+	"complaintPeriod": {
+		"startDate": "2016-07-19T16:04:46.462560+03:00",
+		"endDate": "2016-07-21T19:17:43.749693+03:00"
+	},
+	"suppliers": [
+		{
+			"contactPoint": {
+				"telephone": "380501111111",
+				"name": "Anatoliy Quad",
+				"email": "anatoliy@quad.io"
+			},
+			"identifier": {
+				"scheme": "UA-EDR",
+				"id": "22222222",
+				"legalName": "111111"
+			},
+			"name": "111111",
+			"address": {
+				"postalCode": "02152",
+				"countryName": "Україна",
+				"streetAddress": "Street 1",
+				"region": "м. Київ",
+				"locality": "Kyiv"
+			}
+		}
+	],
+	"bid_id": "8015e3715f2a4bcca84f8754328bd795",
+	"value": {
+		"currency": "UAH",
+		"amount": 9000,
+		"valueAddedTaxIncluded": false
+	},
+	"date": "2016-07-21T19:29:04.662628+03:00",
+	"id": "09613423c6ec442dacfefa15c9439d4e"
+}
