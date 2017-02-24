@@ -1,23 +1,81 @@
 # -*- coding: utf-8 -*-
 
 import jsonpatch
-import logging
+
 import ocdsmerge
 import yaml
 import os
+import zipfile
+from simplejson import dump
 from iso8601 import parse_date
 from datetime import datetime
 from collections import Counter
 from copy import deepcopy
 from .exceptions import LBMismatchError
 
+from boto.s3 import connect_to_region
+from boto.s3.connection import (
+    OrdinaryCallingFormat,
+    S3ResponseError
+)
 
-logger = logging.getLogger(__name__)
+from logging import (
+    getLogger,
+    ERROR
+)
+from logging.config import (
+    dictConfig
+)
 
+logger = getLogger(__name__)
+getLogger('boto').setLevel(ERROR)
 
 with open(os.path.join(os.path.dirname(__file__),
                        'unit_codes.yaml'), 'r') as stream:
     units = yaml.load(stream)
+
+
+def get_torrent_link(bucket, path):
+    return 'https://s3-eu-west-1.amazonaws.com/'\
+            '{}/{}/releases.zip?torrent'.format(bucket, path)
+
+
+def file_size(path, name):
+    return (os.stat(os.path.join(path, name)).st_size) / 1000000
+
+
+def make_zip(name, base_dir, skip=[]):
+    skip.append(name)
+    with zipfile.ZipFile(os.path.join(base_dir, name),
+                         'w', zipfile.ZIP_DEFLATED, allowZip64=True) as zf:
+        for f in [f for f in os.listdir(base_dir) if f not in skip]:
+            zf.write(os.path.join(base_dir, f))
+
+
+def parse_dates(dates):
+    return (parse_date(dates[0]).isoformat(),
+            parse_date(dates[1]).isoformat())
+
+
+def connect_bucket(config):
+    try:
+        conn = connect_to_region(
+                    'eu-west-1',
+                    aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID', ''),
+                    aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY', ''),
+                    calling_format=OrdinaryCallingFormat()
+                    )
+        return conn.get_bucket(config.get('bucket'))
+    except S3ResponseError as e:
+        logger.warn('Unable to connect to s3. Error: {}'.format(e))
+        return False
+
+
+def read_config(path):
+    with open(path) as cfg:
+        config = yaml.load(cfg)
+    dictConfig(config.get('logging', ''))
+    return config
 
 
 def now():
@@ -242,3 +300,12 @@ def save_patched(storage, tender):
 def compile_releases(releases, versioned=False):
     return ocdsmerge.merge(releases) if not versioned\
             else ocdsmerge.merge_versioned(releases)
+
+
+def dump_json(path, name, data, pretty=False):
+    with open(os.path.join(path, name), 'w') \
+            as stream:
+        if pretty:
+            dump(data, stream)
+        else:
+            dump(data, stream, indent=4)
