@@ -12,22 +12,10 @@
 </head>
 <body>
 	<div class="container">
-		{% for link in links %}
-		   {% if link.link|string() == 'example.json' %}
-		    	<p><a href='example.json'>example.json</a></p>
-		   {% elif link.link|string() == 'releases.zip'%}   
-			<p><a href='releases.zip'>releases.zip</a>   ({{ zip_size }} MB)  <a href='{{ torrent_link }}'>.torrent</a></p>
-		   {% endif %}
-		{% endfor %}
-
+		<h1>Prozorro OCDS data</h1>
 		<ol>
 		    {% for link in links %}
-
-		   	{% if link.link|string() != 'example.json' %}
-		   	{% if link.link|string() != 'releases.zip'%}   
-		    		<li><a href="{{ link.link }}">{{ link.link }}</a> ({{ link.size }} MB) </li>
-		   	{% endif %}
-		   	{% endif %}
+		    <li><a href="{{ link }}">{{ link }}</a></li>
 		    {% endfor %}
 		</ol>
 	</div>
