@@ -306,6 +306,6 @@ def dump_json(path, name, data, pretty=False):
     with open(os.path.join(path, name), 'w') \
             as stream:
         if pretty:
-            dump(data, stream)
-        else:
             dump(data, stream, indent=4)
+        else:
+            dump(data, stream)
