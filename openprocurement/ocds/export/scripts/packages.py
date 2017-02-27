@@ -93,7 +93,6 @@ def fetch_and_dump(config, max_date, params, extensions=False):
             package['uri'] = 'http://{}/merged_{}/{}'.format(
                 bucket, max_date, name
             )
-        date = max(map(lambda x: x.get('date', ''), package['releases']))
     except Exception as e:
         logger.info('Error: {}'.format(e))
         return
@@ -115,7 +114,6 @@ def fetch_and_dump(config, max_date, params, extensions=False):
                   pretty_package, pretty=True)
     dump_json(path, name, package)
     logger.info('End {}th dump startdoc={} enddoc={}'.format(nth, start, end))
-    return date
 
 
 def put_to_s3(bucket, path, time, extensions=False):
@@ -154,7 +152,7 @@ def links(path, skip=['example.json', 'index.html', 'releases.zip']):
 
 def create_html(path, config, date, extensions=False):
     template = ENV.get_template('index.html')
-    key = 'merged_{}' if not extensions else 'merged_with_extensions{}'
+    key = 'merged_{}' if not extensions else 'merged_with_extensions_{}'
     torrent_link = get_torrent_link(config.get('bucket'), key.format(date))
     zip_size = file_size(path, 'releases.zip')
     with open(os.path.join(path, 'index.html'), 'w') as stream:
