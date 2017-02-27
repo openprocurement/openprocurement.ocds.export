@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import jsonpatch
-
 import ocdsmerge
 import yaml
 import os

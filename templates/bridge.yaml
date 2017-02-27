@@ -29,7 +29,7 @@ logging:
 
     formatters:
       simple:
-        format: '%(asctime)s  %(name)-30s %(levelname)-7s %(message)s'
+        format: '%(asctime)s  %(name)-10s %(levelname)-7s %(message)s'
 
     handlers:
         file:
@@ -39,6 +39,12 @@ logging:
         console:
             class: logging.StreamHandler
             formatter: simple
+    packer:
+        level: DEBUG
+        handlers:
+            - file
+            - console
+
     root:
         level: DEBUG
         handlers:
