@@ -126,7 +126,7 @@ def run():
         with open(os.path.join(config['path'], name, 'w')) as stream:
             dump(pack, stream)
     else:
-        max_date = list(_tenders.get_max_date())[-1].split('T')[0]
+        max_date = _tenders.get_max_date().split('T')[0]
         total = int(args.number) if args.number else 4096
         key_ids = fetch_ids(_tenders, total)
         logger.info('Fetched key doc ids')
