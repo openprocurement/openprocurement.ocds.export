@@ -38,7 +38,7 @@ with open(os.path.join(os.path.dirname(__file__),
 
 def get_torrent_link(bucket, path):
     return 'https://s3-eu-west-1.amazonaws.com/'\
-            '{}/{}/releases.zip?torrent'.format(bucket, path)
+            '{}/{}releases.zip?torrent'.format(bucket, path)
 
 
 def file_size(path, name):
@@ -328,7 +328,7 @@ def create_html(environment, path, config, date, extensions=False):
 def update_index(templates, bucket):
     template = templates.get_template('base.html')
     index = templates.get_template('index.html')
-    dirs = [d.name for d in bucket.list('merged', '/')]
+    dirs = [d.name for d in bucket.list('merged', '/') if 'full' not in d.name]
     html = template.render(dict(links=[x.strip('/') for x in dirs]))
     bucket.get_key('index.html').set_contents_from_string(html)
     logger.info('Updated base index')
