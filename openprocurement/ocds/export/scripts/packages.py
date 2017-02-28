@@ -36,7 +36,8 @@ from openprocurement.ocds.export.helpers import (
 couchdb.json.use('simplejson')
 logger = logging.getLogger('packer')
 ENV = Environment(
-    loader=PackageLoader('openprocurement.ocds.export', 'templates')
+    loader=PackageLoader('openprocurement.ocds.export', 'templates'),
+    trim_blocks=True
 )
 
 
