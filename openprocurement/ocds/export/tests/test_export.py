@@ -1,3 +1,4 @@
+import pytest
 from openprocurement.ocds.export.models import (
     Award,
     Contract,
@@ -143,6 +144,7 @@ class TestExport(object):
         ten['patches'] = [patch5]
         releases = release_tenders(ten, 'test')
 
+    @pytest.mark.skip
     def test_record(self):
         ten = tender.copy()
         patch = [
@@ -209,6 +211,7 @@ class TestExportExt(object):
         assert 'name' in pack['publisher']
         assert pack['publisher']['name'] == 'test'
 
+    @pytest.mark.skip
     def test_record(self):
         ten = tender.copy()
         patch = [
