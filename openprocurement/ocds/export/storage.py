@@ -54,8 +54,11 @@ class TendersStorage(Database):
             yield item.doc
 
     def get_max_date(self):
-        for item in self.iterview('tenders/by_dateModified_pack', 1000):
-            yield item['key']
+        return next(iter(
+            self.view('tenders/by_dateModified_pack',
+                      limit=1,
+                      descending=True).rows
+        )).get('key')
 
     def get_between_dates(self, sdate, edate):
         for item in self.iterview('tenders/by_dateModified_pack',

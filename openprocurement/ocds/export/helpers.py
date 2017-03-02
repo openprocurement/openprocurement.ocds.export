@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 
 import jsonpatch
-
 import ocdsmerge
 import yaml
 import os
 import zipfile
+import math
 from simplejson import dump
 from iso8601 import parse_date
 from datetime import datetime
 from collections import Counter
-from copy import deepcopy
 from .exceptions import LBMismatchError
+
+from filechunkio import FileChunkIO
 
 from boto.s3 import connect_to_region
 from boto.s3.connection import (
@@ -37,7 +38,7 @@ with open(os.path.join(os.path.dirname(__file__),
 
 def get_torrent_link(bucket, path):
     return 'https://s3-eu-west-1.amazonaws.com/'\
-            '{}/{}/releases.zip?torrent'.format(bucket, path)
+            '{}/{}releases.zip?torrent'.format(bucket, path)
 
 
 def file_size(path, name):
@@ -232,18 +233,6 @@ def create_auction(tender):
     return auctions
 
 
-def add_revisions(tenders):
-    prev_tender = tenders[0]
-    new_tenders = []
-    for tender in tenders[1:]:
-        patch = jsonpatch.make_patch(prev_tender, tender)
-        tender['revisions'] = list(patch)
-        prev_tender = deepcopy(tender)
-        new_tenders.append(tender)
-        del prev_tender['revisions']
-    return new_tenders
-
-
 def mode_test(tender):
     """ drops all test mode tenders """
     return 'ТЕСТУВАННЯ'.decode('utf-8') in tender['title']
@@ -273,30 +262,6 @@ def exists_or_modified(storage, doc):
         return True
 
 
-def save_patched(storage, tender):
-    if '_id' not in tender:
-        tender['_id'] = tender['id']
-    resp = storage.view('tenders/by_dateModified', key=tender['id'])
-    try:
-        date_mod = next(r['value'] for r in resp)
-    except StopIteration:
-        date_mod = None
-    if date_mod is None:
-        logger.info('savig tender id={}'.format(tender['id']))
-        storage.save(tender)
-        return
-
-    if date_mod < tender['dateModified']:
-        logger.info('Updated tender id={}'.format(tender['id']))
-        doc = storage.get(tender['id'])
-        revisions = doc.pop('revisions', [])
-        patch = [p for p in jsonpatch.make_patch(doc, tender).patch if not p['path'].startswith('/_rev')]
-        revisions.append(patch)
-        doc.update(tender)
-        doc['revisions'] = revisions
-        storage.save(doc)
-
-
 def compile_releases(releases, versioned=False):
     return ocdsmerge.merge(releases) if not versioned\
             else ocdsmerge.merge_versioned(releases)
@@ -306,6 +271,81 @@ def dump_json(path, name, data, pretty=False):
     with open(os.path.join(path, name), 'w') \
             as stream:
         if pretty:
-            dump(data, stream)
-        else:
             dump(data, stream, indent=4)
+        else:
+            dump(data, stream)
+
+
+def fetch_ids(db, batch_count):
+    return [r['id'] for r in db.view('tenders/all')][::batch_count]
+
+
+def put_to_s3(bucket, path, time, extensions=False):
+    if extensions:
+        dir_name = 'merged_with_extensions_{}'.format(time)
+    else:
+        dir_name = 'merged_{}'.format(time)
+    for file in os.listdir(path):
+        aws_path = os.path.join(dir_name, file)
+        file_path = os.path.join(path, file)
+        if file.split('.')[1] == 'zip':
+            mp = bucket.initiate_multipart_upload(aws_path)
+            source_size = os.stat(file_path).st_size
+            chunk_size = 52428800
+            chunk_count = int(math.ceil(source_size / chunk_size))
+            for i in range(chunk_count + 1):
+                offset = chunk_size * i
+                bytes = min(chunk_size, source_size - offset)
+                with FileChunkIO(file_path, 'r', offset=offset,
+                                 bytes=bytes) as fp:
+                    mp.upload_part_from_file(fp, part_num=i + 1)
+            mp.complete_upload()
+        else:
+            key = bucket.new_key(aws_path)
+            key.set_contents_from_filename(file_path)
+
+
+def links(path, skip=['example.json', 'index.html', 'releases.zip']):
+    for _file in sorted([f for f in os.listdir(path) if
+                        f not in skip]):
+        yield {
+            'size': file_size(path, _file),
+            'link': _file
+        }
+
+
+def create_html(environment, path, config, date, extensions=False):
+    template = environment.get_template('index.html')
+    key = 'merged_{}' if not extensions else 'merged_with_extensions_{}'
+    torrent_link = get_torrent_link(config.get('bucket'), key.format(date))
+    zip_size = file_size(path, 'releases.zip')
+    with open(os.path.join(path, 'index.html'), 'w') as stream:
+        stream.write(template.render(dict(zip_size=zip_size,
+                                          torrent_link=torrent_link,
+                                          links=links(path))))
+
+
+def update_index(templates, bucket):
+    template = templates.get_template('base.html')
+    index = templates.get_template('index.html')
+    dirs = [d.name for d in bucket.list('merged', '/') if 'full' not in d.name]
+    html = template.render(dict(links=[x.strip('/') for x in dirs]))
+    bucket.get_key('index.html').set_contents_from_string(html)
+    logger.info('Updated base index')
+    for path in dirs:
+        ctx = [p.name for p in bucket.list(path, '/')
+               if not p.name.endswith('html')]
+        archive = bucket.get_key(path+'releases.zip')
+        size = None
+        if archive:
+            size = archive.size/1024/1024
+        torrent_link = get_torrent_link(bucket.name, path)
+        files = sorted([{
+            'link': f.split('/')[1],
+            'size': bucket.get_key(f).size/1024/1024
+        } for f in ctx], key=lambda x: x.get('link'))
+        result = index.render(dict(zip_size=size,
+                                   torrent_link=torrent_link,
+                                   links=files))
+        bucket.get_key(os.path.join(path, 'index.html')).set_contents_from_string(result)
+        logger.info('Updated index in {}'.format(path))
