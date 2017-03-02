@@ -1,0 +1,30 @@
+{
+   "description": "Test",
+   "title": "Test",
+   "author": {
+       "contactPoint": {
+           "url": "www.www.com",
+           "email": "qwe@qwe",
+           "name": "test test",
+           "telephone": "+332"
+       },
+       "identifier": {
+           "scheme": "UA-EDR",
+           "id": "13625948",
+           "legalName": "test"
+       },
+       "name": "Завод-изготовитель",
+       "address": {
+           "postalCode": "",
+           "countryName": "Україна",
+           "streetAddress": "",
+           "region": "",
+           "locality": ""
+       }
+   },
+   "answer": "Tst",
+   "date": "2015-11-04T10:59:58.588859+02:00",
+   "id": "e5ca1fa7b96f480d8f6016a4fbee971c",
+   "questionOf": "lot",
+   "relatedItem": "testID"
+}

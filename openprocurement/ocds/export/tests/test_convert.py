@@ -13,17 +13,16 @@ from openprocurement.ocds.export.helpers import (
 from .utils import (
     tender,
     award,
-    contract,
-    organization,
-    period,
-    document
+    document,
+    cancellation,
+    question
 )
 from copy import deepcopy
 
 
 class TestConvertHelpers(object):
 
-    def test_unique_tenders(self):
+    def test_unique_tenderers(self):
         bid = tender['bids'][0]
         tenderers = unique_tenderers([bid.copy(),
                                       bid.copy()])
@@ -45,13 +44,30 @@ class TestConvertHelpers(object):
             assert doc['id'] == _id + '-{}'.format(i)
 
     def test_convert_cancellation(self):
-        pass
+        ten = deepcopy(tender)
+        lot_canc = cancellation.copy()
+        lot_canc['relatedLot'] = '73039fc5ebf944b19d43a2122c4c3e8b'
+        lot_canc['cancellationOf'] = 'lot'
+        ten['cancellations'] = [cancellation.copy(), lot_canc]
+        convert_cancellation(ten)
+        assert 'pendingCancellation' in ten
+        assert 'pendingCancellation' in ten['lots'][0]
 
     def test_prepare_cancellation_documents(self):
-        pass
+        docs = prepare_cancellation_documents(cancellation.copy())
+        assert docs[0]['documentType'] == 'tenderCancellation'
+        lot_canc = cancellation.copy()
+        lot_canc['cancellationOf'] = 'lot'
+        docs = prepare_cancellation_documents(lot_canc)
+        assert docs[0]['documentType'] == 'lotCancellation'
 
     def test_convert_question(self):
-        pass
+        assert 'relatedItem' in question
+        ten = deepcopy(tender)
+        ten['questions'] = [question.copy()]
+        new = convert_questions(ten)
+        assert 'relatedItem' not in new[0]
+        assert 'relatedLot' in new[0]
 
     def test_award_converter(self):
         ten = deepcopy(tender)
@@ -66,7 +82,14 @@ class TestConvertHelpers(object):
         assert len(bids['details']) == len(bid[0]['lotValues'])
 
     def test_convert_unit_and_location(self):
-        pass
+        items = tender['items']
+        new = convert_unit_and_location(items)
+        new_loc = new[0]['deliveryLocation']
+        new_unit = new[0]['unit']
+        assert 'geometry' in new_loc
+        assert 'coordinates' in new_loc['geometry']
+        assert isinstance(new_loc['geometry']['coordinates'], list)
+        assert 'id' in new_unit
 
     def test_create_auction(self):
         data = deepcopy(tender)

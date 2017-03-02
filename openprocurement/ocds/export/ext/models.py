@@ -1,3 +1,4 @@
+import jsonpatch
 from openprocurement.ocds.export.models import (
     Award,
     Tender,
@@ -20,7 +21,8 @@ from openprocurement.ocds.export.helpers import (
     convert_cancellation,
     convert_questions,
     unique_documents,
-    build_package
+    build_package,
+    compile_releases
 )
 
 extensions = {
@@ -233,10 +235,66 @@ def release_tender_ext(tender, prefix):
     return release
 
 
+def release_tenders_ext(tender, prefix):
+
+    def prepare_first_tags(release):
+        tag = ['tender']
+        for f in ['awards', 'contracts', 'bids']:
+            if f in release:
+                tag.append(f[:-1])
+        return list(set(tag))
+
+    assert 'patches' in tender
+    patches = tender.pop('patches')
+
+    first_release = ReleaseExt(tender).__export__()
+    first_release['tag'] = prepare_first_tags(first_release)
+    releases = [first_release]
+    for patch in patches:
+        tender = jsonpatch.apply_patch(tender, patch)
+        next_release = ReleaseExt(tender).__export__()
+        if first_release != next_release:
+            diff = jsonpatch.make_patch(first_release, next_release).patch
+            tag = []
+            for op in diff:
+                if op['path'] in ['/tag', '/id']:
+                    continue
+                if op['op'] != 'add':
+                    if not any(p in op['path'] for p in ['awards', 'contracts', 'bids']):
+                        tag.append('tenderUpdate')
+                    else:
+                        for p in ['awards', 'contracts', 'bids']:
+                            if p in op['path']:
+                                tag.append(p[:-1] + 'Update')
+                else:
+                    for p in ['awards', 'contracts', 'bids']:
+                        if p in op['path']:
+                            tag.append(p[:-1])
+            next_release['tag'] = list(set(tag))
+            releases.append(next_release)
+        first_release = next_release
+    return releases
+
+
+def record_tenders_ext(tender, prefix):
+    record = {}
+    record['releases'] = release_tenders_ext(tender, prefix)
+    record['compiledRelease'] = compile_releases(record['releases'])
+    record['ocid'] = record['releases'][0]['ocid']
+    return record
+
+
 def package_tenders_ext(tenders, config):
     update_models_map()
     update_callbacks()
     package = build_package(config)
-    package['releases'] = [release_tender_ext(
-        t, config.get('prefix')) for t in tenders]
+    releases = []
+    for tender in tenders:
+        if not tender:
+            continue
+        if 'patches' in tender:
+            releases.extend(release_tenders(tender, config.get('prefix')))
+        else:
+            releases.append(release_tender_ext(tender, config.get('prefix')))
+    package['releases'] = releases
     return package

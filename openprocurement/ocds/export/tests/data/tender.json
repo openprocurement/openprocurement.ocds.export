@@ -1,165 +1,169 @@
 {
-   "procurementMethod": "open",
-   "numberOfBids": 1,
-   "awardPeriod": {
-       "startDate": "2016-07-19T16:04:46.462560+03:00",
-       "endDate": "2016-07-21T20:06:35.294131+03:00"
-   },
-   "enquiryPeriod": {
-       "startDate": "2016-07-19T15:28:47.518250+03:00",
-       "endDate": "2016-07-19T15:35:00+03:00"
-   },
-   "submissionMethod": "electronicAuction",
-   "procuringEntity": {
-       "contactPoint": {
-           "telephone": "380501111111",
-           "name": "Anatoliy Quad",
-           "email": "anatoliy@quad.io"
-       },
-       "identifier": {
-           "scheme": "UA-EDR",
-           "id": "22222222",
-           "uri": "http://www.dus.gov.ua/",
-           "legalName": "111111"
-       },
-       "name": "111111",
-       "kind": "general",
-       "address": {
-           "postalCode": "02152",
-           "countryName": "Україна",
-           "streetAddress": "Street 1",
-           "region": "м. Київ",
-           "locality": "Kyiv"
-       }
-   },
-   "description": "Тест tender description 9f4cfe8a585145f9a5aa42d7c3c9e4ef",
-   "title": "Тест tender 9f4cfe8a585145f9a5aa42d7c3c9e4ef",
-   "lots": [
-       {
-           "status": "unsuccessful",
-           "description": "Тест Lot 1 description73039fc5ebf944b19d43a2122c4c3e8b",
-           "title": "Тест Lot 1 73039fc5ebf944b19d43a2122c4c3e8b",
-           "minimalStep": {
-               "currency": "UAH",
-               "amount": 100,
-               "valueAddedTaxIncluded": false
-           },
-           "value": {
-               "currency": "UAH",
-               "amount": 10000,
-               "valueAddedTaxIncluded": false
-           },
-           "date": "2016-07-21T20:10:40.460918+03:00",
-           "id": "73039fc5ebf944b19d43a2122c4c3e8b",
-           "guarantee": {
-               "currency": "UAH",
-               "amount": 0
-           }
-       }
-   ],
-   "guarantee": {
-       "currency": "UAH",
-       "amount": 0
-   },
-   "tenderID": "UA-2016-07-19-000100",
-   "dateModified": "2016-07-21T20:10:40.460918+03:00",
-   "status": "unsuccessful",
-   "tenderPeriod": {
-       "startDate": "2016-07-19T15:40:00+03:00",
-       "endDate": "2016-07-19T16:00:00+03:00"
-   },
-   "procurementMethodDetails": "quick, accelerator=1440",
-   "procurementMethodType": "belowThreshold",
-   "date": "2016-07-21T20:10:40.460918+03:00",
-   "minimalStep": {
-       "currency": "UAH",
-       "amount": 100,
-       "valueAddedTaxIncluded": false
-   },
-   "items": [
-       {
-           "relatedLot": "73039fc5ebf944b19d43a2122c4c3e8b",
-           "description": "Тест футляри до державних нагород 3",
-           "classification": {
-               "scheme": "CPV",
-               "description": "Cartons",
-               "id": "44617100-9"
-           },
-           "additionalClassifications": [
-               {
-                   "scheme": "ДКПП",
-                   "id": "17.21.1",
-                   "description": "папір і картон гофровані, паперова й картонна тара"
-               },
-               {
-                   "scheme": "ДКПП",
-                   "id": "17.21.1.1",
-                   "description": "папір і картон гофровані, паперова й картонна тара 2"
-               }
-           ],
-           "deliveryAddress": {
-               "postalCode": "79000",
-               "countryName": "Україна",
-               "streetAddress": "вул. Банкова 1",
-               "region": "м. Київ",
-               "locality": "м. Київ"
-           },
-           "deliveryDate": {
-               "startDate": "2016-03-20T18:47:47.136678+02:00",
-               "endDate": "2016-03-23T18:47:47.136678+02:00"
-           },
-           "id": "73039fc5ebf944b19d43a2122c4c3e8b",
-           "unit": {
-               "code": "44617100-9",
-               "name": "item"
-           },
-           "quantity": 5
-       }
-   ],
-   "bids": [
-       {
-           "status": "active",
-           "lotValues": [
-               {
-                   "relatedLot": "73039fc5ebf944b19d43a2122c4c3e8b",
-                   "date": "2016-07-19T15:52:06.696673+03:00",
-                   "value": {
-                       "currency": "UAH",
-                       "amount": 9000,
-                       "valueAddedTaxIncluded": false
-                   }
-               }
-           ],
-           "tenderers": [
-               {
-                   "contactPoint": {
-                       "telephone": "380501111111",
-                       "name": "Anatoliy Quad",
-                       "email": "anatoliy@quad.io"
-                   },
-                   "identifier": {
-                       "scheme": "UA-EDR",
-                       "id": "22222222",
-                       "legalName": "111111"
-                   },
-                   "name": "111111",
-                   "address": {
-                       "postalCode": "02152",
-                       "countryName": "Україна",
-                       "streetAddress": "Street 1",
-                       "region": "м. Київ",
-                       "locality": "Kyiv"
-                   }
-               }
-           ],
-           "date": "2016-07-19T15:52:06.696715+03:00",
-           "id": "8015e3715f2a4bcca84f8754328bd795"
-       }
-   ],
-   "value": {
-       "currency": "UAH",
-       "amount": 10000,
-       "valueAddedTaxIncluded": false
-   },
-   "awardCriteria": "lowestCost"
+  "procurementMethod": "open",
+  "numberOfBids": 1,
+  "awardPeriod": {
+    "startDate": "2016-07-19T16:04:46.462560+03:00",
+    "endDate": "2016-07-21T20:06:35.294131+03:00"
+  },
+  "enquiryPeriod": {
+    "startDate": "2016-07-19T15:28:47.518250+03:00",
+    "endDate": "2016-07-19T15:35:00+03:00"
+  },
+  "submissionMethod": "electronicAuction",
+  "procuringEntity": {
+    "contactPoint": {
+      "telephone": "380501111111",
+      "name": "Anatoliy Quad",
+      "email": "anatoliy@quad.io"
+    },
+    "identifier": {
+      "scheme": "UA-EDR",
+      "id": "22222222",
+      "uri": "http://www.dus.gov.ua/",
+      "legalName": "111111"
+    },
+    "name": "111111",
+    "kind": "general",
+    "address": {
+      "postalCode": "02152",
+      "countryName": "Україна",
+      "streetAddress": "Street 1",
+      "region": "м. Київ",
+      "locality": "Kyiv"
+    }
+  },
+  "description": "Тест tender description 9f4cfe8a585145f9a5aa42d7c3c9e4ef",
+  "title": "Тест tender 9f4cfe8a585145f9a5aa42d7c3c9e4ef",
+  "lots": [
+    {
+      "status": "unsuccessful",
+      "description": "Тест Lot 1 description73039fc5ebf944b19d43a2122c4c3e8b",
+      "title": "Тест Lot 1 73039fc5ebf944b19d43a2122c4c3e8b",
+      "minimalStep": {
+        "currency": "UAH",
+        "amount": 100,
+        "valueAddedTaxIncluded": false
+      },
+      "value": {
+        "currency": "UAH",
+        "amount": 10000,
+        "valueAddedTaxIncluded": false
+      },
+      "date": "2016-07-21T20:10:40.460918+03:00",
+      "id": "73039fc5ebf944b19d43a2122c4c3e8b",
+      "guarantee": {
+        "currency": "UAH",
+        "amount": 0
+      }
+    }
+  ],
+  "guarantee": {
+    "currency": "UAH",
+    "amount": 0
+  },
+  "tenderID": "UA-2016-07-19-000100",
+  "dateModified": "2016-07-21T20:10:40.460918+03:00",
+  "status": "unsuccessful",
+  "tenderPeriod": {
+    "startDate": "2016-07-19T15:40:00+03:00",
+    "endDate": "2016-07-19T16:00:00+03:00"
+  },
+  "procurementMethodDetails": "quick, accelerator=1440",
+  "procurementMethodType": "belowThreshold",
+  "date": "2016-07-21T20:10:40.460918+03:00",
+  "minimalStep": {
+    "currency": "UAH",
+    "amount": 100,
+    "valueAddedTaxIncluded": false
+  },
+  "items": [
+    {
+      "relatedLot": "73039fc5ebf944b19d43a2122c4c3e8b",
+      "description": "Тест футляри до державних нагород 3",
+      "classification": {
+        "scheme": "CPV",
+        "description": "Cartons",
+        "id": "44617100-9"
+      },
+      "additionalClassifications": [
+        {
+          "scheme": "ДКПП",
+          "id": "17.21.1",
+          "description": "папір і картон гофровані, паперова й картонна тара"
+        },
+        {
+          "scheme": "ДКПП",
+          "id": "17.21.1.1",
+          "description": "папір і картон гофровані, паперова й картонна тара 2"
+        }
+      ],
+      "deliveryAddress": {
+        "postalCode": "79000",
+        "countryName": "Україна",
+        "streetAddress": "вул. Банкова 1",
+        "region": "м. Київ",
+        "locality": "м. Київ"
+      },
+      "deliveryLocation": {
+        "latitude": "46.48",
+        "longitude": "30.75"
+      },
+      "deliveryDate": {
+        "startDate": "2016-03-20T18:47:47.136678+02:00",
+        "endDate": "2016-03-23T18:47:47.136678+02:00"
+      },
+      "id": "73039fc5ebf944b19d43a2122c4c3e8b",
+      "unit": {
+        "code": "44617100-9",
+        "name": "item"
+      },
+      "quantity": 5
+    }
+  ],
+  "bids": [
+    {
+      "status": "active",
+      "lotValues": [
+        {
+          "relatedLot": "73039fc5ebf944b19d43a2122c4c3e8b",
+          "date": "2016-07-19T15:52:06.696673+03:00",
+          "value": {
+            "currency": "UAH",
+            "amount": 9000,
+            "valueAddedTaxIncluded": false
+          }
+        }
+      ],
+      "tenderers": [
+        {
+          "contactPoint": {
+            "telephone": "380501111111",
+            "name": "Anatoliy Quad",
+            "email": "anatoliy@quad.io"
+          },
+          "identifier": {
+            "scheme": "UA-EDR",
+            "id": "22222222",
+            "legalName": "111111"
+          },
+          "name": "111111",
+          "address": {
+            "postalCode": "02152",
+            "countryName": "Україна",
+            "streetAddress": "Street 1",
+            "region": "м. Київ",
+            "locality": "Kyiv"
+          }
+        }
+      ],
+      "date": "2016-07-19T15:52:06.696715+03:00",
+      "id": "8015e3715f2a4bcca84f8754328bd795"
+    }
+  ],
+  "value": {
+    "currency": "UAH",
+    "amount": 10000,
+    "valueAddedTaxIncluded": false
+  },
+  "awardCriteria": "lowestCost"
 }

@@ -1,0 +1,17 @@
+publisher:
+    name: test
+license: test
+initiationType: tender
+publicationPolicy: test
+prefix: ocds-test
+
+tenders_db:
+    url: http://127.0.0.1:5984
+    name: test
+
+api:
+    api_host: http://0.0.0.0:8080
+    api_key: 
+    api_version: 2.3
+
+historical: False

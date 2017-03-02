@@ -1,6 +1,5 @@
 import jsonpatch
 from uuid import uuid4
-from itertools import chain
 from openprocurement.ocds.export.helpers import (
     unique_tenderers,
     unique_documents,
@@ -318,6 +317,8 @@ def release_tenders(tender, prefix):
             diff = jsonpatch.make_patch(first_release, next_release).patch
             tag = []
             for op in diff:
+                if op['path'] in ['/tag', '/id']:
+                    continue
                 if op['op'] != 'add':
                     if not any(p in op['path'] for p in ['awards', 'contracts']):
                         tag.append('tenderUpdate')

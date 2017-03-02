@@ -1,5 +1,6 @@
 import pytest
 import simplejson
+import yaml
 from os import path
 
 here = path.dirname(__file__)
@@ -32,3 +33,15 @@ with open(path.join(here, 'data', 'organization.json')) \
 with open(path.join(here, 'data', 'document.json')) \
         as in_stram:
     document = simplejson.load(in_stram)
+
+with open(path.join(here, 'data', 'cancellation.json')) \
+        as in_stram:
+    cancellation = simplejson.load(in_stram)
+
+with open(path.join(here, 'data', 'question.json')) \
+        as in_stram:
+    question = simplejson.load(in_stram)
+
+with open(path.join(here, 'data', 'config.yaml')) \
+        as in_stram:
+    config = yaml.load(in_stram)
