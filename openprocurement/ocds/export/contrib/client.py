@@ -16,7 +16,8 @@ class APIClient(object):
 
         self.base_url = "{}/api/{}".format(api_host, api_version)
         self.session = requests.Session()
-        self.session.auth = (api_key, '')
+        if api_key:
+            self.session.auth = (api_key, '')
         self.session.headers = {
             "Accept": "applicaiton/json",
             "Content-type": "application/json"
