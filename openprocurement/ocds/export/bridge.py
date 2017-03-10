@@ -73,7 +73,7 @@ class APIDataBridge(object):
             revisions = []
             for i in range(int(last_version), int(version)):
                 try:
-                    gversion, tender = self.client.get_tender(_id, i)
+                    gversion, tender = self.client.get_tender(_id, str(i))
                 except:
                     break
                 if gversion == str(i):
