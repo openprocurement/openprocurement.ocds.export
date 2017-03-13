@@ -293,8 +293,19 @@ def package_tenders_ext(tenders, config):
         if not tender:
             continue
         if 'patches' in tender:
-            releases.extend(release_tenders(tender, config.get('prefix')))
+            releases.extend(release_tenders_ext(tender, config.get('prefix')))
         else:
             releases.append(release_tender_ext(tender, config.get('prefix')))
     package['releases'] = releases
+    return package
+
+
+def package_records_ext(tenders, config):
+    package = build_package(config)
+    records = []
+    for tender in tenders:
+        if not tender:
+            continue
+        records.append(record_tenders_ext(tender, config.get('prefix')))
+    package['records'] = records
     return package

@@ -356,3 +356,14 @@ def package_tenders(tenders, config):
             releases.append(release_tender(tender, config.get('prefix')))
     package['releases'] = releases
     return package
+
+
+def package_records(tenders, config):
+    package = build_package(config)
+    records = []
+    for tender in tenders:
+        if not tender:
+            continue
+        records.append(record_tenders(tender, config.get('prefix')))
+    package['records'] = records
+    return package

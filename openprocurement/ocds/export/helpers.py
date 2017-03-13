@@ -305,7 +305,7 @@ def put_to_s3(bucket, path, time, extensions=False):
             key.set_contents_from_filename(file_path)
 
 
-def links(path, skip=['example.json', 'index.html', 'releases.zip']):
+def links(path, skip=['example.json', 'index.html', 'releases.zip', 'records.zip']):
     for _file in sorted([f for f in os.listdir(path) if
                         f not in skip]):
         yield {
@@ -335,14 +335,17 @@ def update_index(templates, bucket):
     for path in dirs:
         ctx = [p.name for p in bucket.list(path, '/')
                if not p.name.endswith('html')]
-        archive = bucket.get_key(path+'releases.zip')
+        if 'record' in p.name:
+            archive = bucket.get_key(path + 'records.zip')
+        else:
+            archive = bucket.get_key(path + 'releases.zip')
         size = None
         if archive:
-            size = archive.size/1024/1024
+            size = archive.size / 1024 / 1024
         torrent_link = get_torrent_link(bucket.name, path)
         files = sorted([{
             'link': f.split('/')[1],
-            'size': bucket.get_key(f).size/1024/1024
+            'size': bucket.get_key(f).size / 1024 / 1024
         } for f in ctx], key=lambda x: x.get('link'))
         result = index.render(dict(zip_size=size,
                                    torrent_link=torrent_link,
