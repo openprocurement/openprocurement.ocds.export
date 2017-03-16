@@ -97,8 +97,9 @@ def build_package(config):
     return package
 
 
-def unique_tenderers(bids):
+def unique_tenderers(tender):
     """leave only unique tenderers as required by standard"""
+    bids = tender.get('bids')
     if not bids:
         return
     tenderers = [tenderer for bid in bids for tenderer in bid.get('tenderers', [])]
@@ -120,7 +121,7 @@ def unique_documents(documents, extension=False):
     return documents
 
 
-def convert_cancellation(tender):
+def convert_cancellation_and_tenderers(tender):
     cancellations = tender.get('cancellations', '')
     if cancellations:
         for cancellation in cancellations:
@@ -135,6 +136,8 @@ def convert_cancellation(tender):
                 tender['documents'].extend(cancellation_docs)
             else:
                 tender['documents'] = cancellation_docs
+    if unique_tenderers(tender):
+        tender['tenderers'] = unique_tenderers(tender)
     return tender
 
 
