@@ -16,10 +16,12 @@ from openprocurement.ocds.export.storage import (
     TendersStorage
 )
 from openprocurement.ocds.export.models import (
-    package_tenders
+    package_tenders,
+    package_records
 )
 from openprocurement.ocds.export.ext.models import (
-    package_tenders_ext
+    package_tenders_ext,
+    package_records_ext
 )
 from openprocurement.ocds.export.helpers import (
     connect_bucket,
@@ -63,10 +65,14 @@ def parse_args():
                         action='store_true',
                         help='Choose to start dump with extensions',
                         default=False)
+    parser.add_argument('-rec',
+                        action='store_true',
+                        help='Choose to start dump record packages',
+                        default=False)
     return parser.parse_args()
 
 
-def fetch_and_dump(config, max_date, params, extensions=False):
+def fetch_and_dump(config, max_date, params, record=False, extensions=False):
     nth, (start, end) = params
     logger.info('Start {}th dump startdoc={}'
                 ' enddoc={}'.format(nth, start, end))
@@ -83,12 +89,13 @@ def fetch_and_dump(config, max_date, params, extensions=False):
     if end:
         args.update(dict(endkey=end))
     result = [r.doc for r in list(db.view('tenders/all', **args))]
-
-    package_func = package_tenders if not extensions else package_tenders_ext
+    if record:
+        package_func = package_records if not extensions else package_records_ext
+    else:
+        package_func = package_tenders if not extensions else package_tenders_ext
     base_url = 'http://{}/merged_{}/{}' if not extensions \
                    else 'http://{}/merged_with_extensions_{}/{}'
-
-    name = 'release-{0:07d}.json'.format(nth)
+    name = 'record-{0:07d}.json'.format(nth) if record else 'release-{0:07d}.json'.format(nth)
     path = config['path']
     try:
         package = package_func(result[:-1], config.get('release'))
@@ -116,14 +123,20 @@ def run():
     _tenders = TendersStorage(config['tenders_db']['url'],
                               config['tenders_db']['name'])
     logger.info('Start packaging')
+    nam = 'records' if args.rec else 'releases'
     if not os.path.exists(config.get('path')):
         os.makedirs(config.get('path'))
     if args.dates:
         datestart, datefinish = parse_dates(args.dates)
         to_release = _tenders.get_between_dates(datestart, datefinish)
-        pack = package_tenders(list(to_release), config)
-        name = 'release_between_{}_{}'.format(datestart.split('T')[0],
-                                              datefinish.split('T')[0])
+        if args.rec:
+            package_func = package_records_ext if args.ext else package_records
+        else:
+            package_func = package_tenders_ext if args.ext else package_tenders
+        pack = package_func(list(to_release), config)
+        name = '{}_between_{}_{}'.format(nam,
+                                         datestart.split('T')[0],
+                                         datefinish.split('T')[0])
         with open(os.path.join(config['path'], name, 'w')) as stream:
             dump(pack, stream)
     else:
@@ -132,16 +145,17 @@ def run():
         key_ids = fetch_ids(_tenders, total)
         logger.info('Fetched key doc ids')
         pool = mp.Pool(mp.cpu_count())
-        if args.ext:
-            _conn = partial(fetch_and_dump, config, max_date, extensions=True)
-        else:
-            _conn = partial(fetch_and_dump, config, max_date)
+        _conn = partial(fetch_and_dump,
+                        config,
+                        max_date,
+                        record=args.rec,
+                        extensions=args.ext)
         params = enumerate(
             zip_longest(key_ids, key_ids[1::], fillvalue=''),
             1
         )
         pool.map(_conn, params)
-        make_zip('releases.zip', config.get('path'))
+        make_zip('{}.zip'.format(nam), config.get('path'))
         create_html(ENV, config.get('path'), config,
                     max_date, extensions=args.ext)
         if args.s3 and bucket:

@@ -15,7 +15,7 @@ callbacks = {
     'minValue': lambda raw_data: raw_data.get('minimalStep'),
     'status': lambda raw_data: raw_data.get('status').split('.')[0],
     'documents': lambda raw_data: unique_documents(raw_data.get('documents')),
-    'tenderers': lambda raw_data: unique_tenderers(raw_data.get('bids')),
+    'tenderers': lambda raw_data: unique_tenderers(raw_data),
     'id': lambda raw_data: raw_data.get('_id') if '_id' in raw_data else raw_data.get('id'),
     'awards': lambda raw_data: award_converter(raw_data),
     'contracts': lambda raw_data: raw_data.get('contracts'),
@@ -358,4 +358,15 @@ def package_tenders(tenders, config):
         else:
             releases.append(release_tender(tender, config.get('prefix')))
     package['releases'] = releases
+    return package
+
+
+def package_records(tenders, config):
+    package = build_package(config)
+    records = []
+    for tender in tenders:
+        if not tender:
+            continue
+        records.append(record_tenders(tender, config.get('prefix')))
+    package['records'] = records
     return package
