@@ -9,6 +9,7 @@ from openprocurement.ocds.export.helpers import (
     compile_releases
 )
 
+invalidsymbols = ["`","~","!", "@","#","$", '"']
 
 callbacks = {
     'minValue': lambda raw_data: raw_data.get('minimalStep'),
@@ -21,7 +22,9 @@ callbacks = {
     'date': lambda raw_data: raw_data.get('dateModified'),
     'tender': lambda raw_data: raw_data,
     'buyer': lambda raw_data: raw_data.get('procuringEntity'),
-    'submissionMethod': lambda raw_data: [raw_data.get('submissionMethod', '')]
+    'submissionMethod': lambda raw_data: [raw_data.get('submissionMethod', '')],
+    'uri':  lambda raw_data: ''.join(c for c in raw_data.encode('ascii','ignore') if c not in invalidsymbols)
+    'url':  lambda raw_data: ''.join(c for c in raw_data.encode('ascii','ignore') if c not in invalidsymbols)
 }
 
 
