@@ -64,7 +64,7 @@ class APIDataBridge(object):
 
     def fetch_tender_versioned(self, feed_item):
         _id = feed_item['id']
-        version, tender = self.client.get_tender(_id, version='100000')
+        version, tender = self.client.get_tender(_id)
         logger.info('Got tender id={}, version={}'.format(tender['id'], version))
         last_date_modified = self._db.view('tenders/by_dateModified', key=tender['id']).rows
         first = False if last_date_modified else True

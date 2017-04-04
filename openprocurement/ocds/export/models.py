@@ -1,6 +1,8 @@
 import jsonpatch
+import logging
 from uuid import uuid4
-from itertools import chain
+from urllib import quote
+from functools import partial
 from openprocurement.ocds.export.helpers import (
     unique_tenderers,
     unique_documents,
@@ -9,6 +11,30 @@ from openprocurement.ocds.export.helpers import (
     build_package,
     compile_releases
 )
+
+logger = logging.getLogger(__name__)
+invalidsymbols = ["`","~","!", "@","#","$", '"', u"\u200E" ]
+
+def quote_uri(key, data):
+    uri = ''.join(c for c in data.get(key, '') if c not in invalidsymbols)
+    if not uri:
+        return ''
+    try:
+        if all(ord(c) < 128 for c in uri):
+            return uri
+    except Exception as e:
+        logger.fatal('Unable to parse uri {}. Error: {}'.format(uri, e.message))
+
+    scheme, rest = uri.split(':')
+    try:
+        path = quote(rest)
+    except:
+        try:
+            tmp = ''.join(c for c in rest if c not in invalidsymbols)
+            path = quote(tmp)
+        except Exception as e:
+            logger.fatal('Unable to parse uri {}. Error: {}'.format(uri, e.message))
+    return '{}:{}'.format(scheme, path)
 
 
 callbacks = {
@@ -23,6 +49,8 @@ callbacks = {
     'tender': lambda raw_data: raw_data,
     'buyer': lambda raw_data: raw_data.get('procuringEntity'),
     'submissionMethod': lambda raw_data: [raw_data.get('submissionMethod', '')]
+    'uri':  partial(quote_uri, 'uri'),
+    'url':  partial(quote_uri, 'url')
 }
 
 
