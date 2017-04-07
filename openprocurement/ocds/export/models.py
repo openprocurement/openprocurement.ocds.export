@@ -48,7 +48,7 @@ callbacks = {
     'date': lambda raw_data: raw_data.get('dateModified'),
     'tender': lambda raw_data: raw_data,
     'buyer': lambda raw_data: raw_data.get('procuringEntity'),
-    'submissionMethod': lambda raw_data: [raw_data.get('submissionMethod', '')]
+    'submissionMethod': lambda raw_data: [raw_data.get('submissionMethod', '')],
     'uri':  partial(quote_uri, 'uri'),
     'url':  partial(quote_uri, 'url')
 }
