@@ -45,7 +45,7 @@ callbacks = {
     'id': lambda raw_data: raw_data.get('_id') if '_id' in raw_data else raw_data.get('id'),
     'awards': lambda raw_data: award_converter(raw_data),
     'contracts': lambda raw_data: raw_data.get('contracts'),
-    'date': lambda raw_data: raw_data.get('dateModified'),
+    'date': lambda raw_data: raw_data.get('dateModified', raw_data.get('date', '')),
     'tender': lambda raw_data: raw_data,
     'buyer': lambda raw_data: raw_data.get('procuringEntity'),
     'submissionMethod': lambda raw_data: [raw_data.get('submissionMethod', '')],
