@@ -17,28 +17,13 @@ invalidsymbols = ["`", "~", "!", "@", "#", "$", '"', u"\u200E"]
 
 
 def quote_uri(key, data):
-    try:
-        uri = ''.join(c for c in data.get(key, '') if c not in invalidsymbols)
-        if not uri:
-            return ''
-        try:
-            if all(ord(c) < 128 for c in uri):
-                return uri
-        except Exception as e:
-            logger.fatal('Unable to parse uri {}. Error: {}'.format(uri, e.message))
-
-        scheme, rest = uri.split(':')
-        try:
-            path = quote(rest)
-        except:
-            try:
-                tmp = ''.join(c for c in rest if c not in invalidsymbols)
-                path = quote(tmp)
-            except Exception as e:
-                logger.fatal('Unable to parse uri {}. Error: {}'.format(uri, e.message))
-        return '{}:{}'.format(scheme, path)
-    except Exception as e:
-        return ''
+    new = ''
+    if not data.get(key):
+        return
+    uri = ''.join(c.encode('utf-8') for c in data.get(key, '') if c not in invalidsymbols)
+    for symb in uri:
+        new += quote(symb) if ord(symb) > 128 else symb
+    return new
 
 
 callbacks = {
