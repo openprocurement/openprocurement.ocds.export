@@ -1,7 +1,7 @@
 from openprocurement.ocds.export.helpers import (
     unique_tenderers,
     unique_documents,
-    convert_cancellation,
+    convert_cancellation_and_tenderers,
     prepare_cancellation_documents,
     convert_questions,
     award_converter,
@@ -24,15 +24,15 @@ class TestConvertHelpers(object):
 
     def test_unique_tenderers(self):
         bid = tender['bids'][0]
-        tenderers = unique_tenderers([bid.copy(),
-                                      bid.copy()])
+        tenderers = unique_tenderers(tender.copy())
         assert len(tenderers) == 1
         assert tenderers[0] == bid['tenderers'][0]
         new_bid = deepcopy(bid)
         new_bid['tenderers'][0]['identifier']['id'] = '11111112222'
         new_bid['tenderers'][0]['name'] = 'new name'
-
-        tenderers = unique_tenderers([bid.copy(), new_bid])
+        ten = tender.copy()
+        ten['bids'].append(new_bid)
+        tenderers = unique_tenderers(ten)
         assert len(tenderers) == 2
         assert tenderers[1] == new_bid['tenderers'][0]
         assert tenderers[0] == bid['tenderers'][0]
@@ -49,7 +49,7 @@ class TestConvertHelpers(object):
         lot_canc['relatedLot'] = '73039fc5ebf944b19d43a2122c4c3e8b'
         lot_canc['cancellationOf'] = 'lot'
         ten['cancellations'] = [cancellation.copy(), lot_canc]
-        convert_cancellation(ten)
+        convert_cancellation_and_tenderers(ten)
         assert 'pendingCancellation' in ten
         assert 'pendingCancellation' in ten['lots'][0]
 
@@ -79,7 +79,7 @@ class TestConvertHelpers(object):
         bid = tender['bids']
         bids = convert_bids(bid)
         assert 'details' in bids
-        assert len(bids['details']) == len(bid[0]['lotValues'])
+        assert len(bids['details']) == len(bid[0]['lotValues']) + len(bid[1]['lotValues'])
 
     def test_convert_unit_and_location(self):
         items = tender['items']

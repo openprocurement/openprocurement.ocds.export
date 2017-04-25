@@ -19,7 +19,7 @@ from openprocurement.ocds.export.helpers import (
     convert_bids,
     create_auction,
     convert_unit_and_location,
-    convert_cancellation,
+    convert_cancellation_and_tenderers,
     convert_questions,
     unique_documents,
     build_package,
@@ -30,7 +30,7 @@ extensions = {
     'bids': lambda raw_data: convert_bids(raw_data.get('bids')),
     'auctions': lambda raw_data: create_auction(raw_data),
     'items': lambda raw_data: convert_unit_and_location(raw_data.get('items')),
-    'tender': lambda raw_data: convert_cancellation(raw_data),
+    'tender': lambda raw_data: convert_cancellation_and_tenderers(raw_data),
     'enquiries': lambda raw_data: convert_questions(raw_data),
     'currentStage': lambda raw_data: raw_data.get('status'),
     'documents': lambda raw_data: unique_documents(raw_data.get('documents'), extension=True),
@@ -41,6 +41,7 @@ def update_callbacks():
     global callbacks
     global extensions
     callbacks.update(extensions)
+    callbacks.pop('tenderers', None)
 
 
 class TenderExt(Tender):
@@ -389,14 +390,29 @@ def record_tenders_ext(tender, prefix):
 
 
 def package_tenders_ext(tenders, config):
+    update_models_map()
+    update_callbacks()
     package = build_package(config)
     releases = []
     for tender in tenders:
         if not tender:
             continue
         if 'patches' in tender:
-            releases.extend(release_tenders(tender, config.get('prefix')))
+            releases.extend(release_tenders_ext(tender, config.get('prefix')))
         else:
             releases.append(release_tender_ext(tender, config.get('prefix')))
     package['releases'] = releases
+    return package
+
+
+def package_records_ext(tenders, config):
+    update_models_map()
+    update_callbacks()
+    package = build_package(config)
+    records = []
+    for tender in tenders:
+        if not tender:
+            continue
+        records.append(record_tenders_ext(tender, config.get('prefix')))
+    package['records'] = records
     return package
