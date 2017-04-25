@@ -1,0 +1,75 @@
+{
+	"status": "cancelled",
+	"items": [
+		{
+			"relatedLot": "73039fc5ebf944b19d43a2122c4c3e8b",
+			"description": "Тест футляри до державних нагород 3",
+			"classification": {
+				"scheme": "CPV",
+				"description": "Cartons",
+				"id": "44617100-9"
+			},
+			"additionalClassifications": [
+				{
+					"scheme": "ДКПП",
+					"id": "17.21.1",
+					"description": "папір і картон гофровані, паперова й картонна тара"
+				},
+				{
+					"scheme": "ДКПП",
+					"id": "17.21.1.1",
+					"description": "папір і картон гофровані, паперова й картонна тара 2"
+				}
+			],
+			"deliveryAddress": {
+				"postalCode": "79000",
+				"countryName": "Україна",
+				"streetAddress": "вул. Банкова 1",
+				"region": "м. Київ",
+				"locality": "м. Київ"
+			},
+			"deliveryDate": {
+				"startDate": "2016-03-20T18:47:47.136678+02:00",
+				"endDate": "2016-03-23T18:47:47.136678+02:00"
+			},
+			"id": "73039fc5ebf944b19d43a2122c4c3e8b",
+			"unit": {
+				"code": "44617100-9",
+				"name": "item"
+			},
+			"quantity": 5
+		}
+	],
+	"suppliers": [
+		{
+			"contactPoint": {
+				"telephone": "380501111111",
+				"name": "Anatoliy Quad",
+				"email": "anatoliy@quad.io"
+			},
+			"identifier": {
+				"scheme": "UA-EDR",
+				"id": "22222222",
+				"legalName": "111111"
+			},
+			"name": "111111",
+			"address": {
+				"postalCode": "02152",
+				"countryName": "Україна",
+				"streetAddress": "Street 1",
+				"region": "м. Київ",
+				"locality": "Kyiv"
+			}
+		}
+	],
+	"value": {
+		"currency": "UAH",
+		"amount": 9000,
+		"valueAddedTaxIncluded": false
+	},
+	"date": "2016-07-21T19:29:04.662628+03:00",
+	"awardID": "09613423c6ec442dacfefa15c9439d4e",
+	"id": "8b2b371ea05445308f8d130cd575106b",
+	"contractID": "UA-2016-07-19-000100-1",
+	"contractNumber": "test"
+}

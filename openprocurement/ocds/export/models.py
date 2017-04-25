@@ -13,7 +13,8 @@ from openprocurement.ocds.export.helpers import (
 )
 
 logger = logging.getLogger(__name__)
-invalidsymbols = ["`","~","!", "@","#","$", '"', u"\u200E" ]
+invalidsymbols = ["`", "~", "!", "@", "#", "$", '"', u"\u200E"]
+
 
 def quote_uri(key, data):
     try:
@@ -52,8 +53,8 @@ callbacks = {
     'tender': lambda raw_data: raw_data,
     'buyer': lambda raw_data: raw_data.get('procuringEntity'),
     'submissionMethod': lambda raw_data: [raw_data.get('submissionMethod', '')],
-    'uri':  partial(quote_uri, 'uri'),
-    'url':  partial(quote_uri, 'url')
+    'uri': partial(quote_uri, 'uri'),
+    'url': partial(quote_uri, 'url')
 }
 
 
@@ -349,6 +350,8 @@ def release_tenders(tender, prefix):
             diff = jsonpatch.make_patch(first_release, next_release).patch
             tag = []
             for op in diff:
+                if op['path'] in ['/tag', '/id']:
+                    continue
                 if op['op'] != 'add':
                     if not any(p in op['path'] for p in ['awards', 'contracts']):
                         tag.append('tenderUpdate')

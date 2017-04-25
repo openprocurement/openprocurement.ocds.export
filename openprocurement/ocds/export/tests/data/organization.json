@@ -1,0 +1,22 @@
+{
+	"contactPoint": {
+		"telephone": "380501111111",
+		"name": "Anatoliy Quad",
+		"email": "anatoliy@quad.io"
+	},
+	"identifier": {
+		"scheme": "UA-EDR",
+		"id": "22222222",
+		"uri": "http://www.dus.gov.ua/",
+		"legalName": "111111"
+	},
+	"name": "111111",
+	"kind": "general",
+	"address": {
+		"postalCode": "02152",
+		"countryName": "Україна",
+		"streetAddress": "Street 1",
+		"region": "м. Київ",
+		"locality": "Kyiv"
+	}
+}
