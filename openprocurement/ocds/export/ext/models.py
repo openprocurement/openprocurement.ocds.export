@@ -12,7 +12,8 @@ from openprocurement.ocds.export.models import (
     modelsMap,
     Release,
     Organization,
-    Contact
+    Contact,
+    Period
 )
 from openprocurement.ocds.export.helpers import (
     convert_bids,
@@ -52,6 +53,16 @@ class TenderExt(Tender):
         'lots',
         'procurementMethodType',
         'currentStage',
+        'qualifications',
+        'qualificationPeriod',
+        'guarantee',
+        'complaints',
+        'complaintPeriod',
+        'features',
+        'shortlistedFirms',
+        'cause',
+        'causeDescription',
+        'stage2TenderID',
     )
 
 
@@ -59,6 +70,11 @@ class AwardExt(Award):
 
     __slots__ = Award.__slots__ + (
         'lotID',
+        'qualified',
+        'complaints',
+        'complaintPeriod',
+        'eligible',
+        'subcontractingDetails'
     )
 
 
@@ -79,7 +95,10 @@ class Bid(Model):
         'value',
         'documents',
         'relatedLot',
-        'participationUrl'
+        'participationUrl',
+        'selfQualified',
+        'selfEligible',
+        'subcontractingDetails',
     )
 
 
@@ -166,6 +185,7 @@ class Lot(Model):
         'value',
         'id',
         'pendingCancellation',
+        'guarantee'
     )
 
 
@@ -197,6 +217,83 @@ class Bids(Model):
     )
 
 
+class Qualification(Model):
+
+    __slots__ = (
+        'status',
+        'lotID',
+        'description',
+        'title',
+        'eligible',
+        'id',
+        'qualified',
+        'bidID',
+        'date',
+        'documents'
+    )
+
+
+class Guarantee(Model):
+
+    __slots__ = (
+        'amount',
+        'currency'
+    )
+
+
+class Complaint(Model):
+
+    __slots__ = (
+        'status',
+        'tendererActionDate',
+        'satisfied',
+        'tendererAction',
+        'dateSubmitted',
+        'id',
+        'reviewPlace',
+        'documents',
+        'title',
+        'decision',
+        'acceptance',
+        'dateEscalated',
+        'rejectReasonDescription',
+        'cancellationReason',
+        'dateAnswered',
+        'type',
+        'relatedLot',
+        'description',
+        'dateCancelled',
+        'date',
+        'dateDecision',
+        'author',
+        'rejectReason',
+        'resolutionType',
+        'resolution',
+        'reviewDate'
+    )
+
+
+class Feature(Model):
+
+    __slots__ = (
+        'code',
+        'featureOf',
+        'relatedItem',
+        'title',
+        'description',
+        'enum'
+    )
+
+
+class ShortlistedFirm(Model):
+
+    __slots__ = (
+        'lots',
+        'identifier',
+        'name',
+    )
+
+
 modelsExt = {
     'contracts': (ContractExt, []),
     'auctions': (Auction, []),
@@ -215,7 +312,14 @@ modelsExt = {
     'suppliers': (OrganizationExt, []),
     'procuringEntity': (OrganizationExt, {}),
     'buyer': (OrganizationExt, {}),
-    'bids': (Bids, {})
+    'bids': (Bids, {}),
+    'qualifications': (Qualification, []),
+    'qualificationPeriod': (Period, {}),
+    'guarantee': (Guarantee, {}),
+    'complaints': (Complaint, []),
+    'complaintPeriod': (Period, {}),
+    'features': (Feature, []),
+    'shortlistedFirms': (ShortlistedFirm, [])
 }
 
 
