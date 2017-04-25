@@ -19,6 +19,10 @@ release:
     publicationPolicy: https://prozorro.gov.ua/publication-policy
     prefix: ocds-be6bcu
 
+{% if 'aws_access_key_id' in options %}
+aws_access_key_id: ${options['aws_access_key_id']}
+aws_secret_access_key: ${options['aws_secret_access_key']}
+{% end %}
 
 path: ${options['path_for_release']}
 bucket: ${options['bucket']}

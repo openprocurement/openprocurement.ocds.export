@@ -16,25 +16,28 @@ logger = logging.getLogger(__name__)
 invalidsymbols = ["`","~","!", "@","#","$", '"', u"\u200E" ]
 
 def quote_uri(key, data):
-    uri = ''.join(c for c in data.get(key, '') if c not in invalidsymbols)
-    if not uri:
-        return ''
     try:
-        if all(ord(c) < 128 for c in uri):
-            return uri
-    except Exception as e:
-        logger.fatal('Unable to parse uri {}. Error: {}'.format(uri, e.message))
-
-    scheme, rest = uri.split(':')
-    try:
-        path = quote(rest)
-    except:
+        uri = ''.join(c for c in data.get(key, '') if c not in invalidsymbols)
+        if not uri:
+            return ''
         try:
-            tmp = ''.join(c for c in rest if c not in invalidsymbols)
-            path = quote(tmp)
+            if all(ord(c) < 128 for c in uri):
+                return uri
         except Exception as e:
             logger.fatal('Unable to parse uri {}. Error: {}'.format(uri, e.message))
-    return '{}:{}'.format(scheme, path)
+
+        scheme, rest = uri.split(':')
+        try:
+            path = quote(rest)
+        except:
+            try:
+                tmp = ''.join(c for c in rest if c not in invalidsymbols)
+                path = quote(tmp)
+            except Exception as e:
+                logger.fatal('Unable to parse uri {}. Error: {}'.format(uri, e.message))
+        return '{}:{}'.format(scheme, path)
+    except Exception as e:
+        return ''
 
 
 callbacks = {
