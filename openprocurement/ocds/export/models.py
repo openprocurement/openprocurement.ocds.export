@@ -27,7 +27,6 @@ def quote_uri(key, data):
 
 
 callbacks = {
-    'minValue': lambda raw_data: raw_data.get('minimalStep'),
     'status': lambda raw_data: raw_data.get('status').split('.')[0],
     'documents': lambda raw_data: unique_documents(raw_data.get('documents')),
     'tenderers': lambda raw_data: unique_tenderers(raw_data),
@@ -230,7 +229,6 @@ class Tender(Model):
         'description',
         'status',
         'items',
-        'minValue',
         'value',
         'procurementMethod',
         'procurementMethodRationale',
