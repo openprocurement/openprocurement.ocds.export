@@ -88,6 +88,7 @@ class APIDataBridge(object):
         logger.info('Finishing fetching revisions of {}'.format(_id))
         self.tenders_queue.put(self.prepare_pached(revisions, version,
                                                    first=first))
+        gevent.sleep(0.5)
 
     def save_items(self):
         logger.info('Start saving')
@@ -117,7 +118,7 @@ class APIDataBridge(object):
                     for t in tenders:
                         if t[1]:
                             self.tenders_queue.put(t[1])
-            gevent.sleep(0.5)
+            gevent.sleep(2)
 
     def _restart(self, gr):
         for g in self.jobs:
