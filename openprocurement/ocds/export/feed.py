@@ -24,10 +24,10 @@ class APIRetreiver(object):
 
         self.tender_queue = Queue(maxsize=config.get('queue_max_size', 250))
         self.filter_callback = filter_callback
-        
+
     def _start(self):
         logger.info('Retreivers starting')
-        self.origin_cookie, self.forward_client, self.backward_client = get_retreive_clients(
+        self.forward_client, self.backward_client = get_retreive_clients(
             self.api_key,
             self.api_host,
             self.api_version
@@ -38,7 +38,6 @@ class APIRetreiver(object):
         forward_params, backward_params = get_start_point(
             self.forward_client,
             self.backward_client,
-            self.origin_cookie,
             self.tender_queue,
             self.filter_callback,
             self.api_extra_params
@@ -47,14 +46,12 @@ class APIRetreiver(object):
         fg = gevent.spawn(
             self.forward,
             forward_params,
-            self.origin_cookie,
             self.tender_queue,
             self.filter_callback,
         )
         bg = gevent.spawn(
             self.backward,
             backward_params,
-            self.origin_cookie,
             self.tender_queue,
             self.filter_callback,
             name='backward'

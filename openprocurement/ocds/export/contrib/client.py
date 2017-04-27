@@ -1,7 +1,6 @@
 import requests
 import requests.adapters
 import requests.exceptions
-from gevent.pool import Pool
 import logging
 
 
@@ -9,6 +8,7 @@ logger = logging.getLogger(__name__)
 VERSION =  'X-Revision-N'
 VERSION_HASH = 'X-Revision-Hash'
 PREV_VERSION = 'X-Revision-Hash'
+
 
 class APIClient(object):
 
@@ -29,10 +29,6 @@ class APIClient(object):
                                                    pool_connections=50,
                                                    pool_maxsize=50)
         self.session.mount(self.resourse_url, APIAdapter)
-
-        # retreive a server cookie
-        resp = self.session.head("{}/{}".format(self.base_url, 'spore'))
-        resp.raise_for_status()
 
     def get_tenders(self, params=None):
         if not params:
@@ -65,6 +61,4 @@ class APIClient(object):
 def get_retreive_clients(api_key, api_host, api_version, **kw):
     forward = APIClient(api_key, api_host, api_version, **kw)
     backward = APIClient(api_key, api_host, api_version, **kw)
-    origin_cookie = forward.session.cookies
-    backward.session.cookies = origin_cookie
-    return origin_cookie, forward, backward
+    return forward, backward

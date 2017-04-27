@@ -37,7 +37,7 @@ class APIDataBridge(object):
             historical=self.historical
         )
 
-        self.fetch_pool = gevent.pool.Pool(20)
+        self.fetch_pool = gevent.pool.Pool(10)
 
     def prepare_pached(self, tenders, version, first=True):
         if first:
@@ -69,6 +69,8 @@ class APIDataBridge(object):
         last_date_modified = self._db.view('tenders/by_dateModified', key=tender['id']).rows
         first = False if last_date_modified else True
         last_version = 1 if first else self._db.get(_id).get('version')
+        if int(version) == int(last_version):
+            return
         try:
             revisions = []
             for i in range(int(last_version), int(version)):
