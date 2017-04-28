@@ -40,6 +40,10 @@ def get_torrent_link(bucket, path):
             '{}/{}releases.zip?torrent'.format(bucket, path)
 
 
+def convert_status(tender):
+    return tender.get('status').split('.')[0] if tender.get('status') else None
+
+
 def file_size(path, name):
     return (os.stat(os.path.join(path, name)).st_size) / 1000000
 

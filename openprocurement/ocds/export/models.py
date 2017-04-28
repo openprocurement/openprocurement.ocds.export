@@ -9,7 +9,8 @@ from openprocurement.ocds.export.helpers import (
     award_converter,
     get_ocid,
     build_package,
-    compile_releases
+    compile_releases,
+    convert_status
 )
 
 logger = logging.getLogger(__name__)
@@ -21,13 +22,16 @@ def quote_uri(key, data):
     if not data.get(key):
         return
     uri = ''.join(c.encode('utf-8') for c in data.get(key, '') if c not in invalidsymbols)
-    for symb in uri:
-        new += quote(symb) if ord(symb) > 128 else symb
+    for index in range(len(uri)):
+        if uri[index] == '\x80':
+            new += '%80'
+            continue
+        new += quote(uri[index]) if ord(uri[index]) > 128 else uri[index]
     return new
 
 
 callbacks = {
-    'status': lambda raw_data: raw_data.get('status').split('.')[0],
+    'status': lambda raw_data: convert_status(raw_data),
     'documents': lambda raw_data: unique_documents(raw_data.get('documents')),
     'tenderers': lambda raw_data: unique_tenderers(raw_data),
     'id': lambda raw_data: raw_data.get('_id') if '_id' in raw_data else raw_data.get('id'),
