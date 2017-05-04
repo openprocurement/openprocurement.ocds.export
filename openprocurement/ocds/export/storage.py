@@ -7,11 +7,11 @@ tenders_map = u"""
 function(doc) {
     if(doc.status.indexOf('draft') !== -1) {return;};
     if(doc.status.indexOf('terminated') !== -1) {return;};
-    if(('doc_type' in doc) && (doc.doc_type !== 'Tender')) {return;};
-    if(doc.title.search("ТЕСТУВАННЯ") !== -1) {return;};
-    if(doc.title_ru.search("ТЕСТИРОВАНИЕ") !== -1) {return;};
-    if(doc.title_en.search("TESTING") !== -1) {return;};
-    if(('mode' in doc) && (doc.mode === 'test')) {return;};
+    if((doc.doc_type || "" ) !== 'Tender') {return;}
+    if((doc.title || "" ).search("ТЕСТУВАННЯ") !== -1) {return;}
+    if((doc.title_ru || "" ).search("ТЕСТИРОВАНИЕ") !== -1) {return;}
+    if((doc.title_en || "" ).search("TESTING") !== -1) {return;}
+    if((doc.mode || "") === 'test') {return;};
     emit(doc._id, null);
 }
 """
