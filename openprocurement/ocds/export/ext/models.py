@@ -13,7 +13,8 @@ from openprocurement.ocds.export.models import (
     Release,
     Organization,
     Contact,
-    Period
+    Period,
+    Address
 )
 from openprocurement.ocds.export.helpers import (
     convert_bids,
@@ -295,6 +296,13 @@ class ShortlistedFirm(Model):
     )
 
 
+class AddressExt(Address):
+
+    __slots__ = Address.__slots__ + (
+        'region',
+    )
+
+
 modelsExt = {
     'contracts': (ContractExt, []),
     'auctions': (Auction, []),
@@ -320,7 +328,8 @@ modelsExt = {
     'complaints': (Complaint, []),
     'complaintPeriod': (Period, {}),
     'features': (Feature, []),
-    'shortlistedFirms': (ShortlistedFirm, [])
+    'shortlistedFirms': (ShortlistedFirm, []),
+    'address': (AddressExt, {})
 }
 
 

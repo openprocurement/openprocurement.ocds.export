@@ -13,7 +13,8 @@ from jinja2 import (
 )
 
 from openprocurement.ocds.export.storage import (
-    TendersStorage
+    TendersStorage,
+    ContractsStorage
 )
 from openprocurement.ocds.export.models import (
     package_tenders,
@@ -69,10 +70,14 @@ def parse_args():
                         action='store_true',
                         help='Choose to start dump record packages',
                         default=False)
+    parser.add_argument('-contracting',
+                        action='store_true',
+                        help='Choose to include contracting',
+                        default=False)
     return parser.parse_args()
 
 
-def fetch_and_dump(config, max_date, params, record=False, extensions=False):
+def fetch_and_dump(config, max_date, params, record=False, extensions=False, contracting=False):
     nth, (start, end) = params
     logger.info('Start {}th dump startdoc={}'
                 ' enddoc={}'.format(nth, start, end))
@@ -81,14 +86,18 @@ def fetch_and_dump(config, max_date, params, record=False, extensions=False):
     bucket = config.get('bucket')
     if not start and not end:
         return
-
     args = {
-        'startkey': start,
-        'include_docs': True
+        'startkey': start
     }
     if end:
         args.update(dict(endkey=end))
-    result = [r.doc for r in list(db.view('tenders/all', **args))]
+    if contracting:
+        contract = ContractsStorage(config['contracts_db']['url'],
+                        config['contracts_db']['name'])
+        args.update(dict(contract_storage=contract))
+        result = [tender for tender in db.get_tenders(**args)]
+    else:
+        result = [tender for tender in db.get_tenders(**args)]
     if record:
         package_func = package_records if not extensions else package_records_ext
     else:
@@ -121,7 +130,7 @@ def run():
     config = read_config(args.config)
     bucket = connect_bucket(config)
     _tenders = TendersStorage(config['tenders_db']['url'],
-                              config['tenders_db']['name'])
+                                  config['tenders_db']['name'])
     logger.info('Start packaging')
     nam = 'records' if args.rec else 'releases'
     if not os.path.exists(config.get('path')):
@@ -149,7 +158,8 @@ def run():
                         config,
                         max_date,
                         record=args.rec,
-                        extensions=args.ext)
+                        extensions=args.ext,
+                        contracting=args.contracting)
         params = enumerate(
             zip_longest(key_ids, key_ids[1::], fillvalue=''),
             1

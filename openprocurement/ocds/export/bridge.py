@@ -95,6 +95,7 @@ class APIDataBridge(object):
                     doc = self._db.get(item['id'])
                     item['_rev'] = doc['_rev']
                 item['doc_type'] = 'Tender'
+                item['_id'] = item['id']
                 self._db.save(item)
                 logger.info('Saved doc {}'.format(item['id']))
             gevent.sleep(1)

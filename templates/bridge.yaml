@@ -3,13 +3,13 @@ api:
     api_key: ${options['api_key']}
     api_version: ${options['api_version']}
 
-releases_db:
-    url: ${options['releases_db_url']}
-    name: ${options['releases_db_name']}
-
 tenders_db:
     url: ${options['tenders_db_url']}
     name: ${options['tenders_db_name']}
+
+contracts_db:
+    url: ${options['contracts_db_url']}
+    name: ${options['contracts_db_name']}
 
 release:
     publisher:
