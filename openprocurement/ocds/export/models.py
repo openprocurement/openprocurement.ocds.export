@@ -97,7 +97,7 @@ class Document(Model):
         'title',
         'description',
         'url',
-        'datePublised',
+        'datePublished',
         'dateModified',
         'format',
         'language'

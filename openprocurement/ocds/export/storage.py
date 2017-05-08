@@ -104,4 +104,5 @@ class ContractsStorage(Database):
     def get_contracts_by_ten_id(self, tender_id):
         return [item.doc for item in self.view('contracts/get_by_tender_id',
                                                key=tender_id,
-                                               include_docs=True)]
+                                               include_docs=True)
+                                               if item.doc.get('status') != 'merged']
