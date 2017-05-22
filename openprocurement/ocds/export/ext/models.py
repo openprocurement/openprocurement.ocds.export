@@ -371,7 +371,7 @@ def release_tenders_ext(tender, modelsMap, callbacks, prefix):
     releases = [first_release]
     for patch in patches:
         tender = jsonpatch.apply_patch(tender, patch)
-        next_release = ReleaseExt(tender).__export__()
+        next_release = ReleaseExt(tender, modelsMap, callbacks).__export__()
         if first_release != next_release:
             diff = jsonpatch.make_patch(first_release, next_release).patch
             tag = []
