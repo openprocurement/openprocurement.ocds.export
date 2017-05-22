@@ -286,11 +286,8 @@ def fetch_ids(db, batch_count):
     return [r['id'] for r in db.view('tenders/all')][::batch_count]
 
 
-def put_to_s3(bucket, path, time, extensions=False):
-    if extensions:
-        dir_name = 'merged_with_extensions_{}'.format(time)
-    else:
-        dir_name = 'merged_{}'.format(time)
+def put_to_s3(bucket, time, path):
+    dir_name = 'merged_with_extensions_{}'.format(time) if 'ext' in path else 'merged_{}'.format(time)
     for file in os.listdir(path):
         aws_path = os.path.join(dir_name, file)
         file_path = os.path.join(path, file)
@@ -320,9 +317,9 @@ def links(path, skip=['example.json', 'index.html', 'releases.zip', 'records.zip
         }
 
 
-def create_html(environment, path, config, date, extensions=False):
+def create_html(environment, config, date, path):
     template = environment.get_template('index.html')
-    key = 'merged_{}' if not extensions else 'merged_with_extensions_{}'
+    key = 'merged_{}' if 'ext' not in path else 'merged_with_extensions_{}'
     torrent_link = get_torrent_link(config.get('bucket'), key.format(date))
     zip_size = file_size(path, 'releases.zip')
     with open(os.path.join(path, 'index.html'), 'w') as stream:

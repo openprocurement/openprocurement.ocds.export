@@ -50,7 +50,7 @@ class Model(object):
 
     __slots__ = ()
 
-    def __init__(self, raw_data):
+    def __init__(self, raw_data, modelsMap, callbacks):
         for key in self.__slots__:
             data = None
             if key in callbacks:
@@ -61,9 +61,9 @@ class Model(object):
                 if key in modelsMap:
                     klass, _type = modelsMap.get(key)
                     if isinstance(_type, list):
-                        setattr(self, key, [klass(x) for x in data])
+                        setattr(self, key, [klass(x, modelsMap, callbacks) for x in data])
                     else:
-                        setattr(self, key, klass(data))
+                        setattr(self, key, klass(data, modelsMap, callbacks))
                 else:
                     setattr(self, key, data)
 
@@ -270,10 +270,10 @@ class Release(Model):
         'tag'
     )
 
-    def __init__(self, raw_data, ocid='ocds-xxxx-'):
+    def __init__(self, raw_data, modelsMap, callbacks, ocid='ocds-xxxx-'):
         self.initiationType = 'tender'
         self.language = 'uk'
-        super(Release, self).__init__(raw_data)
+        super(Release, self).__init__(raw_data, modelsMap, callbacks)
         self.ocid = get_ocid(ocid, raw_data.get('tenderID'))
         self.id = uuid4().hex
 
@@ -305,8 +305,8 @@ modelsMap = {
 }
 
 
-def release_tender(tender, prefix):
-    release = Release(tender, prefix).__export__()
+def release_tender(tender, modelsMap, callbacks, prefix):
+    release = Release(tender, modelsMap, callbacks, prefix).__export__()
     tag = ['tender']
     for op in ['awards', 'contracts']:
         if op in release:
@@ -315,7 +315,7 @@ def release_tender(tender, prefix):
     return release
 
 
-def release_tenders(tender, prefix):
+def release_tenders(tender, modelsMap, callbacks, prefix):
 
     def prepare_first_tags(release):
         tag = ['tender']
@@ -327,12 +327,12 @@ def release_tenders(tender, prefix):
     assert 'patches' in tender
     patches = tender.pop('patches')
 
-    first_release = Release(tender).__export__()
+    first_release = Release(tender, modelsMap, callbacks).__export__()
     first_release['tag'] = prepare_first_tags(first_release)
     releases = [first_release]
     for patch in patches:
         tender = jsonpatch.apply_patch(tender, patch)
-        next_release = Release(tender).__export__()
+        next_release = Release(tender, modelsMap, callbacks).__export__()
         if first_release != next_release:
             diff = jsonpatch.make_patch(first_release, next_release).patch
             tag = []
@@ -356,15 +356,15 @@ def release_tenders(tender, prefix):
     return releases
 
 
-def record_tenders(tender, prefix):
+def record_tenders(tender, modelsMap, callbacks, prefix):
     record = {}
-    record['releases'] = release_tenders(tender, prefix)
+    record['releases'] = release_tenders(tender, modelsMap, callbacks, prefix)
     record['compiledRelease'] = compile_releases(record['releases'])
     record['ocid'] = record['releases'][0]['ocid']
     return record
 
 
-def package_tenders(tenders, config):
+def package_tenders(tenders, modelsMap, callbacks, config):
     package = build_package(config)
     releases = []
     for tender in tenders:
@@ -373,17 +373,17 @@ def package_tenders(tenders, config):
         if 'patches' in tender:
             releases.extend(release_tenders(tender, config.get('prefix')))
         else:
-            releases.append(release_tender(tender, config.get('prefix')))
+            releases.append(release_tender(tender, modelsMap, callbacks, config.get('prefix')))
     package['releases'] = releases
     return package
 
 
-def package_records(tenders, config):
+def package_records(tenders, modelsMap, callbacks, config):
     package = build_package(config)
     records = []
     for tender in tenders:
         if not tender:
             continue
-        records.append(record_tenders(tender, config.get('prefix')))
+        records.append(record_tenders(tender, modelsMap, callbacks, config.get('prefix')))
     package['records'] = records
     return package

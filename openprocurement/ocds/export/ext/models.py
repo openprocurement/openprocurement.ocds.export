@@ -1,4 +1,5 @@
 import jsonpatch
+from copy import deepcopy
 from openprocurement.ocds.export.models import (
     Award,
     Tender,
@@ -41,8 +42,10 @@ extensions = {
 def update_callbacks():
     global callbacks
     global extensions
-    callbacks.update(extensions)
-    callbacks.pop('tenderers', None)
+    callbacks_ext = deepcopy(callbacks)
+    callbacks_ext.update(extensions)
+    callbacks_ext.pop('tenderers', None)
+    return callbacks_ext
 
 
 class TenderExt(Tender):
@@ -336,11 +339,13 @@ modelsExt = {
 def update_models_map():
     global modelsMap
     global modelsExt
-    modelsMap.update(modelsExt)
+    models_ext = deepcopy(modelsMap)
+    models_ext.update(modelsExt)
+    return models_ext
 
 
-def release_tender_ext(tender, prefix):
-    release = ReleaseExt(tender, prefix).__export__()
+def release_tender_ext(tender, modelsMap, callbacks, prefix):
+    release = ReleaseExt(tender, modelsMap, callbacks, prefix).__export__()
     tag = ['tender']
     for op in ['awards', 'contracts', 'bids']:
         if op in release:
@@ -349,7 +354,7 @@ def release_tender_ext(tender, prefix):
     return release
 
 
-def release_tenders_ext(tender, prefix):
+def release_tenders_ext(tender, modelsMap, callbacks, prefix):
 
     def prepare_first_tags(release):
         tag = ['tender']
@@ -361,7 +366,7 @@ def release_tenders_ext(tender, prefix):
     assert 'patches' in tender
     patches = tender.pop('patches')
 
-    first_release = ReleaseExt(tender).__export__()
+    first_release = ReleaseExt(tender, modelsMap, callbacks).__export__()
     first_release['tag'] = prepare_first_tags(first_release)
     releases = [first_release]
     for patch in patches:
@@ -390,17 +395,15 @@ def release_tenders_ext(tender, prefix):
     return releases
 
 
-def record_tenders_ext(tender, prefix):
+def record_tenders_ext(tender, modelsMap, callbacks, prefix):
     record = {}
-    record['releases'] = release_tenders_ext(tender, prefix)
+    record['releases'] = release_tenders_ext(tender, modelsMap, callbacks, prefix)
     record['compiledRelease'] = compile_releases(record['releases'])
     record['ocid'] = record['releases'][0]['ocid']
     return record
 
 
-def package_tenders_ext(tenders, config):
-    update_models_map()
-    update_callbacks()
+def package_tenders_ext(tenders, modelsMap, callbacks, config):
     package = build_package(config)
     releases = []
     for tender in tenders:
@@ -409,12 +412,12 @@ def package_tenders_ext(tenders, config):
         if 'patches' in tender:
             releases.extend(release_tenders_ext(tender, config.get('prefix')))
         else:
-            releases.append(release_tender_ext(tender, config.get('prefix')))
+            releases.append(release_tender_ext(tender, modelsMap, callbacks, config.get('prefix')))
     package['releases'] = releases
     return package
 
 
-def package_records_ext(tenders, config):
+def package_records_ext(tenders, modelsMap, callbacks, config):
     update_models_map()
     update_callbacks()
     package = build_package(config)
@@ -422,6 +425,6 @@ def package_records_ext(tenders, config):
     for tender in tenders:
         if not tender:
             continue
-        records.append(record_tenders_ext(tender, config.get('prefix')))
+        records.append(record_tenders_ext(tender, modelsMap, callbacks, config.get('prefix')))
     package['records'] = records
     return package

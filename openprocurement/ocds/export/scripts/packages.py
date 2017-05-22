@@ -18,11 +18,15 @@ from openprocurement.ocds.export.storage import (
 )
 from openprocurement.ocds.export.models import (
     package_tenders,
-    package_records
+    package_records,
+    callbacks,
+    modelsMap
 )
 from openprocurement.ocds.export.ext.models import (
     package_tenders_ext,
-    package_records_ext
+    package_records_ext,
+    update_callbacks,
+    update_models_map
 )
 from openprocurement.ocds.export.helpers import (
     connect_bucket,
@@ -62,10 +66,6 @@ def parse_args():
                         action='store_true',
                         help="Choose to start uploading to aws s3",
                         default=False)
-    parser.add_argument('-ext',
-                        action='store_true',
-                        help='Choose to start dump with extensions',
-                        default=False)
     parser.add_argument('-rec',
                         action='store_true',
                         help='Choose to start dump record packages',
@@ -77,7 +77,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def fetch_and_dump(config, max_date, params, record=False, extensions=False, contracting=False):
+def fetch_and_dump(config, max_date, params, record=False, contracting=False):
     nth, (start, end) = params
     logger.info('Start {}th dump startdoc={}'
                 ' enddoc={}'.format(nth, start, end))
@@ -99,29 +99,37 @@ def fetch_and_dump(config, max_date, params, record=False, extensions=False, con
     else:
         result = [tender for tender in db.get_tenders(**args)]
     if record:
-        package_func = package_records if not extensions else package_records_ext
+        package_funcs = [package_records, package_records_ext]
     else:
-        package_func = package_tenders if not extensions else package_tenders_ext
-    base_url = 'http://{}/merged_{}/{}' if not extensions \
-                   else 'http://{}/merged_with_extensions_{}/{}'
+        package_funcs = [package_tenders, package_tenders_ext]
+    can_url = 'http://{}/merged_{}/{}'
+    ext_url = 'http://{}/merged_with_extensions_{}/{}'
     name = 'record-{0:07d}.json'.format(nth) if record else 'release-{0:07d}.json'.format(nth)
-    path = config['path']
+    path_can = config['path_can']
+    path_ext = config['path_ext']
     try:
-        package = package_func(result[:-1], config.get('release'))
-        package['uri'] = base_url.format(bucket, max_date, name)
+        package_can = package_funcs[0](result[:-1], modelsMap, callbacks,
+                                       config.get('release'))
+        package_can['uri'] = can_url.format(bucket, max_date, name)
+        package_ext = package_funcs[1](result[:-1], update_models_map(),
+                                       update_callbacks(), config.get('release'))
+        package_ext['uri'] = ext_url.format(bucket, max_date, name)
     except Exception as e:
         logger.info('Error: {}'.format(e))
         return
     if nth == 1:
-        pretty_package = package_func(
-            result[:24], config.get('release')
-        )
-        pretty_package['uri'] = base_url.format(bucket,
-                                                max_date,
-                                                'example.json')
-
-        dump_json(config['path'], 'example.json', pretty_package, pretty=True)
-    dump_json(path, name, package)
+        pretty_package_can = package_funcs[0](result[:24], modelsMap,
+                callbacks, config.get('release'))
+        pretty_package_can['uri'] = can_url.format(bucket, max_date,
+                'example.json')
+        pretty_package_ext = package_funcs[1](result[:24], update_models_map(),
+                update_callbacks(), config.get('release'))
+        pretty_package_ext['uri'] = ext_url.format(bucket, max_date,
+                'example.json')
+        dump_json(path_can, 'example.json', pretty_package_can, pretty=True)
+        dump_json(path_ext, 'example.json', pretty_package_ext, pretty=True)
+    dump_json(path_can, name, package_can)
+    dump_json(path_ext, name, package_ext)
     logger.info('End {}th dump startdoc={} enddoc={}'.format(nth, start, end))
 
 
@@ -133,8 +141,6 @@ def run():
                                   config['tenders_db']['name'])
     logger.info('Start packaging')
     nam = 'records' if args.rec else 'releases'
-    if not os.path.exists(config.get('path')):
-        os.makedirs(config.get('path'))
     if args.dates:
         datestart, datefinish = parse_dates(args.dates)
         to_release = _tenders.get_between_dates(datestart, datefinish)
@@ -158,17 +164,19 @@ def run():
                         config,
                         max_date,
                         record=args.rec,
-                        extensions=args.ext,
                         contracting=args.contracting)
         params = enumerate(
             zip_longest(key_ids, key_ids[1::], fillvalue=''),
             1
         )
         pool.map(_conn, params)
-        make_zip('{}.zip'.format(nam), config.get('path'))
-        create_html(ENV, config.get('path'), config,
-                    max_date, extensions=args.ext)
+        paths = [config.get('path_can'), config.get('path_ext')]
+        pool = mp.Pool(2)
+        create_zip = partial(make_zip, '{}.zip'.format(nam))
+        pool.map(create_zip, paths)
+        create_htm = partial(create_html, ENV, config, max_date)
+        pool.map(create_htm, paths)
         if args.s3 and bucket:
-            put_to_s3(bucket, config.get('path'),
-                      max_date, extensions=args.ext)
+            put_s3 = partial(put_to_s3, bucket, max_date)
+            pool.map(put_s3, paths)
             update_index(ENV, bucket)
