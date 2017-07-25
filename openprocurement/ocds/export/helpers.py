@@ -65,8 +65,8 @@ def connect_bucket(config):
     try:
         conn = connect_to_region(
                     'eu-west-1',
-                    aws_access_key_id=config.get('aws_access_key_id', ''),
-                    aws_secret_access_key=config.get('aws_secret_access_key', ''),
+                    aws_access_key_id=config.get('aws_access_key_id', os.environ.get('AWS_ACCESS_KEY_ID', '')),
+                    aws_secret_access_key=config.get('aws_secret_access_key', os.environ.get('AWS_SECRET_ACCESS_KEY', ''))),
                     calling_format=OrdinaryCallingFormat()
                     )
         return conn.get_bucket(config.get('bucket'))
