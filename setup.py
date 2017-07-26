@@ -17,8 +17,7 @@ install_requires = [
     'requests',
     'gevent',
     'PyYaml',
-    'boto',
-    'filechunkio',
+    'boto3',
     'Jinja2'
 ]
 

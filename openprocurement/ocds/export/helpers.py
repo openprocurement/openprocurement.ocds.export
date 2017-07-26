@@ -5,19 +5,20 @@ import yaml
 import os
 import zipfile
 import math
+import argparse
 from simplejson import dump
 from iso8601 import parse_date
 from datetime import datetime
 from collections import Counter
 from .exceptions import LBMismatchError
 
-from filechunkio import FileChunkIO
+# from filechunkio import FileChunkIO
 
-from boto.s3 import connect_to_region
-from boto.s3.connection import (
-    OrdinaryCallingFormat,
-    S3ResponseError
-)
+# from boto.s3 import connect_to_region
+# from boto.s3.connection import (
+#     OrdinaryCallingFormat,
+#     S3ResponseError
+# )
 
 from logging import (
     getLogger,
@@ -48,7 +49,10 @@ def file_size(path, name):
     return (os.stat(os.path.join(path, name)).st_size) / 1000000
 
 
-def make_zip(name, base_dir, skip=[]):
+def make_zip(name, base_dir, skip=None):
+    if not skip:
+        skip = []
+
     skip.append(name)
     with zipfile.ZipFile(os.path.join(base_dir, name),
                          'w', zipfile.ZIP_DEFLATED, allowZip64=True) as zf:
@@ -286,26 +290,26 @@ def fetch_ids(db, batch_count):
     return [r['id'] for r in db.view('tenders/all')][::batch_count]
 
 
-def put_to_s3(bucket, time, path):
-    dir_name = 'merged_with_extensions_{}'.format(time) if 'ext' in path else 'merged_{}'.format(time)
-    for file in os.listdir(path):
-        aws_path = os.path.join(dir_name, file)
-        file_path = os.path.join(path, file)
-        if file.split('.')[1] == 'zip':
-            mp = bucket.initiate_multipart_upload(aws_path)
-            source_size = os.stat(file_path).st_size
-            chunk_size = 52428800
-            chunk_count = int(math.ceil(source_size / chunk_size))
-            for i in range(chunk_count + 1):
-                offset = chunk_size * i
-                bytes = min(chunk_size, source_size - offset)
-                with FileChunkIO(file_path, 'r', offset=offset,
-                                 bytes=bytes) as fp:
-                    mp.upload_part_from_file(fp, part_num=i + 1)
-            mp.complete_upload()
-        else:
-            key = bucket.new_key(aws_path)
-            key.set_contents_from_filename(file_path)
+# def put_to_s3(bucket, time, path):
+#     dir_name = 'merged_with_extensions_{}'.format(time) if 'ext' in path else 'merged_{}'.format(time)
+#     for file in os.listdir(path):
+#         aws_path = os.path.join(dir_name, file)
+#         file_path = os.path.join(path, file)
+#         if file.split('.')[1] == 'zip':
+#             mp = bucket.initiate_multipart_upload(aws_path)
+#             source_size = os.stat(file_path).st_size
+#             chunk_size = 52428800
+#             chunk_count = int(math.ceil(source_size / chunk_size))
+#             for i in range(chunk_count + 1):
+#                 offset = chunk_size * i
+#                 bytes = min(chunk_size, source_size - offset)
+#                 with FileChunkIO(file_path, 'r', offset=offset,
+#                                  bytes=bytes) as fp:
+#                     mp.upload_part_from_file(fp, part_num=i + 1)
+#             mp.complete_upload()
+#         else:
+#             key = bucket.new_key(aws_path)
+#             key.set_contents_from_filename(file_path)
 
 
 def links(path, skip=['example.json', 'index.html', 'releases.zip', 'records.zip']):
@@ -355,3 +359,32 @@ def update_index(templates, bucket):
                                    links=files))
         bucket.get_key(os.path.join(path, 'index.html')).set_contents_from_string(result)
         logger.info('Updated index in {}'.format(path))
+
+        
+def parse_args():
+    parser = argparse.ArgumentParser('Release Packages')
+    parser.add_argument('-c', '--config',
+                        required=True,
+                        help="Path to configuration file")
+    parser.add_argument('-d', action='append',
+                        dest='dates',
+                        default=[],
+                        help='Start-end dates to generate package')
+    parser.add_argument('-n', '--number')
+    parser.add_argument('-r', '--records',
+                        action='store_true',
+                        default=False,
+                        help='Generate record too')
+    parser.add_argument('-s3',
+                        action='store_true',
+                        help="Choose to start uploading to aws s3",
+                        default=False)
+    parser.add_argument('-rec',
+                        action='store_true',
+                        help='Choose to start dump record packages',
+                        default=False)
+    parser.add_argument('-contracting',
+                        action='store_true',
+                        help='Choose to include contracting',
+                        default=False)
+    return parser.parse_args()
