@@ -35,6 +35,7 @@ extensions = {
     'tender': lambda raw_data: convert_cancellation_and_tenderers(raw_data),
     'enquiries': lambda raw_data: convert_questions(raw_data),
     'currentStage': lambda raw_data: raw_data.get('status'),
+    'procuringEntity': lambda raw_data: raw_data.get('procuringEntity'),
     'documents': lambda raw_data: unique_documents(raw_data.get('documents'), extension=True),
 }
 
@@ -53,6 +54,7 @@ class TenderExt(Tender):
     __slots__ = Tender.__slots__ + (
         'auctions',
         'tenderID',
+        'date',
         'pendingCancellation',
         'enquiries',
         'lots',
@@ -207,6 +209,11 @@ class OrganizationExt(Organization):
         'additionalContactPoints',
     )
 
+class ProcuringEntity(OrganizationExt):
+
+    __slots__ = OrganizationExt.__slots__ + (
+        'kind',
+    )
 
 class ContactExt(Contact):
 
@@ -322,7 +329,7 @@ modelsExt = {
     'contactPoint': (ContactExt, {}),
     'tenderers': (OrganizationExt, []),
     'suppliers': (OrganizationExt, []),
-    'procuringEntity': (OrganizationExt, {}),
+    'procuringEntity': (ProcuringEntity, {}),
     'buyer': (OrganizationExt, {}),
     'bids': (Bids, {}),
     'qualifications': (Qualification, []),
@@ -351,6 +358,8 @@ def release_tender_ext(tender, modelsMap, callbacks, prefix):
         if op in release:
             tag.append(op[:-1])
     release['tag'] = tag
+    if 'tender' in release:
+        release['tender']['date'] = tender.get('date')
     return release
 
 

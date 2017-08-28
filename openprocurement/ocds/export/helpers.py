@@ -7,29 +7,25 @@ import zipfile
 import math
 import argparse
 from simplejson import dump
+from gevent.pool import Pool
 from iso8601 import parse_date
 from datetime import datetime
 from collections import Counter
 from .exceptions import LBMismatchError
 
-# from filechunkio import FileChunkIO
-
-# from boto.s3 import connect_to_region
-# from boto.s3.connection import (
-#     OrdinaryCallingFormat,
-#     S3ResponseError
-# )
-
-from logging import (
-    getLogger,
-    ERROR
+from boto.s3 import connect_to_region
+from boto.s3.connection import (
+    OrdinaryCallingFormat,
+    S3ResponseError
 )
-from logging.config import (
-    dictConfig
-)
+
+from logging import getLogger, ERROR
+from logging.config import dictConfig
+
 
 logger = getLogger(__name__)
 getLogger('boto').setLevel(ERROR)
+
 
 with open(os.path.join(os.path.dirname(__file__),
                        'unit_codes.yaml'), 'r') as stream:
@@ -58,6 +54,7 @@ def make_zip(name, base_dir, skip=None):
                          'w', zipfile.ZIP_DEFLATED, allowZip64=True) as zf:
         for f in [f for f in os.listdir(base_dir) if f not in skip]:
             zf.write(os.path.join(base_dir, f))
+
 
 
 def parse_dates(dates):
@@ -290,28 +287,6 @@ def fetch_ids(db, batch_count):
     return [r['id'] for r in db.view('tenders/all')][::batch_count]
 
 
-# def put_to_s3(bucket, time, path):
-#     dir_name = 'merged_with_extensions_{}'.format(time) if 'ext' in path else 'merged_{}'.format(time)
-#     for file in os.listdir(path):
-#         aws_path = os.path.join(dir_name, file)
-#         file_path = os.path.join(path, file)
-#         if file.split('.')[1] == 'zip':
-#             mp = bucket.initiate_multipart_upload(aws_path)
-#             source_size = os.stat(file_path).st_size
-#             chunk_size = 52428800
-#             chunk_count = int(math.ceil(source_size / chunk_size))
-#             for i in range(chunk_count + 1):
-#                 offset = chunk_size * i
-#                 bytes = min(chunk_size, source_size - offset)
-#                 with FileChunkIO(file_path, 'r', offset=offset,
-#                                  bytes=bytes) as fp:
-#                     mp.upload_part_from_file(fp, part_num=i + 1)
-#             mp.complete_upload()
-#         else:
-#             key = bucket.new_key(aws_path)
-#             key.set_contents_from_filename(file_path)
-
-
 def links(path, skip=['example.json', 'index.html', 'releases.zip', 'records.zip']):
     for _file in sorted([f for f in os.listdir(path) if
                         f not in skip]):
@@ -331,15 +306,17 @@ def create_html(environment, config, date, path):
                                           torrent_link=torrent_link,
                                           links=links(path))))
 
-
 def update_index(templates, bucket):
     template = templates.get_template('base.html')
     index = templates.get_template('index.html')
-    dirs = [d.name for d in bucket.list('merged', '/') if 'full' not in d.name]
+    dirs = [d.name for d in bucket.list('merged', '/') if 'full' not in d.name
+            and '2017-07-26' not in d.name]
     html = template.render(dict(links=[x.strip('/') for x in dirs]))
-    bucket.get_key('index.html').set_contents_from_string(html)
+    k = bucket.get_key('index.html')
+    k.set_contents_from_string(html)
+    k = k.copy(k.bucket.name, k.name, {'Content-Type':'text/html'})
     logger.info('Updated base index')
-    for path in dirs:
+    def update_secondary_index(path):
         ctx = [p.name for p in bucket.list(path, '/')
                if not p.name.endswith('html')]
         if 'record' in p.name:
@@ -357,8 +334,15 @@ def update_index(templates, bucket):
         result = index.render(dict(zip_size=size,
                                    torrent_link=torrent_link,
                                    links=files))
-        bucket.get_key(os.path.join(path, 'index.html')).set_contents_from_string(result)
+        key = bucket.get_key(os.path.join(path, 'index.html'))
+        if not key:
+            key = bucket.new_key(os.path.join(path, 'index.html'))
+        key.set_contents_from_string(result)
+        key = key.copy(key.bucket.name, key.name, {'Content-Type':'text/html'})
         logger.info('Updated index in {}'.format(path))
+
+    pool = Pool(10)
+    pool.map(update_secondary_index, dirs)
 
         
 def parse_args():
@@ -375,10 +359,6 @@ def parse_args():
                         action='store_true',
                         default=False,
                         help='Generate record too')
-    parser.add_argument('-s3',
-                        action='store_true',
-                        help="Choose to start uploading to aws s3",
-                        default=False)
     parser.add_argument('-rec',
                         action='store_true',
                         help='Choose to start dump record packages',
@@ -388,3 +368,17 @@ def parse_args():
                         help='Choose to include contracting',
                         default=False)
     return parser.parse_args()
+
+
+def connect_bucket(config):
+    try:
+        conn = connect_to_region(
+                    'eu-west-1',
+                    aws_access_key_id=config.get('aws_access_key_id', os.environ.get('AWS_ACCESS_KEY_ID', '')),
+                    aws_secret_access_key=config.get('aws_secret_access_key', os.environ.get('AWS_SECRET_ACCESS_KEY', '')),
+                    calling_format=OrdinaryCallingFormat()
+                    )
+        return conn.get_bucket(config.get('bucket'))
+    except S3ResponseError as e:
+        logger.warn('Unable to connect to s3. Error: {}'.format(e))
+        return False
