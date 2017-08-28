@@ -180,14 +180,15 @@ def convert_bids(bids):
     if not bids:
         return
     new = []
-    for bid in bids:
-        if 'lotValues' in bid:
-            for lotval in bid['lotValues']:
+    for _bid in bids:
+        if 'lotValues' in _bid:
+            for lotval in _bid['lotValues']:
+                bid = _bid.copy()
                 bid['relatedLot'] = lotval['relatedLot']
                 bid['value'] = lotval.get('value')
                 new.append(bid)
         else:
-            new.append(bid)
+            new.append(_bid)
     return {"details": new}
 
 

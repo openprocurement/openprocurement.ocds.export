@@ -204,7 +204,6 @@ def run():
 
         max_date = REGISTRY['tenders_storage'].get_max_date().split('T')[0]
         REGISTRY['max_date'] = max_date
-        print max_date
         total = int(args.number) if args.number else 4096
         key_ids = fetch_ids(REGISTRY['tenders_storage'], total)
         LOGGER.info('Fetched key doc ids')
