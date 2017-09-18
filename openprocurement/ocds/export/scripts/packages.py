@@ -76,12 +76,10 @@ def dump_json_to_s3(name, data, pretty=False):
 
     dir_name = 'merged_with_extensions_{}/{}'.format(time, name) if\
                'extensions' in data['uri'] else 'merged_{}/{}'.format(time, name)
-    print dir_name
     try:
         if pretty:
             REGISTRY['bucket'].put_object(Key=dir_name, Body=dumps(data, indent=4))
         else:
-            print dir_name
             REGISTRY['bucket'].put_object(Key=dir_name, Body=dumps(data))
         del data
         LOGGER.info("Successfully uploaded {}".format(name))
@@ -201,7 +199,10 @@ def run():
         with open(os.path.join(config['path'], name, 'w')) as stream:
             dump(pack, stream)
     else:
-
+        for archive in [REGISTRY['zip_path'], REGISTRY['zip_path_ext']]:
+            path = os.path.join(archive, 'releases.zip')
+            if os.path.exists(path):
+                os.remove(path)
         max_date = REGISTRY['tenders_storage'].get_max_date().split('T')[0]
         REGISTRY['max_date'] = max_date
         total = int(args.number) if args.number else 4096
@@ -209,10 +210,9 @@ def run():
         LOGGER.info('Fetched key doc ids')
 
         params = enumerate(
-             zip_longest(key_ids, key_ids[1::], fillvalue=''),
-             1
-         )
-
+            zip_longest(key_ids, key_ids[1::], fillvalue=''),
+            1
+        )
         sleep(1)
         LOGGER.info("Start working")
         map(fetch_and_dump, params)
