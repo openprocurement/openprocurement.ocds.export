@@ -49,6 +49,7 @@ ENV = Environment(
     trim_blocks=True
 )
 LOGGER = logging.getLogger(__name__)
+LOGGER.addHandler(logging.FileHandler(os.path.join(os.getcwd(), 'var/log/pack.log')))
 REGISTRY = {
     "max_date": None,
     "bucket": None,
