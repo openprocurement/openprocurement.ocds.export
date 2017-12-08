@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-import jsonpatch
 import ocdsmerge
 import yaml
 import os
 import zipfile
-import math
 import argparse
 from simplejson import dump
 from gevent.pool import Pool
@@ -282,10 +280,6 @@ def dump_json(path, name, data, pretty=False):
             dump(data, stream, indent=4)
         else:
             dump(data, stream)
-
-
-def fetch_ids(db, batch_count):
-    return [r['id'] for r in db.view('tenders/all')][::batch_count]
 
 
 def links(path, skip=['example.json', 'index.html', 'releases.zip', 'records.zip']):

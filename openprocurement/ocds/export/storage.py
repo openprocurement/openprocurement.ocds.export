@@ -64,18 +64,18 @@ class TendersStorage(Database):
                                         tenders_date_modified,
                                         tenders_date_modified_for_package])
 
-    def get_tenders(self, **args):
-        contract_storage = args.pop('contract_storage', None)
+    def get_tender(self, contracts=False):
         for item in self.iterview('tenders/all',
                                   1000,
                                   include_docs=True,
-                                  **args):
+                                  ):
             tender = item.doc
-            if contract_storage and contract_storage.get_contracts_by_ten_id(tender['id']):
-                tender['contracts'] = contract_storage.get_contracts_by_ten_id(tender['id'])
+            if contracts and contracts.get_contracts_by_ten_id(tender['id']):
+                tender['contracts'] = contracts.get_contracts_by_ten_id(tender['id'])
                 yield tender
             else:
                 yield tender
+
 
     def get_max_date(self):
         return next(iter(

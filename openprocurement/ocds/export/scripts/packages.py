@@ -1,23 +1,16 @@
 # -*- coding: utf-8 -*-
-import argparse
 import os
 import logging
 import couchdb.json
 import zipfile
 import boto3
-
-from functools import partial
-from itertools import izip_longest as zip_longest
 from simplejson import dump, dumps
-from gevent import spawn, sleep
-
+from gevent import spawn, sleep, joinall
 from os.path import join
-from gevent import spawn, sleep, joinall, monkey as M
 from gevent.queue import Queue
 from gevent.event import Event
-
-from jinja2 import Environment, PackageLoader 
-from openprocurement.ocds.export.storage import TendersStorage, ContractsStorage
+from jinja2 import Environment, PackageLoader
+from openprocurement.ocds.export.storage import TendersStorage
 from openprocurement.ocds.export.models import package_tenders, package_records,\
     callbacks, modelsMap
 from openprocurement.ocds.export.ext.models import (
@@ -27,13 +20,8 @@ from openprocurement.ocds.export.ext.models import (
     update_models_map
 )
 from openprocurement.ocds.export.helpers import (
-    connect_bucket,
     read_config,
     parse_dates,
-    make_zip,
-    dump_json,
-    fetch_ids,
-    create_html,
     update_index,
     parse_args,
     connect_bucket
@@ -122,58 +110,55 @@ def upload_archives():
     joinall(g)
 
 
-def fetch_and_dump(params):
-    nth, (start, end) = params
-    LOGGER.info('Start packaging {}th package! Params: startdoc={},'
-                ' enddoc={}'.format(nth, start, end))
-    if not start and not end:
-        return
+def fetch_and_dump(total):
+    num = 0
+    result = []
+    nth = 0
+    for res in REGISTRY['tenders_storage'].get_tender(REGISTRY['contracts_storage']):
+        if num == total:
+            nth += 1
+            start = result[0]['id']
+            end = result[-1]['id']
+            LOGGER.info('Start packaging {}th package! Params: startdoc={},'
+                        ' enddoc={}'.format(nth, start, end))
+            name = 'record-{0:07d}.json'.format(nth) if REGISTRY['record'] else 'release-{0:07d}.json'.format(nth)
+            max_date = REGISTRY['max_date']
+            try:
+                for pack, params in zip(REGISTRY['package_funcs'],
+                                        [{'uri': REGISTRY['can_url'],
+                                          'models': modelsMap,
+                                          'callbacks': callbacks,
+                                          'q': REGISTRY['zipq']},
+                                         {'uri': REGISTRY['ext_url'],
+                                          'models': update_models_map(),
+                                          'callbacks': update_callbacks(),
+                                          'q': REGISTRY['zipq_ext']}]):
+                    LOGGER.info("Start package: {}".format(pack.__name__))
+                    package = pack(result, params['models'], params['callbacks'], REGISTRY['config'].get('release'))
+                    package['uri'] = params['uri'].format(REGISTRY['bucket'].name, max_date, name)
+                    if nth == 1:
+                        pretty_package = pack(result[:24], params['models'], params['callbacks'], REGISTRY['config'].get('release'))
+                        pretty_package['uri'] = params['uri'].format(REGISTRY['bucket'], max_date, 'example.json')
+                        dump_json_to_s3('example.json', pretty_package, pretty=True)
 
-    args = {'startkey': start}
-    if end:
-        args.update(dict(endkey=end))
+                    dump_json_to_s3(name, package)
+                    zip_package(name, package)
+                    del package
+                result = [res]
+                num = 1
+            except Exception as e:
+                LOGGER.info('Error: {}'.format(e))
+                return
 
-    if REGISTRY['contracting']:
-        args.update({'contract_storage': REGISTRY['contracts_storage']})
-
-    result = [tender for tender in REGISTRY['tenders_storage'].get_tenders(**args)]
-
-    name = 'record-{0:07d}.json'.format(nth) if REGISTRY['record'] else 'release-{0:07d}.json'.format(nth)
-    max_date = REGISTRY['max_date']
-    try:
-
-        for pack, params in zip(REGISTRY['package_funcs'],
-            [{'uri': REGISTRY['can_url'],
-              'models': modelsMap,
-              'callbacks': callbacks,
-              'q': REGISTRY['zipq']},
-             {'uri': REGISTRY['ext_url'],
-              'models': update_models_map(),
-              'callbacks': update_callbacks(),
-              'q': REGISTRY['zipq_ext']}]):
-            LOGGER.info("Start package: {}".format(pack.__name__))
-            package = pack(result[:-1], params['models'], params['callbacks'], REGISTRY['config'].get('release'))
-            package['uri'] = params['uri'].format(REGISTRY['bucket'].name, max_date, name)
-            if nth == 1:
-                pretty_package = pack(result[:24], params['models'], params['callbacks'], REGISTRY['config'].get('release'))
-                pretty_package['uri'] = params['uri'].format(REGISTRY['bucket'], max_date, 'example.json')
-                dump_json_to_s3('example.json', pretty_package, pretty=True)
-
-            dump_json_to_s3(name, package)
-            zip_package(name, package)
-            del package
-        del result
-    except Exception as e:
-        LOGGER.info('Error: {}'.format(e))
-        return
-
-    LOGGER.info('Done {}th package! Params: startdoc={}, enddoc={}'.format(nth, start, end))
-
+            LOGGER.info('Done {}th package! Params: startdoc={}, enddoc={}'.format(nth, start, end))
+        else:
+            result.append(res)
+            num += 1
 
 def run():
     args = parse_args()
     config = read_config(args.config)
-    REGISTRY['config'] =  config
+    REGISTRY['config'] = config
     REGISTRY['bucket'] = boto3.resource('s3').Bucket(config['bucket'])
 
     REGISTRY['tenders_storage'] = TendersStorage(config['tenders_db']['url'],
@@ -207,17 +192,9 @@ def run():
         max_date = REGISTRY['tenders_storage'].get_max_date().split('T')[0]
         REGISTRY['max_date'] = max_date
         total = int(args.number) if args.number else 4096
-        key_ids = fetch_ids(REGISTRY['tenders_storage'], total)
-        LOGGER.info('Fetched key doc ids')
-
-        params = enumerate(
-            zip_longest(key_ids, key_ids[1::], fillvalue=''),
-            1
-        )
         sleep(1)
         LOGGER.info("Start working")
-        map(fetch_and_dump, params)
-
+        fetch_and_dump(total)
         upload_archives()
         bucket = connect_bucket(config)
         update_index(ENV, bucket)
