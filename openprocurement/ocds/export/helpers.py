@@ -25,11 +25,6 @@ logger = getLogger(__name__)
 getLogger('boto').setLevel(ERROR)
 
 
-with open(os.path.join(os.path.dirname(__file__),
-                       'unit_codes.yaml'), 'r') as stream:
-    units = yaml.load(stream)
-
-
 def get_torrent_link(bucket, path):
     return 'https://s3-eu-west-1.amazonaws.com/'\
             '{}/{}releases.zip?torrent'.format(bucket, path)
@@ -191,6 +186,9 @@ def convert_bids(bids):
 
 
 def convert_unit_and_location(items):
+    with open(os.path.join(os.path.dirname(__file__),
+                           'unit_codes.yaml'), 'r') as stream:
+        units = yaml.load(stream)
     if not items:
         return
     new = []

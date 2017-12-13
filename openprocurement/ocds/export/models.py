@@ -1,8 +1,6 @@
 import jsonpatch
 import logging
 from uuid import uuid4
-from urllib import quote
-from functools import partial
 from openprocurement.ocds.export.helpers import (
     unique_tenderers,
     unique_documents,
@@ -14,20 +12,6 @@ from openprocurement.ocds.export.helpers import (
 )
 
 logger = logging.getLogger(__name__)
-invalidsymbols = ["`", "~", "!", "@", "#", "$", '"', u"\u200E"]
-
-
-def quote_uri(key, data):
-    new = ''
-    if not data.get(key):
-        return
-    uri = ''.join(c.encode('utf-8') for c in data.get(key, '') if c not in invalidsymbols)
-    for index in range(len(uri)):
-        if uri[index] == '\x80':
-            new += '%80'
-            continue
-        new += quote(uri[index]) if ord(uri[index]) > 128 else uri[index]
-    return new
 
 
 callbacks = {
@@ -41,8 +25,6 @@ callbacks = {
     'tender': lambda raw_data: raw_data,
     'buyer': lambda raw_data: raw_data.get('procuringEntity'),
     'submissionMethod': lambda raw_data: [raw_data.get('submissionMethod', '')],
-    'uri': partial(quote_uri, 'uri'),
-    'url': partial(quote_uri, 'url')
 }
 
 
