@@ -369,3 +369,40 @@ def package_records(tenders, modelsMap, callbacks, config):
         records.append(record_tenders(tender, modelsMap, callbacks, config.get('prefix')))
     package['records'] = records
     return package
+
+
+def compare_data(data, ocds_data):
+    ext = {}
+    for key in data:
+        if key not in ocds_data:
+            ext[key] = data[key]
+        elif data[key] != ocds_data[key]:
+            if isinstance(data[key], list):
+                for i, k in enumerate(data[key]):
+                    ext[key] = [compare_data(k, ocds_data[key][i])]
+                    ext['id'] = data['id'] if data.get('id') else ''
+            elif isinstance(data[key], dict):
+                ext[key] = compare_data(data[key], ocds_data[key])
+            else:
+                ext[key] = data[key]
+        if data.get('id'):
+            ext['id'] = data['id']
+    return ext
+
+
+def get_extensions(tender):
+    new_tender = {}
+    data = {}
+    ocds_data = release_tender(tender, modelsMap, callbacks, 'ocds-be6bcu')
+    fields = ['awards', 'contracts']
+    for field in fields:
+        try:
+            new_tender[field] = tender[field]
+            tender.pop(field)
+        except KeyError:
+            pass
+    new_tender['tender'] = tender
+    new_tender['buyer'] = new_tender.get('tender').pop('procuringEntity')
+    data['ocds'] = ocds_data
+    data['extensions'] = compare_data(new_tender, ocds_data)
+    return data
