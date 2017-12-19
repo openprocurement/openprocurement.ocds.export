@@ -112,7 +112,7 @@ def unique_documents(documents, extension=False):
             if 'documentOf' in doc:
                 doc['documentScope'] = doc.pop('documentOf')
     cout = Counter(doc['id'] for doc in documents)
-    for i in [i for i, c in cout.iteritems() if c > 1]:
+    for i in [i for i, c in cout.items() if c > 1]:
         for index, d in enumerate([d for d in documents if d['id'] == i]):
             d['id'] = d['id'] + '-{}'.format(index)
     return documents
