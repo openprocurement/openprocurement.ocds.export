@@ -378,9 +378,7 @@ def compare_data(data, ocds_data):
             ext[key] = data[key]
         elif data[key] != ocds_data[key]:
             if isinstance(data[key], list):
-                for i, k in enumerate(data[key]):
-                    ext[key] = [compare_data(k, ocds_data[key][i])]
-                    ext['id'] = data['id'] if data.get('id') else ''
+                ext[key] = [compare_data(k, ocds_data[key][i]) for i, k in enumerate(data[key])]
             elif isinstance(data[key], dict):
                 ext[key] = compare_data(data[key], ocds_data[key])
             else:
@@ -394,13 +392,9 @@ def get_extensions(tender):
     new_tender = {}
     data = {}
     ocds_data = release_tender(tender, modelsMap, callbacks, 'ocds-be6bcu')
-    fields = ['awards', 'contracts']
-    for field in fields:
-        try:
-            new_tender[field] = tender[field]
-            tender.pop(field)
-        except KeyError:
-            pass
+    for field in ['awards', 'contracts']:
+        if field in tender:
+            new_tender[field] = tender.pop(field)
     new_tender['tender'] = tender
     new_tender['buyer'] = new_tender.get('tender').pop('procuringEntity')
     data['ocds'] = ocds_data
