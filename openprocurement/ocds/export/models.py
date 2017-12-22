@@ -396,7 +396,8 @@ def get_extensions(tender):
         if field in tender:
             new_tender[field] = tender.pop(field)
     new_tender['tender'] = tender
-    new_tender['buyer'] = new_tender.get('tender').pop('procuringEntity')
+    if 'procuringEntity' in new_tender['tender']:
+        new_tender['buyer'] = new_tender['tender'].pop('procuringEntity')
     data['ocds'] = ocds_data
     data['extensions'] = compare_data(new_tender, ocds_data)
     return data
