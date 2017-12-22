@@ -36,7 +36,7 @@ entry_points = {
 }
 
 setup(name='openprocurement_ocds_export',
-      version='0.1.0',
+      version='0.1.0+py3',
       description=DESCRIPTION,
       author='Quintagroup, Ltd.',
       author_email='info@quintagroup.com',
