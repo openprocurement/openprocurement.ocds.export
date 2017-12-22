@@ -19,6 +19,7 @@ install_requires = [
     'boto3',
     'boto',
     'Jinja2',
+    'google-compute-engine'
 ]
 
 test_requires = [
