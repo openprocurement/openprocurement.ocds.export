@@ -159,8 +159,10 @@ def run():
     args = parse_args()
     config = read_config(args.config)
     REGISTRY['config'] = config
-    REGISTRY['bucket'] = boto3.resource('s3').Bucket(config['bucket'])
-
+    REGISTRY['bucket'] = boto3.resource('s3',
+                                        aws_access_key_id=config.get("aws_access_key_id"),
+                                        aws_secret_access_key=config.get("aws_secret_access_key")).Bucket(config['bucket']
+                                        )
     REGISTRY['tenders_storage'] = TendersStorage(config['tenders_db']['url'],
                                                  config['tenders_db']['name'])
     REGISTRY['db'] = REGISTRY['tenders_storage']
