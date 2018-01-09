@@ -9,7 +9,7 @@ install_requires = [
     'setuptools',
     'iso8601',
     'simplejson',
-    'ocdsmerge',
+    'ocdsmerge==0.3',
     'jsonpatch',
     'CouchDB',
     'python-dateutil',
