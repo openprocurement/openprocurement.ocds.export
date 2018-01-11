@@ -37,7 +37,6 @@ ENV = Environment(
     trim_blocks=True
 )
 LOGGER = logging.getLogger(__name__)
-LOGGER.addHandler(logging.FileHandler(os.path.join(os.getcwd(), 'var/log/pack.log')))
 REGISTRY = {
     "max_date": None,
     "bucket": None,
@@ -159,6 +158,10 @@ def run():
     args = parse_args()
     config = read_config(args.config)
     REGISTRY['config'] = config
+    handler = logging.FileHandler(os.path.join(config.get('log_dir'), 'pack.log'))
+    formatter = logging.Formatter('%(asctime)s  %(name)-10s %(levelname)-7s %(message)s')
+    handler.setFormatter(formatter)
+    LOGGER.addHandler(handler)
     REGISTRY['bucket'] = boto3.resource('s3',
                                         aws_access_key_id=config.get("aws_access_key_id"),
                                         aws_secret_access_key=config.get("aws_secret_access_key")).Bucket(config['bucket']

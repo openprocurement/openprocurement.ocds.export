@@ -28,6 +28,7 @@ path_can: ${options['path_for_release_can']}
 path_ext: ${options['path_for_release_ext']}
 bucket: ${options['bucket']}
 historical: ${options['historical']}
+log_dir: ${options['log_dir']}
 logging:
     version: 1
     disable_existing_loggers: False
@@ -55,4 +56,3 @@ logging:
         handlers:
             - file
             - console
-
