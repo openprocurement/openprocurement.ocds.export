@@ -4,6 +4,7 @@ import logging
 import couchdb.json
 import zipfile
 import boto3
+import requests
 from simplejson import dump, dumps
 from gevent import spawn, sleep, joinall
 from os.path import join
@@ -203,3 +204,4 @@ def run():
         upload_archives()
         bucket = connect_bucket(config)
         update_index(ENV, bucket)
+        requests.get('http://ping.pushmon.com/pushmon/ping/WDMnYJy')
