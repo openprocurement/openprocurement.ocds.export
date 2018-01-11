@@ -1,0 +1,9 @@
+[Unit]
+Description=Timer to run export every friday
+
+[Timer]
+OnCalendar=Fri *-*-* 03:00:00
+Unit=export.service
+
+[Install]
+WantedBy=multi-user.target
