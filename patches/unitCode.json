@@ -1,0 +1,29 @@
+[
+    {
+        "path": "/definitions/Item/properties/unit/properties/id", 
+        "value": {
+            "title": "ID",
+            "type": "string", 
+            "description": "UN/CEFACT Recommendation 20 unit code."
+        }, 
+        "op": "add"
+    }, 
+    {
+        "op": "add",
+        "path": "/definitions/Item/properties/unit/properties/symbol",
+        "value": {
+            "title": "Symbol",
+            "type": "string",
+            "description": "An optional user-friendly symbol for the unit of measurement"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/definitions/Item/properties/unit/properties/scheme",
+        "value": {
+            "title": "Scheme",
+            "type": "string",
+            "description": "An identifier for the codelist from which units of measure are taken"
+        }
+    }
+]

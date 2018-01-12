@@ -1,0 +1,11 @@
+[
+	{
+        "path": "/definitions/Contract/properties/contractNumber", 
+        "value": {
+        	"title": "Contract Number",
+            "type": "string", 
+            "description": "Editable number of the contract "
+        }, 
+        "op": "add"
+    }
+]

@@ -1,0 +1,60 @@
+[
+    {
+        "path": "/definitions/Item/properties/deliveryAddress",
+        "value": {
+            "title": "Delivery Address",
+            "description": "Address, where the item should be delivered",
+            "$ref": "#/definitions/Address"
+        },
+        "op": "add"
+    },
+    {
+        "path": "/definitions/Item/properties/deliveryDate",
+        "value": {
+            "title": "Delivery Date",
+            "description": "Period during which the item should be delivered",
+            "$ref": "#/definitions/Period"
+        },
+        "op": "add"
+    },
+    {
+        "op": "add",
+        "path": "/definitions/Location",
+        "value": {
+            "title": "Location",
+            "type": "object",
+            "description": "The location where activity related to this tender, contract or license will be delivered, or will take place. A location can be described by either a geometry (point location, line or polygon), or a gazetteer entry, or both.",
+            "properties": {
+                "geometry": {
+                    "type": "object",
+                    "description": "We follow the [GeoJSON standard](http://geojson.org/) to express basic location information, using latitude and longitude values in the [WGS84](https://en.wikipedia.org/wiki/World_Geodetic_System) (EPSG:4326) projection.  A point location can be identified by geocoding a delivery address. For concession licenses, or other contracts covering a polygon location which is not contained in a known gazetteer, polygon and multi-polygon can be used. ",
+                    "notes_for_guidance": "The guidance notes should describe when to use MultiPoint, and when to use multiple line-items each with their own locations",
+                    "properties": {
+                        "coordinates": {
+                            "description": "The relevant array of points, e.g. [latitude,longitude], or nested array, for the geoJSON geometry being described. The longitude and latitude MUST be expressed in decimal degrees in the WGS84 (EPSG:4326) projection",
+                            "type": [
+                                "array",
+                                "null"
+                            ],
+                            "items": {
+                                "type": [
+                                    "number",
+                                    "array"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    {
+        "op": "add",
+        "path": "/definitions/Item/properties/deliveryLocation",
+        "value": {
+            "title": "Delivery Location",
+            "description": "The location where activity related to this tender, contract or license will be delivered, or will take place. A location can be described by either a geometry (point location, line or polygon), or a gazetteer entry, or both.",
+            "$ref": "#/definitions/Location"
+        }
+    }
+]

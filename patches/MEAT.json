@@ -1,0 +1,75 @@
+[
+	{
+		"op": "add",
+		"path": "/definitions/Feature",
+		"value": {
+			"type": "object",
+			"title": "Feature",
+			"description": "Features of tender",
+			"properties": {
+				"code": {
+					"title": "Code",
+					"description": "Code of the feature, auto generated",
+					"type": "string",
+				},
+				"featureOf": {
+					"title": "Feature Of",
+					"description": "What the feature is related to.",
+					"type": "string"
+				},
+				"relatedItem": {
+					"title": "Related Item",
+					"description": "An identifier of the related item or lot",
+					"type": "string"
+				},
+				"title": {
+					"title": "Title",
+					"description": "Title of feature",
+					"type": "string",
+				},
+				"description": {
+					"title": "Description",
+					"description": "Description of the feature",
+					"type": "string"
+				},
+				"enum": {
+					"title": "Enum",
+					"description": "List of values",
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"value": {
+								"title": "Value",
+								"description": "Value of the feature",
+								"type": "float"
+							},
+							"title": {
+								"title": "Title",
+								"description": "Title of the value",
+								"type": "string",
+							},
+							"description": {
+								"title": "Description",
+								"description": "Description of the value",
+								"type": "string"
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	{
+		"op": "add",
+		"path": "/definitions/Tender/properties/features",
+		"value": {
+			"title": "Features",
+			"description": "Features of tenders",
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/Feature"
+			}
+		}
+	}
+]

@@ -1,0 +1,20 @@
+[
+    {
+        "path": "/definitions/Tender/properties/tenderID", 
+        "value": {
+        	"title": "Tender ID",
+            "type": "string", 
+            "description": "The tender identifier to refer tender to in \"paper\" documentation. TenderID should always be the same as the OCID. It is included to make the flattened data structure more convenient"
+        }, 
+        "op": "add"
+    },
+    {
+    	"op": "add",
+    	"path": "/definitions/Tender/properties/stage2tenderID",
+    	"value": {
+    		"title": "Stage2 tender ID",
+    		"description": "A tender identifier used on the second stage of the competitive dialogue procedure.",
+    		"type": "string"
+    	}
+    }
+]

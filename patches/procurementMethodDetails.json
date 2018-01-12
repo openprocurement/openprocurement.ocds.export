@@ -1,0 +1,26 @@
+[
+    {
+        "path": "/definitions/Tender/properties/procurementMethodType",
+        "value": {
+        	"title": "Procurement Method Type",
+            "enum": [],
+            "type": "string",
+            "description": "Type of Open Procurement procedure"
+        },
+        "op": "add"
+    },
+    {
+        "op": "add",
+        "path": "/definitions/Tender/properties/procurementMethodType/enum/0",
+        "value": "belowThreshold"
+    },
+    {
+        "op": "add",
+        "path": "/definitions/Tender/properties/currentStage",
+        "value": {
+        	"title": "Current stage",
+            "description": "Current stage of tender",
+            "type": "string"
+        }
+    }
+]

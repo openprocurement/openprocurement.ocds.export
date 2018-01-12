@@ -1,0 +1,50 @@
+[
+    {
+        "path": "/definitions/Auction", 
+        "value": {
+            "title": "Auction",
+            "type": "object",
+            "descritpion": "Auction object which shows all auction properties of lots and tender", 
+            "properties": { 
+                "url": {
+                    "title": "Auction",
+                    "type": "string", 
+                    "descritpion": "Url for auction"
+                }, 
+                "period": {
+                    "title": "Auction Period",
+                    "descritpion": "Period when Auction is conducted", 
+                 
+                    "$ref": "#/definitions/Period"
+                }, 
+                "minimalStep": {
+                    "title": "Minimal Step",
+                    "descritpion": "Minimal step for this auction", 
+                    "$ref": "#/definitions/Value"
+                }
+            }
+        }, 
+        "op": "add"
+    }, 
+    {
+        "path": "/definitions/Tender/properties/auctions", 
+        "value": {
+            "title": "Auctions",
+            "items": {
+                "$ref": "#/definitions/Auction"
+            }, 
+            "type": "array", 
+            "descritpion": "Auctions of tender and lots"
+        }, 
+        "op": "add"
+    },
+    {
+        "path": "/definitions/Bid/properties/participationUrl",
+        "value": {
+            "title": "Participation url",
+            "type": "string",
+            "descritpion": "A link for participation in auction"
+        },
+        "op": "add"
+    }
+]

@@ -1,0 +1,18 @@
+[
+	{
+		"op": "add",
+		"path": "/definitions/Tender/properties/cause",
+		"value": {
+			"description": "Cause of negotiations. See Article 35 of the Law of Ukraine \"On Public Procurement\". Required for openprocurement.limited",
+			"type": "string"
+		}
+	},
+	{
+		"op": "add",
+		"path": "/definitions/Tender/properties/causeDescription",
+		"value": {
+			"description": "Reasoning behind usage of negotiations. Required for openprocurement.limited",
+			"type": "string"
+		}
+	}
+]
