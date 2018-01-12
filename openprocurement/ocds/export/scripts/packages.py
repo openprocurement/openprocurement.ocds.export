@@ -67,9 +67,9 @@ def dump_json_to_s3(name, data, pretty=False):
                'extensions' in data['uri'] else 'merged_{}/{}'.format(time, name)
     try:
         if pretty:
-            REGISTRY['bucket'].put_object(Key=dir_name, Body=dumps(data, indent=4))
+            REGISTRY['bucket'].put_object(Key=dir_name, Body=dumps(data, indent=4), ContentType="application/json")
         else:
-            REGISTRY['bucket'].put_object(Key=dir_name, Body=dumps(data))
+            REGISTRY['bucket'].put_object(Key=dir_name, Body=dumps(data), ContentType="application/json")
         del data
         LOGGER.info("Successfully uploaded {}".format(name))
     except Exception as e:
@@ -135,10 +135,10 @@ def fetch_and_dump(total):
                                           'q': REGISTRY['zipq_ext']}]):
                     LOGGER.info("Start package: {}".format(pack.__name__))
                     package = pack(result, params['models'], params['callbacks'], REGISTRY['config'].get('release'))
-                    package['uri'] = params['uri'].format(REGISTRY['bucket'].name, max_date, name)
+                    package['uri'] = params['uri'].format(REGISTRY['config'].get("bucket"), max_date, name)
                     if nth == 1:
                         pretty_package = pack(result[:24], params['models'], params['callbacks'], REGISTRY['config'].get('release'))
-                        pretty_package['uri'] = params['uri'].format(REGISTRY['bucket'], max_date, 'example.json')
+                        pretty_package['uri'] = params['uri'].format(REGISTRY['config'].get("bucket"), max_date, 'example.json')
                         dump_json_to_s3('example.json', pretty_package, pretty=True)
 
                     dump_json_to_s3(name, package)
