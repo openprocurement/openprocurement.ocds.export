@@ -109,6 +109,18 @@ def upload_archives():
         g.append(spawn(REGISTRY['bucket'].upload_file(path, name)))
     joinall(g)
 
+def upload_releases_json(amount, max_date):
+    upload_paths = ["merged_with_extensions_{}/releases.json".format(max_date), "merged_{}/releases.json".format(max_date)]
+    listing_paths = ["http://{}/merged_with_extensions_{}", "http://{}/merged_{}"]
+    for upload, listing in zip(upload_paths, listing_paths):
+        to_upload = {
+            "links": {
+                "all": [listing.format(REGISTRY['bucket'].name, max_date)
+                        + "/release-{0:07d}.json".format(k)
+                        for k in range(1, amount + 1)]
+            }
+        }
+        REGISTRY['bucket'].put_object(Key=upload, Body=dumps(to_upload, indent=4), ContentType="application/json")
 
 def fetch_and_dump(total):
     num = 0
@@ -154,6 +166,7 @@ def fetch_and_dump(total):
         else:
             result.append(res)
             num += 1
+    return nth
 
 def run():
     args = parse_args()
@@ -200,8 +213,9 @@ def run():
         total = int(args.number) if args.number else 4096
         sleep(1)
         LOGGER.info("Start working")
-        fetch_and_dump(total)
+        amount = fetch_and_dump(total)
         upload_archives()
         bucket = connect_bucket(config)
+        upload_releases_json(amount, max_date)
         update_index(ENV, bucket)
         requests.get('http://ping.pushmon.com/pushmon/ping/WDMnYJy')

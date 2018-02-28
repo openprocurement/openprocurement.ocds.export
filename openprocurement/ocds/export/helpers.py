@@ -305,7 +305,7 @@ def update_index(templates, bucket):
     template = templates.get_template('base.html')
     index = templates.get_template('index.html')
     dirs = [d.name for d in bucket.list('merged', '/') if 'full' not in d.name
-            and '2017-07-26' not in d.name]
+            and '2017-07-26' not in d.name and d.name != 'merged_2018-02-16']
     html = template.render(dict(links=[x.strip('/') for x in dirs]))
     k = bucket.get_key('index.html')
     k.set_contents_from_string(html)

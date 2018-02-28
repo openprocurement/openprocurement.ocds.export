@@ -16,18 +16,24 @@
 		   {% if link.link|string() == 'example.json' %}
 		    	<p><a href='example.json'>example.json</a></p>
 		   {% elif link.link|string() == 'releases.zip'%}   
-			<p><a href='releases.zip'>releases.zip</a>   ({{ zip_size }} MB)  <a href='{{ torrent_link }}'>.torrent</a></p>
+				<p><a href='releases.zip'>releases.zip</a>   ({{ zip_size }} MB)  <a href='{{ torrent_link }}'>.torrent</a></p>
+		   {% endif %}
+		{% endfor %}
+		{% for link in links %}
+		   {% if link.link|string() == 'releases.json' %}
+		        <p><a href='releases.json'>releases.json</a></p>
 		   {% endif %}
 		{% endfor %}
 
 		<ol>
 		    {% for link in links %}
-
+			{% if link.link|string() != 'releases.json' %}
 		   	{% if link.link|string() != 'example.json' %}
-		   	{% if link.link|string() != 'releases.zip'%}   
+			{% if link.link|string() != 'releases.zip'%}
 		    		<li><a href="{{ link.link }}">{{ link.link }}</a> ({{ link.size }} MB) </li>
 		   	{% endif %}
 		   	{% endif %}
+			{% endif %}
 		    {% endfor %}
 		</ol>
 	</div>
