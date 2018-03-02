@@ -1,0 +1,20 @@
+[
+	{
+		"op": "add",
+		"path": "/definitions/Lot/properties/pendingCancellation",
+		"value": {
+            "title": "Cancellation pending",
+            "type": "boolean",
+            "description":  "Yes or No field showing  whether a lot is pending for cancellation."
+		}
+	},
+	{
+		"op": "add",
+		"path": "/definitions/Tender/properties/pendingCancellation",
+		"value": {
+			"title": "Cancellation pending",
+			"type": "boolean",
+			"description": "Yes or No field showing  whether a lot is pending for cancellation"
+		}
+	}
+]

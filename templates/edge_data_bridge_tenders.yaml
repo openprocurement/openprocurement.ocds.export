@@ -1,0 +1,81 @@
+main:
+  resources_api_server: ${options['api_host']}
+  resources_api_version: ${options['api_version']}
+  public_resources_api_server: http://public.api.openprocurement.org
+  couch_url: ${options['tenders_db_url']}
+  db_name: ${options['tenders_db_name']}
+  log_db_name: logs_db
+  client_inc_step_timeout: 0.1
+  client_dec_step_timeout: 0.02
+  drop_threshold_client_cookies: 1.5
+  worker_sleep: 5
+  retry_default_timeout: 5
+  retries_count: 10
+  queue_timeout: 5
+  queues_controller_timeout: 60
+  workers_inc_threshold: 75
+  workers_dec_threshold: 35
+  workers_max: 10
+  workers_min: 3
+  retry_workers_min: 1
+  retry_workers_max: 3
+  resource_items_queue_size: 10000
+  retry_resource_items_queue_size: -1
+  filter_workers_count: 1
+  watch_interval: 10
+  resource_items_limit: 1000
+  resource: ${options['tenders_resource']}
+  user_agent: ${options['user_agent']}
+  bulk_save_limit: 1000
+  bulk_save_interval: 3
+  bulk_query_limit: 5000
+  bulk_query_interval: 3
+  retrievers_params:
+    down_requests_sleep: 1
+    up_requests_sleep: 1
+    up_wait_sleep: 30
+    up_wait_sleep_min: 5
+    queue_size: 1001
+version: 1
+
+formatters:
+  simple:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: simple
+    stream: ext://sys.stdout
+
+
+loggers:
+  openprocurement.edge.databridge:
+    handlers: [console]
+    propagate: no
+    level: DEBUG
+
+  openprocurement.edge.collector:
+    handlers: [console]
+    propagate: no
+    level: DEBUG
+
+  openprocurement.edge.utils:
+    handlers: [console]
+    propagate: no
+    level: DEBUG
+
+  openprocurement.edge.workers:
+    handlers: [console]
+    propagate: no
+    level: DEBUG
+
+  openprocurement_client.sync:
+    handlers: [console]
+    propagate: no
+    level: DEBUG
+
+  "":
+    handlers: [console]
+    level: DEBUG

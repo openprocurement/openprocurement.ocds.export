@@ -1,0 +1,94 @@
+[
+    {
+        "op": "add",
+        "path": "/definitions/Bid",
+        "value": {
+            "title": "Bid",
+            "description": "For representing a bid in response to the tender or qualification stage in this contracting process.",
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "title": "ID",
+                    "description": "A local identifier for this bid",
+                    "type": [
+                        "string"
+                    ]
+                },
+                "date": {
+                    "title": "Date",
+                    "description": "The date when this bid was received.",
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "date-time"
+                },
+                "status": {
+                    "title": "Status",
+                    "description": "The status of the bid, drawn from the bidStatus codelist",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "tenderers": {
+                    "title": "Tenderer",
+                    "description": "The party, or parties, responsible for this bid. This should provide a name and identifier, cross-referenced to an entry in the parties array at the top level of the release.",
+                    "type": [
+                        "array",
+                        "null"
+                    ],
+                    "items": {
+                        "$ref": "#/definitions/Organization"
+                    }
+                },
+                "value": {
+                    "title": "Value",
+                    "description": "The total value of the bid.",
+                    "$ref": "#/definitions/Value"
+                },
+                "documents": {
+                    "title": "Documents",
+                    "description": "All documents and attachments related to the bid and its evaluation.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Document"
+                    },
+                    "uniqueItems": true
+                },
+                "relatedLot": {
+                    "title": "Related Lot",
+                    "description": "Id of related lot",
+                    "type": "string"
+                }
+            }
+        }
+    },
+    {
+    	"op": "add",
+    	"path": "/properties/bids",
+    	"value": {
+    		"title": "Bids",
+    		"type": "object",
+    		"description": "A list of all bids placed in the tender with information about tenderers, their proposal and other qualification documentation.",
+    		"properties": {
+    			"details": {
+                    "title": "Bid details",
+                    "description": "An array of bids, providing information on the bidders, and where applicable, bid status, bid values and related documents. The extent to which this information can be disclosed varies from jurisdiction to jurisdiction.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Bid"
+                    }
+                }
+    		}
+    	}
+    },
+    {
+        "op": "add",
+        "path": "/properties/tag/items/enum/0",
+        "value": "bid"
+    }
+]

@@ -1,0 +1,10 @@
+[Unit]
+Description=Unit for running ocds export
+
+[Service]
+Type=simple
+ExecStart=${parts.buildout.directory}/bin/packages -contracting
+User=devel
+
+[Install]
+WantedBy=default.target

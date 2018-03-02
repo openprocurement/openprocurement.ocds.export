@@ -1,0 +1,28 @@
+[
+	{
+		"op": "add",
+		"path": "/definitions/Organization/properties/additionalContactPoints",
+		"value": {
+			"title": "Additional contact points",
+			"description": "List of additional contact points for the organization",
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/ContactPoint"
+			}
+		}
+	},
+	{
+		"op": "add",
+		"path": "/definitions/ContactPoint/properties/availableLanguage",
+		"value": {
+			"title": "Available language",
+			"description": "Specifies the language of communication",
+			"type": "string",
+			"enum": [
+				"uk",
+				"en",
+				"ru"
+			]
+		}
+	}
+]

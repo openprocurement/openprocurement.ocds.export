@@ -1,0 +1,192 @@
+[
+	{
+		"op": "add",
+		"path": "/definitions/Complaint",
+		"value": {
+			"type": "object",
+			"description": "Complaints to tender conditions and their resolutions",
+			"title": "Complaint",
+			"required": [
+				"author"
+			],
+		},
+		"properties": {
+			"status": {
+				"enum": [
+					"draft", 
+					"claim", 
+					"answered", 
+					"pending", 
+					"invalid", 
+					"declined", 
+					"resolved", 
+					"cancelled", 
+					"accepted", 
+					"stopped"
+				], 
+				"type": "string", 
+				"description": "The current status of the complaint"
+			}, 
+			"tendererActionDate": {
+				"type": "string", 
+				"description": "The date of the tenderer action"
+			}, 
+			"satisfied": {
+				"type": "boolean", 
+				"description": "A Yes/No field to indicate whether the complaint was satisfied"
+			}, 
+			"tendererAction": {
+				"type": "string", 
+				"description": "Action of tenderer"
+			}, 
+			"dateSubmitted": {
+				"type": "string", 
+				"description": "The date when claim was submitted"
+			}, 
+			"id": {
+				"type": "string", 
+				"description": "Unique identifier of the complaint"
+			}, 
+			"reviewPlace": {
+				"type": "string", 
+				"description": "The place of reviewing the complaint"
+			}, 
+			"documents": {
+				"uniqueItems": true, 
+				"items": {
+					"$ref": "#/definitions/Document"
+				}, 
+				"type": "array", 
+				"description": "All documents and attachments related to the complaint"
+			}, 
+			"title": {
+				"type": "string", 
+				"description": "Title of the complaint"
+			}, 
+			"decision": {
+				"type": "string", 
+				"description": "Decision of a reviewer on the complaint."
+			}, 
+			"acceptance": {
+				"type": "boolean", 
+				"description": "A Yes/No field to indicate whether the complaint was accepted"
+			}, 
+			"dateEscalated": {
+				"type": "string", 
+				"description": "The date of claim to complaint escalation"
+			}, 
+			"rejectReasonDescription": {
+				"type": "string", 
+				"description": "Description of reject reason"
+			}, 
+			"cancellationReason": {
+				"type": "string", 
+				"description": "Reason for cancelling the complaint."
+			}, 
+			"dateAnswered": {
+				"type": "string", 
+				"description": "The date when Procuring entity answered the claim"
+			}, 
+			"type": {
+				"enum": [
+					"claim", 
+					"complaint"
+				], 
+				"type": "string", 
+				"description": "Type of the complaint"
+			}, 
+			"relatedLot": {
+				"type": "string", 
+				"description": "An identifier of the related lot"
+			}, 
+			"description": {
+				"type": "string", 
+				"description": "Description of the issue"
+			}, 
+			"dateCancelled": {
+				"type": "string", 
+				"description": "The date of cancelling the complaint."
+			}, 
+			"date": {
+				"type": "string", 
+				"description": "Date of posting the complaint"
+			}, 
+			"dateDecision": {
+				"type": "string", 
+				"description": "The date when a decision on the complaint was made."
+			}, 
+			"author": {
+				"description": "Organization filing a complaint.", 
+				"$ref": "#/definitions/Organization"
+			}, 
+			"rejectReason": {
+				"enum": [
+					"law", 
+					"payment", 
+					"fixed"
+				], 
+				"type": "string", 
+				"description": "Reasons of rejecting the complaint"
+			}, 
+			"resolutionType": {
+				"enum": [
+					"invalid", 
+					"declined", 
+					"resolved"
+				], 
+				"type": "string", 
+				"description": "Type of resolution"
+			}, 
+			"resolution": {
+				"type": "string", 
+				"description": "Resolution of Procuring entity"
+			}, 
+			"reviewDate": {
+				"type": "string", 
+				"description": "The date of reviewing the complaint"
+			}
+		}
+	},
+	{
+		"op": "add",
+		"path": "/definitions/Tender/properties/complaints",
+		"value": {
+			"description": "Complaints to tender conditions and their resolutions",
+			"title": "Complaint",
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/Complaint"
+			}
+		}
+	},
+	{
+		"op": "add",
+		"path": "/definitions/Tender/properties/complaintPeriod",
+		"value": {
+			"description": "The timeframe when complaints can be submitted.",
+			"title": "Complaint period",
+			"type": "string"
+		}
+	},
+	{
+		"op": "add",
+		"path": "/definitions/Award/properties/complaints",
+		"value": {
+			"description": "Complaints to award conditions and their resolutions",
+			"title": "Complaint",
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/Complaint"
+			}
+		}
+	},
+	{
+		"op": "add",
+		"path": "/definitions/Award/properties/complaintPeriod",
+		"value": {
+			"description": "The timeframe when complaints can be submitted.",
+			"title": "Complaint period",
+			"type": "string"
+		}
+	}
+]

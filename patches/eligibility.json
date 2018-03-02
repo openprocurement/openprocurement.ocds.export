@@ -1,0 +1,32 @@
+[
+	{
+		"op": "add",
+		"path": "/definitions/Award/properties/eligible",
+		"value": {
+			"title": "eligible",
+			"description": "Confirms compliance of eligibility criteria set by the procuring entity in the tendering documents",
+			"type": "boolean"
+		}
+	},
+	{
+		"op": "add",
+		"path": "/definitions/Bid/properties/selfEligible",
+		"value": {
+			"title": "Self eligible",
+			"description": "Confirms compliance of eligibility criteria set by the customer in the tendering documents",
+			"type": "boolean"
+		}
+	},
+	{
+		"op": "add",
+		"path": "/definitions/Bid/properties/eligibilityDocuments",
+		"value": {
+			"title": "Eligibility documents",
+			"description": "Documents related to eligibility of bids",
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/Document"
+			}
+		}
+	}
+]

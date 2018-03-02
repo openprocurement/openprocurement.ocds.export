@@ -1,0 +1,110 @@
+
+[
+    {
+        "path": "/definitions/Lot", 
+        "required": [
+            "value"
+        ], 
+        "value": {
+            "title": "Lot",
+            "type": "object", 
+            "description": "Lot related to tender", 
+            "properties": {
+                "status": {
+                    "title": "Status",
+                    "enum": [
+                        "active", 
+                        "unsuccessful", 
+                        "complete", 
+                        "cancelled"
+                    ], 
+                    "type": "string", 
+                    "description": "Status of the lot"
+                }, 
+                "description": {
+                    "title": "Description",
+                    "type": "string", 
+                    "description": "Detailed description of tender lot"
+                }, 
+                "title": {
+                    "title": "Title",
+                    "type": "string", 
+                    "description": "Title of lot"
+                },
+                "value": {
+                    "title": "Value",
+                    "description": "Total available tender lot budget", 
+                    "$ref": "#/definitions/Value"
+                },
+                "id": {
+                    "title": "ID",
+                    "type": "string", 
+                    "description": "Unique id of the lot"
+                }
+            }
+        }, 
+        "op": "add"
+    },
+    {
+        "path": "/definitions/Tender/properties/lots", 
+        "value": {
+            "title": "Lots",
+            "items": {
+                "$ref": "#/definitions/Lot"
+            }, 
+            "type": "array", 
+            "description": "All lots of the tender"
+        }, 
+        "op": "add"
+    },
+    {
+        "path": "/definitions/Item/properties/relatedLot", 
+        "value": {
+            "title": "Related Lot",
+            "type": "string", 
+            "description": "An identifier of the related lot. This field is added if there are lots in tender."
+        }, 
+        "op": "add"
+    },
+    {
+        "op": "add",
+        "path": "/definitions/Award/properties/lotID",
+        "value": {
+            "title": "Lot ID",
+            "description": "An identifier of the related lot.",
+            "type": "string"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/definitions/Document/properties/documentScope/enum/1",
+        "value": "lot"
+    },
+    {
+        "op": "add",
+        "path": "/definitions/Auction/properties/relatedLot",
+        "value": {
+            "title": "Related lot",
+            "description": "Id of the related lot",
+            "type": "string"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/definitions/Enquiry/properties/relatedLot",
+        "value": {
+            "title": "Related lot",
+            "description": "Id of the related lot",
+            "type": "string"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/definitions/Bid/properties/participationUrl",
+        "value": {
+            "title": "Participation url",
+            "description": "A link for participation in auction",
+            "type": "string"
+        }
+    }
+]

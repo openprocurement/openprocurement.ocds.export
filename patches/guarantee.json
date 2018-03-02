@@ -1,0 +1,42 @@
+[
+	{
+		"op": "add",
+		"path": "/definitions/Guarantee",
+		"value": {
+			"title": "Guarantee",
+			"description": "A sum of money which the Economic Operator  may set out in tender documentation and which the Participant (Award of Tender/Lot) shall pay in case of a refusal to sign the Contract, or in other cases foreseen in the Law.",
+			"type": "object",
+			"required": ["currency"],
+			"properties": {
+				"amount": {
+					"title": "Amount",
+					"description": "Amount of the guarantee as a number",
+					"type": "float"
+				},
+				"currency": {
+					"title": "Currency",
+					"description": "Currency of the guarantee in a 3-letter ISO 4217 format.",
+					"type": "string"
+				}
+			}
+		}
+	},
+	{
+		"op": "add",
+		"path": "/definitions/Tender/properties/guarantee",
+		"value": {
+			"title": "Guarantee",
+			"description": "A sum of money which the Economic Operator  may set out in tender documentation and which the Participant (Award of Tender/Lot) shall pay in case of a refusal to sign the Contract, or in other cases foreseen in the Law.",
+			"$ref": "#/definitions/Guarantee"
+		}
+	},
+	{
+		"op": "add",
+		"path": "/definitions/Lot/properties/guarantee",
+		"value": {
+			"title": "Guarantee",
+			"description": "A sum of money which the Economic Operator  may set out in tender documentation and which the Participant (Award of Tender/Lot) shall pay in case of a refusal to sign the Contract, or in other cases foreseen in the Law.",
+			"$ref": "#/definitions/Guarantee"
+		}
+	}
+]

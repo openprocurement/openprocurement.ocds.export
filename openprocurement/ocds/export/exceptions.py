@@ -1,0 +1,2 @@
+class LBMismatchError(Exception):
+    pass

@@ -1,0 +1,18 @@
+{
+   "status": "active",
+   "documents": [
+       {
+           "format": "text/plain",
+           "title": "Помилково створений.docx",
+           "documentOf": "tender",
+           "datePublished": "2017-01-13T16:11:12.050051+02:00",
+           "dateModified": "2017-01-13T16:11:12.050072+02:00",
+           "id": "62dfce3e4253432581e9680d9afc636e"
+       }
+   ],
+   "reason": "помилково створений",
+   "reasonType": "cancelled",
+   "date": "2017-01-13T16:11:16.863956+02:00",
+   "cancellationOf": "tender",
+   "id": "00f93d19098445a5bf3286f6bf3e9fc7"
+}

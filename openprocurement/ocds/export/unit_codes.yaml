@@ -1,0 +1,84 @@
+BX:
+  name: box
+  symbol: ''
+D64:
+  name: block
+  symbol: ''
+E11:
+  name: gigacalorie
+  symbol: ''
+E48:
+  name: service unit
+  symbol: ''
+E50:
+  name: accounting unit
+  symbol: ''
+E51:
+  name: job
+  symbol: ''
+E54:
+  name: trip
+  symbol: ''
+H87:
+  name: piece
+  symbol: ''
+HAR:
+  name: hectare
+  symbol: ha
+KGM:
+  name: kilogram
+  symbol: kg
+KMT:
+  name: kilometre
+  symbol: km
+KT:
+  name: kit
+  symbol: ''
+KWH:
+  name: kilowatt hour
+  symbol: "kW\xB7h"
+LM:
+  name: linear metre
+  symbol: ''
+LO:
+  name: lot  [unit of procurement]
+  symbol: ''
+LTR:
+  name: litre
+  symbol: l
+MON:
+  name: month
+  symbol: mo
+MTK:
+  name: square metre
+  symbol: "m\xB2"
+MTQ:
+  name: cubic metre
+  symbol: "m\xB3"
+MTR:
+  name: metre
+  symbol: m
+NMP:
+  name: number of packs
+  symbol: ''
+PK:
+  name: pack
+  symbol: ''
+PR:
+  name: pair
+  symbol: ''
+R9:
+  name: thousand cubic metre
+  symbol: ''
+RM:
+  name: ream
+  symbol: ''
+SET:
+  name: set
+  symbol: ''
+TNE:
+  name: tonne (metric ton)
+  symbol: t
+VI:
+  name: vial
+  symbol: ''

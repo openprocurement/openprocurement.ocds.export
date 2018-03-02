@@ -1,0 +1,38 @@
+[
+    {
+        "path": "/definitions/shortlistedFirms", 
+        "required": [
+            "name"
+        ], 
+        "value": {
+            "type": "object", 
+            "description": "A list of firms which can register bids on the second stage of the competitive dialogue procedure", 
+            "properties": {
+                "lots": {
+                    "items": {
+                        "$ref": "#/definitions/Lots"
+                    }, 
+                    "type": "array", 
+                    "description": "List of lots"
+                }, 
+                "identifier": {
+                    "description": "The primary identifier for this organization", 
+                    "$ref": "#/definitions/Identifier"
+                }, 
+                "name": {
+                    "type": "string", 
+                    "description": "Firm name"
+                }
+            }
+        }, 
+        "op": "add"
+    },
+    {
+        "path": "/definitions/Tender/properties/shortlistedFirms", 
+        "value": {
+            "type": "string", 
+            "description": "A list of firms which can register bids on the second stage of the competitive dialogue procedure"
+        }, 
+        "op": "add"
+    }
+]
