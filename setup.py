@@ -1,36 +1,10 @@
 from setuptools import setup
-from setuptools.extension import Extension
-
-try:
-    from Cython.Build import cythonize
-    cython = True
-except ImportError:
-    cython = False
-
 
 DESCRIPTION = """
     Libraty for generating packages
     in OCDS release format from openprocurement data
 """
 
-
-if cython:
-    ext = cythonize(Extension(
-        'openprocurement.ocds.export.models',
-        ['openprocurement/ocds/export/models.pyx']),
-        Extension(
-        'openprocurement.ocds.export.ext.models',
-        ['openprocurement/ocds/export/ext/models.pyx'])
-    )
-
-else:
-    ext = [Extension(
-        'openprocurement.ocds.export.models',
-        ['openprocurement/ocds/export/models.c']),
-        Extension(
-        'openprocurement.ocds.export.ext.models',
-        ['openprocurement/ocds/export/ext/models.c']),
-    ]
 
 install_requires = [
     'setuptools',
@@ -73,6 +47,5 @@ setup(name='openprocurement.ocds.export',
       zip_safe=False,
       install_requires=install_requires,
       tests_require=test_requires,
-      ext_modules=ext,
       entry_points=entry_points
       )
