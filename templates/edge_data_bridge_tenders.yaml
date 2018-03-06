@@ -36,6 +36,8 @@ main:
     up_wait_sleep: 30
     up_wait_sleep_min: 5
     queue_size: 1001
+  historical: ${options['historical']}
+  token: ${options['token']}
 version: 1
 
 formatters:

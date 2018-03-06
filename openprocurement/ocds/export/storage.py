@@ -92,6 +92,24 @@ class TendersStorage(Database):
                                   include_docs=True):
             yield item.doc
 
+    def get_list_of_historical_tenders(self):
+        same_ids = {}
+        import pdb
+        pdb.set_trace()
+        prev_id = next(iter(
+            self.view('tenders/all',
+                      limit=1).rows
+        )).get('key').split('-')[0]
+        for item in self.iterview('tenders/all',
+                                  1000,
+                                  include_docs=True,
+                                  ):
+            if prev_id == item.id.split('-')[0]:
+                same_ids[item.id] = item.doc
+            else:
+                cp = deepcopy(same_ids)
+                same_ids = {}
+                yield cp
 
 class ContractsStorage(Database):
 

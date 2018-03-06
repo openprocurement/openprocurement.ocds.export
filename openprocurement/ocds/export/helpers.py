@@ -339,7 +339,32 @@ def update_index(templates, bucket):
     pool = Pool(10)
     pool.map(update_secondary_index, dirs)
 
-        
+
+def compare_data(new, prev):
+    ext = {}
+    for key in new:
+        if key not in prev:
+            ext[key] = new[key]
+        elif new[key] != prev[key]:
+            if isinstance(new[key], list):
+                ext[key] = [compare_data(k, prev[key][i]) for i, k in enumerate(new[key])]
+            elif isinstance(new[key], dict):
+                ext[key] = compare_data(new[key], prev[key])
+            else:
+                ext[key] = new[key]
+        if new.get('id'):
+            ext['id'] = new['id']
+    return ext
+
+
+def sort_by_key(keys):
+    to_sort = {
+        int(key.split('-')[-1]): key
+        for key in keys
+    }
+    return [to_sort[val] for val in sorted(to_sort)]
+
+
 def parse_args():
     parser = argparse.ArgumentParser('Release Packages')
     parser.add_argument('-c', '--config',
@@ -361,6 +386,10 @@ def parse_args():
     parser.add_argument('-contracting',
                         action='store_true',
                         help='Choose to include contracting',
+                        default=False)
+    parser.add_argument('--historical',
+                        action='store_true',
+                        help='Choose to pack historical releases',
                         default=False)
     return parser.parse_args()
 

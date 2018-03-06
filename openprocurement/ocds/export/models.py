@@ -10,7 +10,9 @@ from openprocurement.ocds.export.helpers import (
     get_ocid,
     build_package,
     compile_releases,
-    convert_status
+    convert_status,
+    compare_data,
+    sort_by_key
 )
 
 logger = logging.getLogger(__name__)
@@ -304,7 +306,6 @@ modelsMap = {
     'contracts': (Contract, [])
 }
 
-
 def release_tender(tender, modelsMap, callbacks, prefix):
     release = Release(tender, modelsMap, callbacks, prefix).__export__()
     tag = ['tender']
@@ -315,7 +316,7 @@ def release_tender(tender, modelsMap, callbacks, prefix):
     return release
 
 
-def release_tenders(tender, modelsMap, callbacks, prefix):
+def release_tenders(tenders, modelsMap, callbacks, prefix):
 
     def prepare_first_tags(release):
         tag = ['tender']
@@ -324,43 +325,25 @@ def release_tenders(tender, modelsMap, callbacks, prefix):
                 tag.append(f[:-1])
         return list(set(tag))
 
-    assert 'patches' in tender
-    patches = tender.pop('patches')
-
-    first_release = Release(tender, modelsMap, callbacks).__export__()
-    first_release['tag'] = prepare_first_tags(first_release)
-    releases = [first_release]
-    for patch in patches:
-        tender = jsonpatch.apply_patch(tender, patch)
-        next_release = Release(tender, modelsMap, callbacks).__export__()
-        if first_release != next_release:
-            diff = jsonpatch.make_patch(first_release, next_release).patch
-            tag = []
-            for op in diff:
-                if op['path'] in ['/tag', '/id']:
-                    continue
-                if op['op'] != 'add':
-                    if not any(p in op['path'] for p in ['awards', 'contracts']):
-                        tag.append('tenderUpdate')
-                    else:
-                        for p in ['awards', 'contracts']:
-                            if p in op['path']:
-                                tag.append(p[:-1] + 'Update')
-                else:
-                    for p in ['awards', 'contracts']:
-                        if p in op['path']:
-                            tag.append(p[:-1])
-            next_release['tag'] = list(set(tag))
-            releases.append(next_release)
-        first_release = next_release
+    prev = {}
+    releases = []
+    sorted_keys = sort_by_key(tenders.keys())
+    for tender in sorted_keys:
+        pat = jsonpatch.make_patch(tenders[tender], prev).patch
+        diff = compare_data(tenders[tender], prev)
+        release = Release(diff, modelsMap, callbacks, prefix).__export__()
+        release['tag'] = prepare_first_tags(release)
+        releases.append()
+        prev = tenders[tender]
     return releases
 
 
-def record_tenders(tender, modelsMap, callbacks, prefix):
-    record = {}
-    record['releases'] = release_tenders(tender, modelsMap, callbacks, prefix)
-    record['compiledRelease'] = compile_releases(record['releases'])
-    record['ocid'] = record['releases'][0]['ocid']
+def record_tenders(tenders, modelsMap, callbacks, prefix):
+    record = {
+        "releases": release_tenders(tenders, modelsMap, callbacks, prefix),
+        "compiledRelease": compile_releases(record['releases']),
+        "ocid": record['releases'][0]['ocid']
+    }
     return record
 
 

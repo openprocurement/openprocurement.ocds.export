@@ -13,7 +13,7 @@ from gevent.event import Event
 from jinja2 import Environment, PackageLoader
 from openprocurement.ocds.export.storage import TendersStorage
 from openprocurement.ocds.export.models import package_tenders, package_records,\
-    callbacks, modelsMap
+    callbacks, modelsMap, release_tenders, record_tenders
 from openprocurement.ocds.export.ext.models import (
     package_tenders_ext,
     package_records_ext,
@@ -25,7 +25,8 @@ from openprocurement.ocds.export.helpers import (
     parse_dates,
     update_index,
     parse_args,
-    connect_bucket
+    connect_bucket,
+    compare_data
 )
 logging.getLogger('boto').setLevel(logging.WARN)
 logging.getLogger('boto3').setLevel(logging.WARN)
@@ -203,6 +204,9 @@ def run():
                                          datefinish.split('T')[0])
         with open(os.path.join(config['path'], name, 'w')) as stream:
             dump(pack, stream)
+    elif args.historical:
+        for historical_tenders in REGISTRY['tenders_storage'].get_list_of_historical_tenders():
+            record_tenders(historical_tenders, modelsMap, callbacks, config['release'].get('prefix'))
     else:
         for archive in [REGISTRY['zip_path'], REGISTRY['zip_path_ext']]:
             path = os.path.join(archive, 'releases.zip')

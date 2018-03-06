@@ -106,6 +106,7 @@ class Bid(Model):
         'selfQualified',
         'selfEligible',
         'subcontractingDetails',
+        'eligibilityDocuments'
     )
 
 
@@ -339,7 +340,8 @@ modelsExt = {
     'complaintPeriod': (Period, {}),
     'features': (Feature, []),
     'shortlistedFirms': (ShortlistedFirm, []),
-    'address': (AddressExt, {})
+    'address': (AddressExt, {}),
+    'eligibilityDocuments': (DocumentExt, []),
 }
 
 
