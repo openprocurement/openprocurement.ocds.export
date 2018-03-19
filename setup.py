@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 DESCRIPTION = """
     Libraty for generating packages
@@ -42,7 +42,8 @@ setup(name='openprocurement.ocds.export',
       author_email='info@quintagroup.com',
       license='Apache License 2.0',
       include_package_data=True,
-      packages=['openprocurement.ocds.export'],
+      packages=find_packages(exclude=['ez_setup']),
+      namespace_packages=['openprocurement', 'openprocurement.ocds'],
       zip_safe=False,
       install_requires=install_requires,
       tests_require=test_requires,
