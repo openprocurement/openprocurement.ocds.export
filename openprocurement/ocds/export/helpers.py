@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import ocdsmerge
 import yaml
 import os
 import zipfile

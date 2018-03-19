@@ -312,6 +312,9 @@ def release_tender(tender, modelsMap, callbacks, prefix):
         if op in release:
             tag.append(op[:-1])
     release['tag'] = tag
+    release['_id'] = release['tender']['id']
+    if '_rev' in tender:
+        release['_rev'] = tender['_rev']
     return release
 
 
