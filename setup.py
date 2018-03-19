@@ -4,6 +4,7 @@ DESCRIPTION = """
     Libraty for generating packages
     in OCDS release format from openprocurement data
 """
+VERSION = "1.0.1a1+bridge"
 
 
 install_requires = [
@@ -35,7 +36,7 @@ entry_points = {
 }
 
 setup(name='openprocurement.ocds.export',
-      version='0.1.0',
+      version=VERSION,
       description=DESCRIPTION,
       author='Quintagroup, Ltd.',
       author_email='info@quintagroup.com',
