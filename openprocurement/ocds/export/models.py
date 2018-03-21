@@ -275,7 +275,7 @@ class Release(Model):
         self.language = 'uk'
         super(Release, self).__init__(raw_data, modelsMap, callbacks)
         self.ocid = get_ocid(ocid, raw_data.get('tenderID'))
-        self.id = uuid4().hex
+        self.id = raw_data.get('id')
 
 
 modelsMap = {
@@ -312,7 +312,7 @@ def release_tender(tender, modelsMap, callbacks, prefix):
         if op in release:
             tag.append(op[:-1])
     release['tag'] = tag
-    release['_id'] = release['tender']['id']
+    release['_id'] = release['id']
     if '_rev' in tender:
         release['_rev'] = tender['_rev']
     return release
