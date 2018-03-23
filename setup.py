@@ -4,7 +4,7 @@ DESCRIPTION = """
     Libraty for generating packages
     in OCDS release format from openprocurement data
 """
-VERSION = "1.0.1a2+bridge"
+VERSION = "1.0.1a3+bridge"
 
 
 install_requires = [
